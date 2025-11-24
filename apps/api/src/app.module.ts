@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 
 import { UsersModule } from './users/users.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { PaymentsModule } from './payments/payments.module';
 import { StudentsModule } from './students/students.module';
@@ -27,8 +29,18 @@ import { ImportsModule } from './imports/imports.module';
     LettersModule,
     MailModule,
     ImportsModule,
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule { }

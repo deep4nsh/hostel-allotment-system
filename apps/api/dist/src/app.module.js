@@ -12,6 +12,8 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const prisma_module_1 = require("./prisma/prisma.module");
 const users_module_1 = require("./users/users.module");
+const throttler_1 = require("@nestjs/throttler");
+const core_1 = require("@nestjs/core");
 const auth_module_1 = require("./auth/auth.module");
 const payments_module_1 = require("./payments/payments.module");
 const students_module_1 = require("./students/students.module");
@@ -38,9 +40,19 @@ exports.AppModule = AppModule = __decorate([
             letters_module_1.LettersModule,
             mail_module_1.MailModule,
             imports_module_1.ImportsModule,
+            throttler_1.ThrottlerModule.forRoot([{
+                    ttl: 60000,
+                    limit: 100,
+                }]),
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [
+            app_service_1.AppService,
+            {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },
+        ],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
