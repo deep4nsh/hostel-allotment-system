@@ -23,6 +23,16 @@ let StudentsService = class StudentsService {
             include: {
                 user: {
                     select: { email: true, role: true }
+                },
+                payments: true,
+                allotment: {
+                    include: {
+                        room: {
+                            include: {
+                                floor: true
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -31,6 +41,42 @@ let StudentsService = class StudentsService {
         return this.prisma.student.update({
             where: { userId },
             data,
+        });
+    }
+    async savePreferences(userId, preferences) {
+        const student = await this.findOne(userId);
+        if (!student)
+            throw new Error('Student not found');
+        await this.prisma.preference.deleteMany({
+            where: { studentId: student.id },
+        });
+        return this.prisma.preference.createMany({
+            data: preferences.map((pref) => ({
+                studentId: student.id,
+                floorId: pref.floorId,
+                rank: pref.rank,
+                year: student.year || 1,
+            })),
+        });
+    }
+    async updateProfile(userId, data) {
+        return this.prisma.student.update({
+            where: { userId },
+            data,
+        });
+    }
+    async generateUniqueId(userId) {
+        const student = await this.findOne(userId);
+        if (!student)
+            throw new Error('Student not found');
+        if (student.uniqueId)
+            return student;
+        const year = new Date().getFullYear();
+        const random = Math.floor(1000 + Math.random() * 9000);
+        const uniqueId = `DTU-${year}-${random}`;
+        return this.prisma.student.update({
+            where: { userId },
+            data: { uniqueId },
         });
     }
 };

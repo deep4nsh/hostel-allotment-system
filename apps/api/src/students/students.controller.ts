@@ -1,9 +1,9 @@
-import { Controller, Get, Body, Patch, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, UseGuards, Request, Res } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { PdfService } from './pdf.service';
 import { AuthGuard } from '@nestjs/passport';
-import { Response } from 'express';
-import { Res } from '@nestjs/common';
+import type { Response } from 'express';
+import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Controller('students')
 export class StudentsController {
@@ -20,8 +20,14 @@ export class StudentsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Patch('me')
-    updateProfile(@Request() req: any, @Body() data: any) {
-        return this.studentsService.update(req.user.userId, data);
+    updateProfile(@Request() req: any, @Body() updateStudentDto: UpdateStudentDto) {
+        return this.studentsService.updateProfile(req.user.userId, updateStudentDto);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('me/generate-id')
+    generateId(@Request() req: any) {
+        return this.studentsService.generateUniqueId(req.user.userId);
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -37,5 +43,11 @@ export class StudentsController {
         });
 
         res.end(buffer);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('preferences')
+    savePreferences(@Request() req: any, @Body() body: { preferences: any[] }) {
+        return this.studentsService.savePreferences(req.user.userId, body.preferences);
     }
 }

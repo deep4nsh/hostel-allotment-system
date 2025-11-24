@@ -17,7 +17,7 @@ const common_1 = require("@nestjs/common");
 const students_service_1 = require("./students.service");
 const pdf_service_1 = require("./pdf.service");
 const passport_1 = require("@nestjs/passport");
-const common_2 = require("@nestjs/common");
+const update_student_dto_1 = require("./dto/update-student.dto");
 let StudentsController = class StudentsController {
     studentsService;
     pdfService;
@@ -28,8 +28,11 @@ let StudentsController = class StudentsController {
     getProfile(req) {
         return this.studentsService.findOne(req.user.userId);
     }
-    updateProfile(req, data) {
-        return this.studentsService.update(req.user.userId, data);
+    updateProfile(req, updateStudentDto) {
+        return this.studentsService.updateProfile(req.user.userId, updateStudentDto);
+    }
+    generateId(req) {
+        return this.studentsService.generateUniqueId(req.user.userId);
     }
     async downloadSlip(req, res) {
         const student = await this.studentsService.findOne(req.user.userId);
@@ -40,6 +43,9 @@ let StudentsController = class StudentsController {
             'Content-Length': buffer.length,
         });
         res.end(buffer);
+    }
+    savePreferences(req, body) {
+        return this.studentsService.savePreferences(req.user.userId, body.preferences);
     }
 };
 exports.StudentsController = StudentsController;
@@ -57,18 +63,35 @@ __decorate([
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, update_student_dto_1.UpdateStudentDto]),
     __metadata("design:returntype", void 0)
 ], StudentsController.prototype, "updateProfile", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('me/generate-id'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "generateId", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Get)('me/slip'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_2.Res)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], StudentsController.prototype, "downloadSlip", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('preferences'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "savePreferences", null);
 exports.StudentsController = StudentsController = __decorate([
     (0, common_1.Controller)('students'),
     __metadata("design:paramtypes", [students_service_1.StudentsService,
