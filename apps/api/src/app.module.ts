@@ -15,6 +15,8 @@ import { AllotmentModule } from './allotment/allotment.module';
 import { LettersModule } from './letters/letters.module';
 import { MailModule } from './mail/mail.module';
 import { ImportsModule } from './imports/imports.module';
+import { RefundsModule } from './refunds/refunds.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -29,10 +31,13 @@ import { ImportsModule } from './imports/imports.module';
     LettersModule,
     MailModule,
     ImportsModule,
+    RefundsModule,
+    DocumentsModule,
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,
     }]),
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [

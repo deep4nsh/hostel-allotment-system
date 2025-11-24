@@ -23,6 +23,8 @@ const allotment_module_1 = require("./allotment/allotment.module");
 const letters_module_1 = require("./letters/letters.module");
 const mail_module_1 = require("./mail/mail.module");
 const imports_module_1 = require("./imports/imports.module");
+const refunds_module_1 = require("./refunds/refunds.module");
+const documents_module_1 = require("./documents/documents.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -40,10 +42,13 @@ exports.AppModule = AppModule = __decorate([
             letters_module_1.LettersModule,
             mail_module_1.MailModule,
             imports_module_1.ImportsModule,
+            refunds_module_1.RefundsModule,
+            documents_module_1.DocumentsModule,
             throttler_1.ThrottlerModule.forRoot([{
                     ttl: 60000,
                     limit: 100,
                 }]),
+            documents_module_1.DocumentsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

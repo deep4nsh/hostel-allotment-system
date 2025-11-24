@@ -13,7 +13,7 @@ export class PaymentsController {
         if (!body.amount || !body.purpose) {
             throw new BadRequestException('Amount and purpose are required');
         }
-        return this.paymentsService.createOrder(req.user.userId, body.amount, body.purpose);
+        return this.paymentsService.createOrder(req.user.userId, body.amount, body.purpose as 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE');
     }
 
     @UseGuards(AuthGuard('jwt'))

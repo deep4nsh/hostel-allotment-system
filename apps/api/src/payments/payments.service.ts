@@ -15,25 +15,36 @@ export class PaymentsService {
         });
     }
 
-    async createOrder(userId: string, amount: number, purpose: PaymentPurpose) {
+    async createOrder(userId: string, amount: number, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE') {
         const options = {
-            amount: amount * 100, // Amount in paise
+            amount: amount * 100, // Razorpay expects amount in paise
             currency: 'INR',
             receipt: `receipt_${Date.now()}`,
-            notes: { userId, purpose },
         };
 
         try {
             const order = await this.razorpay.orders.create(options);
 
-            // We don't create a Payment record yet, or we can create one with PENDING status
-            // For now, let's return the order details to the frontend
+            // Save initial payment record
+            const student = await this.prisma.student.findUnique({ where: { userId } });
+            if (student) {
+                await this.prisma.payment.create({
+                    data: {
+                        studentId: student.id,
+                        amount: amount,
+                        purpose: purpose,
+                        status: 'PENDING',
+                        txnRef: order.id,
+                        gateway: 'RAZORPAY'
+                    }
+                });
+            }
+
             return order;
         } catch (error) {
-            throw new BadRequestException('Failed to create Razorpay order');
+            throw new Error(error);
         }
     }
-
     async verifyPayment(
         razorpayOrderId: string,
         razorpayPaymentId: string,

@@ -66,14 +66,26 @@ let PaymentsService = class PaymentsService {
             amount: amount * 100,
             currency: 'INR',
             receipt: `receipt_${Date.now()}`,
-            notes: { userId, purpose },
         };
         try {
             const order = await this.razorpay.orders.create(options);
+            const student = await this.prisma.student.findUnique({ where: { userId } });
+            if (student) {
+                await this.prisma.payment.create({
+                    data: {
+                        studentId: student.id,
+                        amount: amount,
+                        purpose: purpose,
+                        status: 'PENDING',
+                        txnRef: order.id,
+                        gateway: 'RAZORPAY'
+                    }
+                });
+            }
             return order;
         }
         catch (error) {
-            throw new common_1.BadRequestException('Failed to create Razorpay order');
+            throw new Error(error);
         }
     }
     async verifyPayment(razorpayOrderId, razorpayPaymentId, razorpaySignature, userId, purpose, amount) {
