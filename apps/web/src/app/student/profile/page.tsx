@@ -87,7 +87,22 @@ export default function StudentProfilePage() {
                         <CardDescription>Important documents</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button variant="outline" className="w-full md:w-auto">
+                        <Button variant="outline" className="w-full md:w-auto" onClick={async () => {
+                            const token = localStorage.getItem('token')
+                            const res = await fetch('http://localhost:3000/students/me/slip', {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            })
+                            if (res.ok) {
+                                const blob = await res.blob()
+                                const url = window.URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = 'registration-slip.pdf'
+                                a.click()
+                            } else {
+                                alert('Failed to download slip')
+                            }
+                        }}>
                             Download Registration Slip
                         </Button>
                     </CardContent>
