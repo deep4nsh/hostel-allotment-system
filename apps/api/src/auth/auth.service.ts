@@ -4,12 +4,14 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
+        private prisma: PrismaService,
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
@@ -35,11 +37,21 @@ export class AuthService {
             throw new UnauthorizedException('User already exists');
         }
 
-        // Create user
+        // Create user and associated student record
         return this.usersService.create({
             email: registerDto.email,
             password: registerDto.password,
             role: registerDto.role || 'STUDENT',
+        }).then(async (user) => {
+            // Create empty student record
+            await this.prisma.student.create({
+                data: {
+                    userId: user.id,
+                    name: '', // Placeholder, to be filled in profile
+                    gender: 'OTHER', // Default
+                },
+            });
+            return user;
         });
     }
 }

@@ -14,9 +14,50 @@ export default function RegisterPage() {
         event.preventDefault()
         setIsLoading(true)
 
-        setTimeout(() => {
+        const email = (event.target as any).email.value
+        const password = (event.target as any).password.value
+        const confirmPassword = (event.target as any)['confirm-password'].value
+
+        if (password !== confirmPassword) {
+            alert("Passwords do not match")
             setIsLoading(false)
-        }, 3000)
+            return
+        }
+
+        try {
+            const res = await fetch('http://localhost:3000/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(data.message || 'Registration failed')
+            }
+
+            // Auto login after register to get token
+            const loginRes = await fetch('http://localhost:3000/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+
+            if (loginRes.ok) {
+                const data = await loginRes.json()
+                localStorage.setItem('token', data.access_token)
+                // Redirect to payment
+                window.location.href = '/payment/registration'
+            } else {
+                // Should not happen usually
+                window.location.href = '/auth/login'
+            }
+
+        } catch (error: any) {
+            alert(error.message)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (

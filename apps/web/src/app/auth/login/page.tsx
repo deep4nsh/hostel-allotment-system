@@ -14,9 +14,32 @@ export default function LoginPage() {
         event.preventDefault()
         setIsLoading(true)
 
-        setTimeout(() => {
+        const email = (event.target as any).email.value
+        const password = (event.target as any).password.value
+
+        try {
+            const res = await fetch('http://localhost:3000/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+
+            if (!res.ok) {
+                throw new Error('Invalid credentials')
+            }
+
+            const data = await res.json()
+            localStorage.setItem('token', data.access_token)
+
+            // Check if payment is needed (TODO: Check student status)
+            // For now, redirect to profile
+            window.location.href = '/student/profile'
+
+        } catch (error: any) {
+            alert(error.message)
+        } finally {
             setIsLoading(false)
-        }, 3000)
+        }
     }
 
     return (
