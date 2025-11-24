@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  WARDEN
+  OIC
+  SYSTEM_MGR
+  INTERN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentPurpose {
+  REGISTRATION
+  SEAT_BOOKING
+  MESS_FEE
+  HOSTEL_FEE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // Hashed
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student?
+  auditLogs AuditLog[]
+}
+
+model Student {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  
+  uniqueId    String?  @unique // JAC/GATE/DTU Exam No.
+  name        String
+  phone       String?
+  program     String?  // B.Tech, M.Tech, PhD
+  year        Int?     // 1, 2, 3, 4
+  gender      Gender
+  address     String?
+  homeLat     Float?
+  homeLng     Float?
+  profileMeta Json?    // Flexible storage for other details
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  preferences   Preference[]
+  waitlist      WaitlistEntry?
+  allotment     Allotment?
+  payments      Payment[]
+  refundRequests RefundRequest[]
+  documents     Document[]
+}
+
+model Hostel {
+  id        String   @id @default(uuid())
+  name      String
+  floors    Floor[]
+}
+
+model Floor {
+  id        String   @id @default(uuid())
+  hostelId  String
+  hostel    Hostel   @relation(fields: [hostelId], references: [id])
+  number    Int
+  gender    Gender
+  rooms     Room[]
+  preferences Preference[]
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  floorId     String
+  floor       Floor    @relation(fields: [floorId], references: [id])
+  number      String
+  capacity    Int
+  occupancy   Int      @default(0)
+  yearAllowed Int[]    // Array of years allowed (e.g. [1] or [1, 2])
+
+  allotments  Allotment[]
+}
+
+model Preference {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  floorId   String
+  floor     Floor    @relation(fields: [floorId], references: [id])
+  rank      Int      // 1st preference, 2nd, etc.
+  year      Int      // Academic year for which preference is made
+
+  @@unique([studentId, rank])
+}
+
+model WaitlistEntry {
+  id        String   @id @default(uuid())
+  studentId String   @unique
+  student   Student  @relation(fields: [studentId], references: [id])
+  position  Int
+  status    String   // ACTIVE, ALLOTTED, EXPIRED
+  createdAt DateTime @default(now())
+}
+
+model Allotment {
+  id        String   @id @default(uuid())
+  studentId String   @unique
+  student   Student  @relation(fields: [studentId], references: [id])
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  type      String   // REGULAR, TEMPORARY
+  issueDate DateTime @default(now())
+  validTill DateTime?
+  letterUrl String?
+
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id        String         @id @default(uuid())
+  studentId String
+  student   Student        @relation(fields: [studentId], references: [id])
+  purpose   PaymentPurpose
+  status    PaymentStatus
+  amount    Float
+  txnRef    String?        @unique // Razorpay Order ID or Payment ID
+  gateway   String         @default("RAZORPAY")
+  createdAt DateTime       @default(now())
+}
+
+model RefundRequest {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  feeType   String
+  amount    Float
+  status    String   // PENDING, APPROVED, REJECTED, PROCESSED
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  kind      String   // PHOTO, SIGNATURE, ADMISSION_LETTER, UNDERTAKING
+  fileUrl   String
+  ocrFields Json?
+  uploadedAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  timestamp DateTime @default(now())
+}

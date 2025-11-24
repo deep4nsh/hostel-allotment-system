@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Lint API
+        run: cd apps/api && npm run lint
+
+      - name: Build API
+        run: cd apps/api && npm run build
+
+      - name: Lint Web
+        run: cd apps/web && npm run lint
+
+      - name: Build Web
+        run: cd apps/web && npm run build
