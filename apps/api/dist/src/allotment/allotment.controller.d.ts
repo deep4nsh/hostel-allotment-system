@@ -52,10 +52,10 @@ export declare class AllotmentController {
         } & {
             number: string;
             id: string;
-            capacity: number;
-            yearAllowed: number[];
-            occupancy: number;
             floorId: string;
+            capacity: number;
+            occupancy: number;
+            yearAllowed: number[];
         };
     } & {
         id: string;

@@ -9,10 +9,10 @@ export declare class HostelsController {
             rooms: {
                 number: string;
                 id: string;
-                capacity: number;
-                yearAllowed: number[];
-                occupancy: number;
                 floorId: string;
+                capacity: number;
+                occupancy: number;
+                yearAllowed: number[];
             }[];
         } & {
             number: number;
@@ -29,10 +29,10 @@ export declare class HostelsController {
             rooms: {
                 number: string;
                 id: string;
-                capacity: number;
-                yearAllowed: number[];
-                occupancy: number;
                 floorId: string;
+                capacity: number;
+                occupancy: number;
+                yearAllowed: number[];
             }[];
         } & {
             number: number;
@@ -49,10 +49,10 @@ export declare class HostelsController {
             rooms: {
                 number: string;
                 id: string;
-                capacity: number;
-                yearAllowed: number[];
-                occupancy: number;
                 floorId: string;
+                capacity: number;
+                occupancy: number;
+                yearAllowed: number[];
             }[];
         } & {
             number: number;

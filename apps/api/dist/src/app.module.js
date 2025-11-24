@@ -20,6 +20,7 @@ const waitlist_module_1 = require("./waitlist/waitlist.module");
 const allotment_module_1 = require("./allotment/allotment.module");
 const letters_module_1 = require("./letters/letters.module");
 const mail_module_1 = require("./mail/mail.module");
+const imports_module_1 = require("./imports/imports.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -36,6 +37,7 @@ exports.AppModule = AppModule = __decorate([
             allotment_module_1.AllotmentModule,
             letters_module_1.LettersModule,
             mail_module_1.MailModule,
+            imports_module_1.ImportsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

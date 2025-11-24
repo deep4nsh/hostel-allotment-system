@@ -12,6 +12,7 @@ import { WaitlistModule } from './waitlist/waitlist.module';
 import { AllotmentModule } from './allotment/allotment.module';
 import { LettersModule } from './letters/letters.module';
 import { MailModule } from './mail/mail.module';
+import { ImportsModule } from './imports/imports.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MailModule } from './mail/mail.module';
     AllotmentModule,
     LettersModule,
     MailModule,
+    ImportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
