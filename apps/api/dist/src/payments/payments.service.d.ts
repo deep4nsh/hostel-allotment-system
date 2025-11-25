@@ -7,12 +7,12 @@ export declare class PaymentsService {
     createOrder(userId: string, amount: number, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE'): Promise<import("razorpay/dist/types/orders").Orders.RazorpayOrder>;
     verifyPayment(razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string, userId: string, purpose: PaymentPurpose, amount: number): Promise<{
         id: string;
-        createdAt: Date;
-        amount: number;
+        studentId: string;
         purpose: import("@prisma/client").$Enums.PaymentPurpose;
         status: import("@prisma/client").$Enums.PaymentStatus;
+        amount: number;
         txnRef: string | null;
         gateway: string;
-        studentId: string;
+        createdAt: Date;
     }>;
 }

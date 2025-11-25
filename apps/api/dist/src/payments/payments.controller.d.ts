@@ -15,12 +15,12 @@ export declare class PaymentsController {
         amount: number;
     }): Promise<{
         id: string;
-        createdAt: Date;
-        amount: number;
+        studentId: string;
         purpose: import("@prisma/client").$Enums.PaymentPurpose;
         status: import("@prisma/client").$Enums.PaymentStatus;
+        amount: number;
         txnRef: string | null;
         gateway: string;
-        studentId: string;
+        createdAt: Date;
     }>;
 }

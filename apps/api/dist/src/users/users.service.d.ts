@@ -27,7 +27,7 @@ export declare class UsersService {
         role: import("@prisma/client").$Enums.Role;
         createdAt: Date;
         updatedAt: Date;
-    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    } | null, null, import("@prisma/client/runtime/library").DefaultArgs>;
     findByEmail(email: string): import("@prisma/client").Prisma.Prisma__UserClient<{
         id: string;
         email: string;
@@ -35,7 +35,7 @@ export declare class UsersService {
         role: import("@prisma/client").$Enums.Role;
         createdAt: Date;
         updatedAt: Date;
-    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    } | null, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: string, updateUserDto: UpdateUserDto): import("@prisma/client").Prisma.Prisma__UserClient<{
         id: string;
         email: string;
@@ -43,7 +43,7 @@ export declare class UsersService {
         role: import("@prisma/client").$Enums.Role;
         createdAt: Date;
         updatedAt: Date;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     remove(id: string): import("@prisma/client").Prisma.Prisma__UserClient<{
         id: string;
         email: string;
@@ -51,5 +51,5 @@ export declare class UsersService {
         role: import("@prisma/client").$Enums.Role;
         createdAt: Date;
         updatedAt: Date;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
 }

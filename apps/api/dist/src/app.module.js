@@ -25,6 +25,7 @@ const mail_module_1 = require("./mail/mail.module");
 const imports_module_1 = require("./imports/imports.module");
 const refunds_module_1 = require("./refunds/refunds.module");
 const documents_module_1 = require("./documents/documents.module");
+const ops_module_1 = require("./ops/ops.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -44,6 +45,7 @@ exports.AppModule = AppModule = __decorate([
             imports_module_1.ImportsModule,
             refunds_module_1.RefundsModule,
             documents_module_1.DocumentsModule,
+            ops_module_1.OpsModule,
             throttler_1.ThrottlerModule.forRoot([{
                     ttl: 60000,
                     limit: 100,

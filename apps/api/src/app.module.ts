@@ -17,6 +17,7 @@ import { MailModule } from './mail/mail.module';
 import { ImportsModule } from './imports/imports.module';
 import { RefundsModule } from './refunds/refunds.module';
 import { DocumentsModule } from './documents/documents.module';
+import { OpsModule } from './ops/ops.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DocumentsModule } from './documents/documents.module';
     ImportsModule,
     RefundsModule,
     DocumentsModule,
+    OpsModule,
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,

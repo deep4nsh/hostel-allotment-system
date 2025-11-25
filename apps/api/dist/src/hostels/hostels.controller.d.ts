@@ -7,18 +7,18 @@ export declare class HostelsController {
     create(createHostelDto: CreateHostelDto): Promise<{
         floors: ({
             rooms: {
-                number: string;
                 id: string;
                 floorId: string;
+                number: string;
                 capacity: number;
                 occupancy: number;
                 yearAllowed: number[];
             }[];
         } & {
-            number: number;
             id: string;
-            gender: import("@prisma/client").$Enums.Gender;
             hostelId: string;
+            number: number;
+            gender: import("@prisma/client").$Enums.Gender;
         })[];
     } & {
         id: string;
@@ -27,18 +27,18 @@ export declare class HostelsController {
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         floors: ({
             rooms: {
-                number: string;
                 id: string;
                 floorId: string;
+                number: string;
                 capacity: number;
                 occupancy: number;
                 yearAllowed: number[];
             }[];
         } & {
-            number: number;
             id: string;
-            gender: import("@prisma/client").$Enums.Gender;
             hostelId: string;
+            number: number;
+            gender: import("@prisma/client").$Enums.Gender;
         })[];
     } & {
         id: string;
@@ -47,29 +47,29 @@ export declare class HostelsController {
     findOne(id: string): import("@prisma/client").Prisma.Prisma__HostelClient<({
         floors: ({
             rooms: {
-                number: string;
                 id: string;
                 floorId: string;
+                number: string;
                 capacity: number;
                 occupancy: number;
                 yearAllowed: number[];
             }[];
         } & {
-            number: number;
             id: string;
-            gender: import("@prisma/client").$Enums.Gender;
             hostelId: string;
+            number: number;
+            gender: import("@prisma/client").$Enums.Gender;
         })[];
     } & {
         id: string;
         name: string;
-    }) | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }) | null, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: string, updateHostelDto: UpdateHostelDto): import("@prisma/client").Prisma.Prisma__HostelClient<{
         id: string;
         name: string;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     remove(id: string): import("@prisma/client").Prisma.Prisma__HostelClient<{
         id: string;
         name: string;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
 }

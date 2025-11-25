@@ -43,7 +43,7 @@ export class AllotmentService {
 
         // 3. Sort Students
         // Priority: 1. Payment Timestamp (FCFS for now)
-        eligibleStudents.sort((a, b) => {
+        eligibleStudents.sort((a: any, b: any) => {
             const paymentA = a.payments[0].createdAt.getTime();
             const paymentB = b.payments[0].createdAt.getTime();
             return paymentA - paymentB;
@@ -57,10 +57,10 @@ export class AllotmentService {
 
             // Try preferences first
             for (const pref of student.preferences) {
-                const floor = hostel.floors.find((f) => f.id === pref.floorId);
+                const floor = hostel.floors.find((f: any) => f.id === pref.floorId);
                 if (floor) {
                     const availableRoom = floor.rooms.find(
-                        (r) => r.occupancy < r.capacity,
+                        (r: any) => r.occupancy < r.capacity,
                     );
                     if (availableRoom) {
                         allottedRoom = availableRoom;
@@ -73,7 +73,7 @@ export class AllotmentService {
             if (!allottedRoom) {
                 for (const floor of hostel.floors) {
                     const availableRoom = floor.rooms.find(
-                        (r) => r.occupancy < r.capacity,
+                        (r: any) => r.occupancy < r.capacity,
                     );
                     if (availableRoom) {
                         allottedRoom = availableRoom;
