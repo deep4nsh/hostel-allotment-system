@@ -33,7 +33,6 @@ export default function RegistrationPaymentPage() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    amount: 500, // 500 INR
                     purpose: 'REGISTRATION'
                 })
             })
@@ -62,7 +61,7 @@ export default function RegistrationPaymentPage() {
                             razorpayPaymentId: response.razorpay_payment_id,
                             razorpaySignature: response.razorpay_signature,
                             purpose: 'REGISTRATION',
-                            amount: 500
+                            amount: 1000 // Fixed amount matching backend
                         })
                     })
 
@@ -106,7 +105,7 @@ export default function RegistrationPaymentPage() {
                 <CardContent>
                     <div className="flex justify-between items-center p-4 bg-white rounded-lg border">
                         <span className="font-medium">Amount</span>
-                        <span className="text-xl font-bold">₹500.00</span>
+                        <span className="text-xl font-bold">₹1000.00</span>
                     </div>
                 </CardContent>
                 <CardFooter>

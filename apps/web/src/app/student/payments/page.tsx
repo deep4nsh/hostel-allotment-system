@@ -121,6 +121,19 @@ export default function StudentPaymentsPage() {
 
             <Card>
                 <CardHeader>
+                    <CardTitle>Hostel Fee</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <div className="text-3xl font-bold mb-4">Dynamic</div>
+                        <p className="text-slate-500 mb-4">Based on Room Capacity (Single/Double/Triple)</p>
+                        <Button onClick={() => handlePayment('HOSTEL_FEE')} className="w-full">Pay Hostel Fee</Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>Mess Fee</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -128,8 +141,9 @@ export default function StudentPaymentsPage() {
                         <div className="text-green-600 font-bold text-lg">Paid</div>
                     ) : (
                         <div className="space-y-2">
-                            <p>Amount: ₹20,000</p>
-                            <Button onClick={handlePayMessFee}>Pay Mess Fee</Button>
+                            <div className="text-3xl font-bold mb-4">₹20,000</div>
+                            <p className="text-slate-500 mb-4">Advance Mess Fee for the semester.</p>
+                            <Button onClick={() => handlePayment('MESS_FEE')} className="w-full">Pay Mess Fee</Button>
                         </div>
                     )}
                 </CardContent>
@@ -170,6 +184,6 @@ export default function StudentPaymentsPage() {
                     </table>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     )
 }

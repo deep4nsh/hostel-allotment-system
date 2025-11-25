@@ -85,7 +85,7 @@ export default function StudentPreferencesPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ amount: 10000, purpose: 'SEAT_BOOKING' }) // 10k INR
+                body: JSON.stringify({ purpose: 'SEAT_BOOKING' })
             })
             if (!res.ok) throw new Error('Failed')
             const order = await res.json()
@@ -107,7 +107,7 @@ export default function StudentPreferencesPage() {
                             razorpayPaymentId: response.razorpay_payment_id,
                             razorpaySignature: response.razorpay_signature,
                             purpose: 'SEAT_BOOKING',
-                            amount: 10000
+                            amount: 5000 // Fixed amount matching backend
                         })
                     })
                     if (verifyRes.ok) {
@@ -129,8 +129,8 @@ export default function StudentPreferencesPage() {
         return (
             <div className="p-8 text-center space-y-4">
                 <h1 className="text-2xl font-bold">Seat Booking Fee Required</h1>
-                <p>You must pay the seat booking fee of ₹10,000 to submit preferences.</p>
-                <Button onClick={handlePayment}>Pay ₹10,000</Button>
+                <p>You must pay the seat booking fee of ₹5,000 to submit preferences.</p>
+                <Button onClick={handlePayment}>Pay ₹5,000</Button>
                 <Script src="https://checkout.razorpay.com/v1/checkout.js" />
             </div>
         )
