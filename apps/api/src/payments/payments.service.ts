@@ -16,9 +16,16 @@ export class PaymentsService {
     }
 
     async createOrder(userId: string, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE') {
-        const student = await this.prisma.student.findUnique({ where: { userId } });
+        let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
-            throw new BadRequestException('Student record not found for user');
+            // Auto-create student record if missing (for legacy users or sync issues)
+            student = await this.prisma.student.create({
+                data: {
+                    userId,
+                    name: '',
+                    gender: 'OTHER',
+                }
+            });
         }
 
         let amount = 0;
@@ -126,26 +133,45 @@ export class PaymentsService {
         }
     }
     async mockVerify(userId: string, purpose: PaymentPurpose, amount: number) {
-        const student = await this.prisma.student.findUnique({ where: { userId } });
-        if (!student) throw new BadRequestException('Student not found');
+        console.log(`Mock Verify called for User: ${userId}, Purpose: ${purpose}, Amount: ${amount}`);
+        let student = await this.prisma.student.findUnique({ where: { userId } });
 
-        // Create successful payment record
-        const payment = await this.prisma.payment.create({
-            data: {
-                studentId: student.id,
-                purpose,
-                status: PaymentStatus.COMPLETED,
-                amount,
-                txnRef: `mock_${Date.now()}`,
-                gateway: 'MOCK',
-            },
-        });
-
-        // Update Student status based on purpose
-        if (purpose === 'REGISTRATION') {
-            // Logic to update student status if needed
+        if (!student) {
+            console.log(`Student not found for userId: ${userId}, creating new record...`);
+            student = await this.prisma.student.create({
+                data: {
+                    userId,
+                    name: '',
+                    gender: 'OTHER',
+                }
+            });
         }
 
-        return payment;
+        console.log(`Student found: ${student.id}`);
+
+        try {
+            // Create successful payment record
+            const payment = await this.prisma.payment.create({
+                data: {
+                    studentId: student.id,
+                    purpose,
+                    status: PaymentStatus.COMPLETED,
+                    amount,
+                    txnRef: `mock_${Date.now()}`,
+                    gateway: 'MOCK',
+                },
+            });
+            console.log(`Payment created: ${payment.id}`);
+
+            // Update Student status based on purpose
+            if (purpose === 'REGISTRATION') {
+                // Logic to update student status if needed
+            }
+
+            return payment;
+        } catch (error) {
+            console.error('Error creating mock payment:', error);
+            throw error;
+        }
     }
 }

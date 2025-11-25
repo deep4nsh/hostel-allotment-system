@@ -62,9 +62,15 @@ let PaymentsService = class PaymentsService {
         });
     }
     async createOrder(userId, purpose) {
-        const student = await this.prisma.student.findUnique({ where: { userId } });
+        let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
-            throw new common_1.BadRequestException('Student record not found for user');
+            student = await this.prisma.student.create({
+                data: {
+                    userId,
+                    name: '',
+                    gender: 'OTHER',
+                }
+            });
         }
         let amount = 0;
         if (purpose === 'REGISTRATION')
@@ -143,22 +149,39 @@ let PaymentsService = class PaymentsService {
         }
     }
     async mockVerify(userId, purpose, amount) {
-        const student = await this.prisma.student.findUnique({ where: { userId } });
-        if (!student)
-            throw new common_1.BadRequestException('Student not found');
-        const payment = await this.prisma.payment.create({
-            data: {
-                studentId: student.id,
-                purpose,
-                status: client_1.PaymentStatus.COMPLETED,
-                amount,
-                txnRef: `mock_${Date.now()}`,
-                gateway: 'MOCK',
-            },
-        });
-        if (purpose === 'REGISTRATION') {
+        console.log(`Mock Verify called for User: ${userId}, Purpose: ${purpose}, Amount: ${amount}`);
+        let student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) {
+            console.log(`Student not found for userId: ${userId}, creating new record...`);
+            student = await this.prisma.student.create({
+                data: {
+                    userId,
+                    name: '',
+                    gender: 'OTHER',
+                }
+            });
         }
-        return payment;
+        console.log(`Student found: ${student.id}`);
+        try {
+            const payment = await this.prisma.payment.create({
+                data: {
+                    studentId: student.id,
+                    purpose,
+                    status: client_1.PaymentStatus.COMPLETED,
+                    amount,
+                    txnRef: `mock_${Date.now()}`,
+                    gateway: 'MOCK',
+                },
+            });
+            console.log(`Payment created: ${payment.id}`);
+            if (purpose === 'REGISTRATION') {
+            }
+            return payment;
+        }
+        catch (error) {
+            console.error('Error creating mock payment:', error);
+            throw error;
+        }
     }
 };
 exports.PaymentsService = PaymentsService;
