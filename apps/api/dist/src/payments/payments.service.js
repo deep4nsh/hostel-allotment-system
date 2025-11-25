@@ -57,11 +57,39 @@ let PaymentsService = class PaymentsService {
     constructor(prisma) {
         this.prisma = prisma;
         this.razorpay = new razorpay_1.default({
-            key_id: process.env.RAZORPAY_KEY_ID || 'test_key_id',
-            key_secret: process.env.RAZORPAY_KEY_SECRET || 'test_key_secret',
+            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
+            key_secret: process.env.RAZORPAY_KEY_SECRET || 's42BN13v3y7S0Y4aoY4aoY4a',
         });
     }
-    async createOrder(userId, amount, purpose) {
+    async createOrder(userId, purpose) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) {
+            throw new common_1.BadRequestException('Student record not found for user');
+        }
+        let amount = 0;
+        if (purpose === 'REGISTRATION')
+            amount = 1000;
+        else if (purpose === 'SEAT_BOOKING')
+            amount = 5000;
+        else if (purpose === 'MESS_FEE')
+            amount = 20000;
+        else if (purpose === 'HOSTEL_FEE') {
+            const allotment = await this.prisma.allotment.findUnique({
+                where: { studentId: student.id },
+                include: { room: true },
+            });
+            if (!allotment)
+                throw new Error('No room allotted to pay hostel fee');
+            const capacity = allotment.room.capacity;
+            if (capacity === 1)
+                amount = 60000;
+            else if (capacity === 2)
+                amount = 56000;
+            else if (capacity === 3)
+                amount = 52000;
+            else
+                amount = 52000;
+        }
         const options = {
             amount: amount * 100,
             currency: 'INR',

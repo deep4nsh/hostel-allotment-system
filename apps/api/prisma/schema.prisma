@@ -22,6 +22,13 @@ enum Gender {
   OTHER
 }
 
+enum Category {
+  DELHI
+  OUTSIDE_DELHI
+  PH
+  NRI
+}
+
 enum PaymentStatus {
   PENDING
   COMPLETED
@@ -59,6 +66,7 @@ model Student {
   program     String?  // B.Tech, M.Tech, PhD
   year        Int?     // 1, 2, 3, 4
   gender      Gender
+  category    Category @default(DELHI)
   address     String?
   homeLat     Float?
   homeLng     Float?

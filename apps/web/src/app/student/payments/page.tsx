@@ -37,22 +37,23 @@ export default function StudentPaymentsPage() {
         fetchPayments()
     }, [router])
 
-    const handlePayMessFee = async () => {
+    const handlePayment = async (purpose: 'MESS_FEE' | 'HOSTEL_FEE') => {
         const token = localStorage.getItem('token')
         try {
+            // 1. Create Order
             const res = await fetch('http://localhost:3000/payments/create-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ amount: 20000, purpose: 'MESS_FEE' }) // 20k INR
+                body: JSON.stringify({ purpose })
             })
             if (!res.ok) throw new Error('Failed')
             const order = await res.json()
 
             const options = {
-                key: 'test_key_id', // Replace with env var
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
                 amount: order.amount,
                 currency: order.currency,
                 order_id: order.id,

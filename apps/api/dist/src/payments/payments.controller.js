@@ -22,10 +22,10 @@ let PaymentsController = class PaymentsController {
         this.paymentsService = paymentsService;
     }
     async createOrder(req, body) {
-        if (!body.amount || !body.purpose) {
-            throw new common_1.BadRequestException('Amount and purpose are required');
+        if (!body.purpose) {
+            throw new common_1.BadRequestException('Purpose is required');
         }
-        return this.paymentsService.createOrder(req.user.userId, body.amount, body.purpose);
+        return this.paymentsService.createOrder(req.user.userId, body.purpose);
     }
     async verifyPayment(req, body) {
         return this.paymentsService.verifyPayment(body.razorpayOrderId, body.razorpayPaymentId, body.razorpaySignature, req.user.userId, body.purpose, body.amount);

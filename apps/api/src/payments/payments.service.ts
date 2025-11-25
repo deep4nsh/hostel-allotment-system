@@ -10,12 +10,37 @@ export class PaymentsService {
 
     constructor(private prisma: PrismaService) {
         this.razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID || 'test_key_id',
-            key_secret: process.env.RAZORPAY_KEY_SECRET || 'test_key_secret',
+            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
+            key_secret: process.env.RAZORPAY_KEY_SECRET || 's42BN13v3y7S0Y4aoY4aoY4a',
         });
     }
 
-    async createOrder(userId: string, amount: number, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE') {
+    async createOrder(userId: string, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE') {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) {
+            throw new BadRequestException('Student record not found for user');
+        }
+
+        let amount = 0;
+        if (purpose === 'REGISTRATION') amount = 1000; // Fixed Registration Fee
+        else if (purpose === 'SEAT_BOOKING') amount = 5000; // Fixed Seat Booking Fee
+        else if (purpose === 'MESS_FEE') amount = 20000; // Fixed Mess Fee (for now)
+        else if (purpose === 'HOSTEL_FEE') {
+            // Dynamic Hostel Fee based on Room Capacity
+            const allotment = await this.prisma.allotment.findUnique({
+                where: { studentId: student.id },
+                include: { room: true },
+            });
+
+            if (!allotment) throw new Error('No room allotted to pay hostel fee');
+
+            const capacity = allotment.room.capacity;
+            if (capacity === 1) amount = 60000;
+            else if (capacity === 2) amount = 56000;
+            else if (capacity === 3) amount = 52000;
+            else amount = 52000; // Default fallback
+        }
+
         const options = {
             amount: amount * 100, // Razorpay expects amount in paise
             currency: 'INR',

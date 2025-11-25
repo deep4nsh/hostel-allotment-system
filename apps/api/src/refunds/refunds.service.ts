@@ -8,23 +8,45 @@ export class RefundsService {
 
     constructor(private prisma: PrismaService) {
         this.razorpay = new Razorpay({
-            key_id: 'rzp_test_1DP5mmOlF5G5ag', // Test Key
-            key_secret: 's42BN13v3y7S0Y4aoY4aoY4a', // Mock Secret
+            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag', // Test Key
+            key_secret: process.env.RAZORPAY_KEY_SECRET || 's42BN13v3y7S0Y4aoY4aoY4a', // Mock Secret
         });
     }
 
     async createRequest(userId: string, paymentId: string, reason: string) {
-        const student = await this.prisma.student.findUnique({ where: { userId } });
+        const student = await this.prisma.student.findUnique({
+            where: { userId },
+            include: { allotment: true }
+        });
         if (!student) throw new Error('Student not found');
 
         const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
         if (!payment || payment.studentId !== student.id) throw new Error('Invalid payment');
 
+        let refundAmount = payment.amount;
+
+        // Check for Allotment and apply deductions
+        // Rules: <10 days: -3000, 10-30 days: -6000, >30 days: No refund
+        if (student.allotment) {
+            const issueDate = new Date(student.allotment.issueDate);
+            const now = new Date();
+            const diffTime = Math.abs(now.getTime() - issueDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 30) {
+                refundAmount = 0;
+            } else if (diffDays > 10) {
+                refundAmount = Math.max(0, refundAmount - 6000);
+            } else {
+                refundAmount = Math.max(0, refundAmount - 3000);
+            }
+        }
+
         return this.prisma.refundRequest.create({
             data: {
                 studentId: student.id,
                 feeType: payment.purpose,
-                amount: payment.amount,
+                amount: refundAmount,
                 status: 'PENDING',
             },
         });

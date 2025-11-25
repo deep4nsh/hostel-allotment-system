@@ -32,6 +32,7 @@ export declare class RefundsController {
             program: string | null;
             year: number | null;
             gender: import("@prisma/client").$Enums.Gender;
+            category: import("@prisma/client").$Enums.Category;
             address: string | null;
             homeLat: number | null;
             homeLng: number | null;

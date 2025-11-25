@@ -49,7 +49,12 @@ let AllotmentService = class AllotmentService {
                 },
             },
         });
+        const categoryPriority = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
         eligibleStudents.sort((a, b) => {
+            const catA = categoryPriority[a.category] ?? 3;
+            const catB = categoryPriority[b.category] ?? 3;
+            if (catA !== catB)
+                return catA - catB;
             const paymentA = a.payments[0].createdAt.getTime();
             const paymentB = b.payments[0].createdAt.getTime();
             return paymentA - paymentB;

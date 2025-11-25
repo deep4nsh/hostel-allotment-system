@@ -91,7 +91,7 @@ export default function StudentPreferencesPage() {
             const order = await res.json()
 
             const options = {
-                key: 'test_key_id',
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
                 amount: order.amount,
                 currency: order.currency,
                 order_id: order.id,
