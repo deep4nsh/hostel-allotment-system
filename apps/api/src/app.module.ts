@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 import { UsersModule } from './users/users.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -39,6 +41,10 @@ import { OpsModule } from './ops/ops.module';
       ttl: 60000,
       limit: 100,
     }]),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
     DocumentsModule,
   ],
   controllers: [AppController],
