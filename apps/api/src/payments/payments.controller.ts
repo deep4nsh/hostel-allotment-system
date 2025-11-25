@@ -38,4 +38,9 @@ export class PaymentsController {
             body.amount,
         );
     }
+    @UseGuards(AuthGuard('jwt'))
+    @Post('mock-verify')
+    async mockVerify(@Request() req: any, @Body() body: { purpose: PaymentPurpose; amount: number }) {
+        return this.paymentsService.mockVerify(req.user.userId, body.purpose, body.amount);
+    }
 }

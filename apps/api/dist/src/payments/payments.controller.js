@@ -30,6 +30,9 @@ let PaymentsController = class PaymentsController {
     async verifyPayment(req, body) {
         return this.paymentsService.verifyPayment(body.razorpayOrderId, body.razorpayPaymentId, body.razorpaySignature, req.user.userId, body.purpose, body.amount);
     }
+    async mockVerify(req, body) {
+        return this.paymentsService.mockVerify(req.user.userId, body.purpose, body.amount);
+    }
 };
 exports.PaymentsController = PaymentsController;
 __decorate([
@@ -50,6 +53,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "verifyPayment", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('mock-verify'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "mockVerify", null);
 exports.PaymentsController = PaymentsController = __decorate([
     (0, common_1.Controller)('payments'),
     __metadata("design:paramtypes", [payments_service_1.PaymentsService])

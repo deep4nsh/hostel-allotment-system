@@ -15,4 +15,14 @@ export declare class PaymentsService {
         gateway: string;
         createdAt: Date;
     }>;
+    mockVerify(userId: string, purpose: PaymentPurpose, amount: number): Promise<{
+        id: string;
+        studentId: string;
+        purpose: import("@prisma/client").$Enums.PaymentPurpose;
+        status: import("@prisma/client").$Enums.PaymentStatus;
+        amount: number;
+        txnRef: string | null;
+        gateway: string;
+        createdAt: Date;
+    }>;
 }

@@ -125,4 +125,27 @@ export class PaymentsService {
             throw new BadRequestException('Invalid payment signature');
         }
     }
+    async mockVerify(userId: string, purpose: PaymentPurpose, amount: number) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) throw new BadRequestException('Student not found');
+
+        // Create successful payment record
+        const payment = await this.prisma.payment.create({
+            data: {
+                studentId: student.id,
+                purpose,
+                status: PaymentStatus.COMPLETED,
+                amount,
+                txnRef: `mock_${Date.now()}`,
+                gateway: 'MOCK',
+            },
+        });
+
+        // Update Student status based on purpose
+        if (purpose === 'REGISTRATION') {
+            // Logic to update student status if needed
+        }
+
+        return payment;
+    }
 }

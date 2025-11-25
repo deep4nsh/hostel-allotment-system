@@ -19,13 +19,15 @@ export default function RegistrationPaymentPage() {
     const handlePayment = async () => {
         setIsLoading(true)
         try {
-            // 1. Create Order
-            const token = localStorage.getItem('token') // Assuming token is stored here
+            const token = localStorage.getItem('token')
             if (!token) {
                 router.push('/auth/login')
                 return
             }
 
+            // 1. Get Amount (via Create Order or hardcoded)
+            // We'll use create-order to ensure we get the backend-validated amount logic if needed, 
+            // or just hardcode since we know it. Let's use create-order to be safe and consistent.
             const res = await fetch('http://localhost:3000/payments/create-order', {
                 method: 'POST',
                 headers: {
@@ -39,51 +41,27 @@ export default function RegistrationPaymentPage() {
 
             if (!res.ok) throw new Error('Failed to create order')
             const order = await res.json()
+            const amountInRupees = order.amount / 100
 
-            // 2. Open Razorpay
-            const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
-                amount: order.amount,
-                currency: order.currency,
-                name: "DTU Hostel",
-                description: "Registration Fee",
-                order_id: order.id,
-                handler: async function (response: any) {
-                    // 3. Verify Payment
-                    const verifyRes = await fetch('http://localhost:3000/payments/verify', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            razorpayOrderId: response.razorpay_order_id,
-                            razorpayPaymentId: response.razorpay_payment_id,
-                            razorpaySignature: response.razorpay_signature,
-                            purpose: 'REGISTRATION',
-                            amount: 1000 // Fixed amount matching backend
-                        })
-                    })
-
-                    if (verifyRes.ok) {
-                        alert('Payment Successful!')
-                        router.push('/student/profile')
-                    } else {
-                        alert('Payment Verification Failed')
-                    }
+            // 2. Mock Verify (Bypass Razorpay)
+            const verifyRes = await fetch('http://localhost:3000/payments/mock-verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
-                prefill: {
-                    name: "Student Name", // TODO: Get from profile
-                    email: "student@example.com",
-                    contact: "9999999999"
-                },
-                theme: {
-                    color: "#3399cc"
-                }
-            };
+                body: JSON.stringify({
+                    purpose: 'REGISTRATION',
+                    amount: amountInRupees
+                })
+            })
 
-            const rzp1 = new window.Razorpay(options);
-            rzp1.open();
+            if (verifyRes.ok) {
+                alert('Payment Successful (Mock)')
+                router.push('/student/profile')
+            } else {
+                alert('Payment Verification Failed')
+            }
         } catch (error) {
             console.error(error)
             alert('Something went wrong')

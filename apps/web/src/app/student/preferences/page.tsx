@@ -76,9 +76,9 @@ export default function StudentPreferencesPage() {
     }
 
     const handlePayment = async () => {
-        // Reuse payment logic (copy-paste for now, should be a hook)
         const token = localStorage.getItem('token')
         try {
+            // 1. Get Amount
             const res = await fetch('http://localhost:3000/payments/create-order', {
                 method: 'POST',
                 headers: {
@@ -89,37 +89,27 @@ export default function StudentPreferencesPage() {
             })
             if (!res.ok) throw new Error('Failed')
             const order = await res.json()
+            const amountInRupees = order.amount / 100
 
-            const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
-                amount: order.amount,
-                currency: order.currency,
-                order_id: order.id,
-                handler: async function (response: any) {
-                    const verifyRes = await fetch('http://localhost:3000/payments/verify', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            razorpayOrderId: response.razorpay_order_id,
-                            razorpayPaymentId: response.razorpay_payment_id,
-                            razorpaySignature: response.razorpay_signature,
-                            purpose: 'SEAT_BOOKING',
-                            amount: 5000 // Fixed amount matching backend
-                        })
-                    })
-                    if (verifyRes.ok) {
-                        alert('Payment Successful')
-                        setIsPaid(true)
-                    }
-                }
+            // 2. Mock Verify
+            const verifyRes = await fetch('http://localhost:3000/payments/mock-verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    purpose: 'SEAT_BOOKING',
+                    amount: amountInRupees
+                })
+            })
+            if (verifyRes.ok) {
+                alert('Payment Successful (Mock)')
+                setIsPaid(true)
             }
-            const rzp = new (window as any).Razorpay(options)
-            rzp.open()
         } catch (e) {
             console.error(e)
+            alert('Payment failed')
         }
     }
 
