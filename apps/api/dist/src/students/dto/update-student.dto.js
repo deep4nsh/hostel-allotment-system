@@ -13,14 +13,23 @@ exports.UpdateStudentDto = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 class UpdateStudentDto {
+    uniqueId;
     name;
     phone;
     address;
     gender;
+    category;
     program;
     year;
+    cgpa;
+    distance;
 }
 exports.UpdateStudentDto = UpdateStudentDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "uniqueId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
@@ -42,6 +51,11 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateStudentDto.prototype, "gender", void 0);
 __decorate([
+    (0, class_validator_1.IsEnum)(client_1.Category),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "category", void 0);
+__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
@@ -53,4 +67,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateStudentDto.prototype, "year", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.Max)(10),
+    __metadata("design:type", Number)
+], UpdateStudentDto.prototype, "cgpa", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdateStudentDto.prototype, "distance", void 0);
 //# sourceMappingURL=update-student.dto.js.map

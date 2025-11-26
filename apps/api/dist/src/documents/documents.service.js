@@ -62,13 +62,27 @@ let DocumentsService = class DocumentsService {
         }
         const fileName = `${student.id}_${type}_${Date.now()}${path.extname(file.originalname)}`;
         const filePath = path.join(uploadDir, fileName);
+        const fileUrl = `/uploads/${fileName}`;
         fs.writeFileSync(filePath, file.buffer);
+        const document = await this.prisma.document.create({
+            data: {
+                studentId: student.id,
+                kind: type,
+                fileUrl: fileUrl,
+            }
+        });
         return {
             message: 'File uploaded successfully',
-            path: filePath,
-            type,
-            fileName
+            document
         };
+    }
+    async findAllByStudent(userId) {
+        return this.prisma.document.findMany({
+            where: {
+                student: { userId }
+            },
+            orderBy: { uploadedAt: 'desc' }
+        });
     }
     async processOcr(userId) {
         return {

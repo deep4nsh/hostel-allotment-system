@@ -28,6 +28,9 @@ let DocumentsController = class DocumentsController {
     async triggerOcr(req) {
         return this.documentsService.processOcr(req.user.userId);
     }
+    async getMyDocuments(req) {
+        return this.documentsService.findAllByStudent(req.user.userId);
+    }
 };
 exports.DocumentsController = DocumentsController;
 __decorate([
@@ -47,6 +50,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], DocumentsController.prototype, "triggerOcr", null);
+__decorate([
+    (0, common_1.Get)('my'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], DocumentsController.prototype, "getMyDocuments", null);
 exports.DocumentsController = DocumentsController = __decorate([
     (0, common_1.Controller)('documents'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),

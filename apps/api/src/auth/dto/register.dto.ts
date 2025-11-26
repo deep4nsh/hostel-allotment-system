@@ -10,6 +10,10 @@ export class RegisterDto {
     password: string;
 
     @IsOptional()
+    @IsString()
+    name?: string;
+
+    @IsOptional()
     @IsEnum(Role)
     role?: Role;
 }

@@ -53,6 +53,7 @@ model User {
 
   student Student?
   auditLogs AuditLog[]
+  hostels   Hostel[] @relation("HostelWarden")
 }
 
 model Student {
@@ -81,6 +82,8 @@ model Student {
   payments      Payment[]
   refundRequests RefundRequest[]
   documents     Document[]
+  rebateRequests MessRebateRequest[]
+  complaints    MaintenanceRequest[]
 }
 
 model Hostel {
@@ -88,6 +91,8 @@ model Hostel {
   name      String
   isAC      Boolean  @default(false)
   floors    Floor[]
+  wardens   User[]   @relation("HostelWarden") // Warden management
+  complaints MaintenanceRequest[]
 }
 
 model Floor {
@@ -177,6 +182,32 @@ model Document {
   fileUrl   String
   ocrFields Json?
   uploadedAt DateTime @default(now())
+}
+
+model MessRebateRequest {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  documentUrl String?  // For medical/academic proof
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MaintenanceRequest {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  hostelId    String?
+  hostel      Hostel?  @relation(fields: [hostelId], references: [id])
+  category    String   // ELECTRICITY, PLUMBING, CARPENTRY, CLEANING, OTHER
+  description String
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AuditLog {

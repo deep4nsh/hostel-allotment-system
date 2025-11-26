@@ -18,10 +18,27 @@ export declare class OpsController {
         path: string;
     }>;
     getAnalytics(): Promise<{
-        totalStudents: number;
-        totalUsers: number;
-        totalRevenue: any;
-        allotments: number;
-        refundRequests: number;
+        overview: {
+            totalStudents: number;
+            allotmentsCount: number;
+            totalRevenue: number;
+            pendingRefunds: number;
+        };
+        hostelStats: {
+            name: string;
+            capacity: number;
+            occupancy: number;
+            fillRate: number;
+        }[];
+        demographics: {
+            byCategory: {
+                category: import("@prisma/client").$Enums.Category;
+                count: number;
+            }[];
+            byYear: {
+                year: string | number;
+                count: number;
+            }[];
+        };
     }>;
 }

@@ -53,63 +53,52 @@ let AllotmentService = class AllotmentService {
         eligibleStudents.sort((a, b) => {
             const isSeniorA = (a.year || 1) > 1;
             const isSeniorB = (b.year || 1) > 1;
-            if (isSeniorA !== isSeniorB) {
-            }
             if (a.category === 'PH' && b.category !== 'PH')
                 return -1;
             if (b.category === 'PH' && a.category !== 'PH')
                 return 1;
+            const catA = categoryPriority[a.category] ?? 3;
+            const catB = categoryPriority[b.category] ?? 3;
+            if (catA !== catB)
+                return catA - catB;
+            const metaA = a.profileMeta || {};
+            const metaB = b.profileMeta || {};
             if (!isSeniorA && !isSeniorB) {
-                const catA = categoryPriority[a.category] ?? 3;
-                const catB = categoryPriority[b.category] ?? 3;
-                if (catA !== catB)
-                    return catA - catB;
-                const metaA = a.profileMeta || {};
-                const metaB = b.profileMeta || {};
                 if (a.category === 'DELHI') {
                     if (metaA.medicalIssue && !metaB.medicalIssue)
                         return -1;
                     if (metaB.medicalIssue && !metaA.medicalIssue)
                         return 1;
-                    const distA = metaA.distance || 0;
-                    const distB = metaB.distance || 0;
+                    const distA = Number(metaA.distance) || 0;
+                    const distB = Number(metaB.distance) || 0;
                     if (distA !== distB)
                         return distB - distA;
                 }
             }
             else {
-                const metaA = a.profileMeta || {};
-                const metaB = b.profileMeta || {};
                 if (metaA.backlog && !metaB.backlog)
                     return 1;
                 if (metaB.backlog && !metaA.backlog)
                     return -1;
-                if (metaA.medicalIssue && !metaB.medicalIssue)
-                    return -1;
-                if (metaB.medicalIssue && !metaA.medicalIssue)
-                    return 1;
-                const catA = categoryPriority[a.category] ?? 3;
-                const catB = categoryPriority[b.category] ?? 3;
-                if (catA !== catB)
-                    return catA - catB;
                 if (a.category === 'OUTSIDE_DELHI') {
-                    const cgpaA = metaA.cgpa || 0;
-                    const cgpaB = metaB.cgpa || 0;
+                    const cgpaA = Number(metaA.cgpa) || 0;
+                    const cgpaB = Number(metaB.cgpa) || 0;
                     if (cgpaA !== cgpaB)
                         return cgpaB - cgpaA;
                 }
                 else if (a.category === 'DELHI') {
-                    const distA = metaA.distance || 0;
-                    const distB = metaB.distance || 0;
+                    const distA = Number(metaA.distance) || 0;
+                    const distB = Number(metaB.distance) || 0;
                     if (distA !== distB)
                         return distB - distA;
                 }
             }
-            const paymentA = a.payments[0].createdAt.getTime();
-            const paymentB = b.payments[0].createdAt.getTime();
+            const paymentA = new Date(a.payments[0]?.createdAt).getTime() || 0;
+            const paymentB = new Date(b.payments[0]?.createdAt).getTime() || 0;
             return paymentA - paymentB;
         });
         const allotments = [];
+        let waitlistCounter = 1;
         for (const student of eligibleStudents) {
             let allottedRoom = null;
             for (const pref of student.preferences) {
@@ -145,11 +134,28 @@ let AllotmentService = class AllotmentService {
                 });
                 allottedRoom.occupancy++;
                 allotments.push(allotment);
+                try {
+                    await this.prisma.waitlistEntry.delete({ where: { studentId: student.id } });
+                }
+                catch (e) { }
+            }
+            else {
+                await this.prisma.waitlistEntry.upsert({
+                    where: { studentId: student.id },
+                    update: { position: waitlistCounter, status: 'ACTIVE' },
+                    create: {
+                        studentId: student.id,
+                        position: waitlistCounter,
+                        status: 'ACTIVE',
+                    }
+                });
+                waitlistCounter++;
             }
         }
         return {
             totalEligible: eligibleStudents.length,
             allotted: allotments.length,
+            waitlisted: waitlistCounter - 1,
             details: allotments,
         };
     }

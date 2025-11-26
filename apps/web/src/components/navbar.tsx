@@ -1,54 +1,153 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { 
+  LayoutDashboard, 
+  FileText, 
+  AlertCircle, 
+  Utensils, 
+  BarChart3, 
+  LogOut, 
+  User as UserIcon,
+  Menu
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Navbar() {
-    const router = useRouter()
-    const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
 
-    useEffect(() => {
-        const token = localStorage.getItem('token')
-        setIsLoggedIn(!!token)
-    }, [])
-
-    const handleLogout = () => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        setIsLoggedIn(false)
-        router.push('/auth/login')
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+      try {
+        // Simple JWT decode without library
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setRole(payload.role);
+      } catch (e) {
+        console.error("Failed to decode token", e);
+        // If token is invalid, maybe logout?
+      }
+    } else {
+      setIsLoggedIn(false);
+      setRole(null);
     }
+  }, [pathname]);
 
-    return (
-        <nav className="border-b bg-white">
-            <div className="flex h-16 items-center px-4 container mx-auto justify-between">
-                <Link href="/" className="font-bold text-xl">DTU Hostels</Link>
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setRole(null);
+    router.push("/login");
+  };
 
-                <div className="flex items-center space-x-4">
-                    {isLoggedIn ? (
-                        <>
-                            <Link href="/student/profile" className="text-sm font-medium hover:underline">Profile</Link>
-                            <Link href="/student/documents" className="text-sm font-medium hover:underline">Documents</Link>
-                            <Link href="/student/preferences" className="text-sm font-medium hover:underline">Preferences</Link>
-                            <Link href="/student/payments" className="text-sm font-medium hover:underline">Payments</Link>
-                            <div className="h-4 w-[1px] bg-slate-300 mx-2"></div>
-                            <Link href="/admin/allotment" className="text-sm font-medium text-slate-600 hover:underline">Admin</Link>
-                            <Button variant="ghost" size="sm" onClick={handleLogout}>Logout</Button>
-                        </>
-                    ) : (
-                        <>
-                            <Link href="/auth/login">
-                                <Button variant="ghost" size="sm">Login</Button>
-                            </Link>
-                            <Link href="/auth/register">
-                                <Button size="sm">Register</Button>
-                            </Link>
-                        </>
+  // Hide navbar on auth pages and their sub-routes
+  if (pathname?.startsWith("/login") || pathname?.startsWith("/register") || pathname?.startsWith("/auth")) {
+    return null;
+  }
+
+  const isActive = (path: string) => pathname === path;
+
+  return (
+    <nav className="border-b bg-white sticky top-0 z-50 shadow-sm">
+      <div className="flex h-16 items-center px-4 container mx-auto justify-between">
+        <Link href="/" className="font-bold text-xl text-blue-900 flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center text-white text-sm">DTU</div>
+          <span>Hostels</span>
+        </Link>
+
+        <div className="flex items-center space-x-6">
+          {isLoggedIn ? (
+            <>
+              {/* Desktop Navigation Links */}
+              <div className="hidden md:flex items-center space-x-4">
+                {role === "STUDENT" && (
+                  <>
+                    <NavLink href="/dashboard" active={isActive("/dashboard")}>Dashboard</NavLink>
+                    <NavLink href="/student/documents" active={isActive("/student/documents")}>Documents</NavLink>
+                    <NavLink href="/student/complaints" active={isActive("/student/complaints")}>Complaints</NavLink>
+                    <NavLink href="/student/rebate" active={isActive("/student/rebate")}>Mess Rebate</NavLink>
+                  </>
+                )}
+
+                {(role === "ADMIN" || role === "WARDEN") && (
+                  <>
+                    <NavLink href="/warden/dashboard" active={isActive("/warden/dashboard")}>Requests</NavLink>
+                    <NavLink href="/warden/complaints" active={isActive("/warden/complaints")}>Complaints</NavLink>
+                    {role === "ADMIN" && (
+                      <>
+                        <NavLink href="/admin/allotment" active={isActive("/admin/allotment")}>Allotment</NavLink>
+                        <NavLink href="/admin/analytics" active={isActive("/admin/analytics")}>Analytics</NavLink>
+                      </>
                     )}
-                </div>
+                  </>
+                )}
+              </div>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <div className="h-8 w-8 bg-slate-100 rounded-full flex items-center justify-center">
+                        <UserIcon className="h-4 w-4" />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">My Account</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {role}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <div className="flex gap-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm">Login</Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm">Register</Button>
+              </Link>
             </div>
-        </nav>
-    )
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+        active ? "text-blue-600 font-bold" : "text-slate-600"
+      }`}
+    >
+      {children}
+    </Link>
+  );
 }

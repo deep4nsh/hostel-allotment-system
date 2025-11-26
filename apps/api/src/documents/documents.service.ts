@@ -7,7 +7,7 @@ import * as path from 'path';
 export class DocumentsService {
   constructor(private prisma: PrismaService) { }
 
-  async uploadFile(userId: string, file: Express.Multer.File, type: 'PHOTO' | 'SIGNATURE' | 'ADMISSION_LETTER') {
+  async uploadFile(userId: string, file: Express.Multer.File, type: string) {
     const student = await this.prisma.student.findUnique({ where: { userId } });
     if (!student) throw new Error('Student not found');
 
@@ -18,32 +18,36 @@ export class DocumentsService {
 
     const fileName = `${student.id}_${type}_${Date.now()}${path.extname(file.originalname)}`;
     const filePath = path.join(uploadDir, fileName);
+    const fileUrl = `/uploads/${fileName}`;
 
     fs.writeFileSync(filePath, file.buffer);
 
-    // In a real app, we would save the file path/URL to a Document model
-    // For now, we'll just return the success status and path
-    // We can also update a 'documents' JSON field on the Student model if we had one, 
-    // or create a Document model. 
-    // Let's assume we create a Document record.
-
-    // Check if we have a Document model. If not, we'll just return the path.
-    // The schema has not been modified to add Document model yet. 
-    // I should probably add it or just return the path for now as per the plan "Save file to disk and create Document record".
-    // Wait, the plan said "create Document record". I should check schema.prisma.
+    // Save to Database
+    const document = await this.prisma.document.create({
+      data: {
+        studentId: student.id,
+        kind: type,
+        fileUrl: fileUrl,
+      }
+    });
 
     return {
       message: 'File uploaded successfully',
-      path: filePath,
-      type,
-      fileName
+      document
     };
+  }
+
+  async findAllByStudent(userId: string) {
+    return this.prisma.document.findMany({
+      where: {
+        student: { userId }
+      },
+      orderBy: { uploadedAt: 'desc' }
+    });
   }
 
   async processOcr(userId: string) {
     // Mock OCR Logic
-    // In reality, this would read the Admission Letter file and send it to an OCR service
-
     return {
       success: true,
       data: {

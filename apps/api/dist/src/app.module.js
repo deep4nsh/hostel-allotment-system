@@ -28,6 +28,8 @@ const imports_module_1 = require("./imports/imports.module");
 const refunds_module_1 = require("./refunds/refunds.module");
 const documents_module_1 = require("./documents/documents.module");
 const ops_module_1 = require("./ops/ops.module");
+const rebates_module_1 = require("./rebates/rebates.module");
+const complaints_module_1 = require("./complaints/complaints.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -48,6 +50,8 @@ exports.AppModule = AppModule = __decorate([
             refunds_module_1.RefundsModule,
             documents_module_1.DocumentsModule,
             ops_module_1.OpsModule,
+            rebates_module_1.RebatesModule,
+            complaints_module_1.ComplaintsModule,
             throttler_1.ThrottlerModule.forRoot([{
                     ttl: 60000,
                     limit: 100,
@@ -56,7 +60,6 @@ exports.AppModule = AppModule = __decorate([
                 rootPath: (0, path_1.join)(process.cwd(), 'uploads'),
                 serveRoot: '/uploads',
             }),
-            documents_module_1.DocumentsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

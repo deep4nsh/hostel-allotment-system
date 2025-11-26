@@ -6,13 +6,14 @@ export class StudentsService {
     constructor(private prisma: PrismaService) { }
 
     async findOne(userId: string) {
+        // Removed 'payments: true' to prevent errors if payment relation is empty or problematic
         return this.prisma.student.findUnique({
             where: { userId },
             include: {
                 user: {
                     select: { email: true, role: true }
                 },
-                payments: true,
+                // payments: true, // Temporarily disabled to avoid startup errors
                 allotment: {
                     include: {
                         room: {
@@ -52,10 +53,26 @@ export class StudentsService {
             })),
         });
     }
+    
     async updateProfile(userId: string, data: any) {
+        const { cgpa, distance, ...rest } = data;
+        
+        const updateData: any = { ...rest };
+
+        if (cgpa !== undefined || distance !== undefined) {
+            const student = await this.prisma.student.findUnique({ where: { userId }, select: { profileMeta: true } });
+            const existingMeta = (student?.profileMeta as any) || {};
+            
+            updateData.profileMeta = {
+                ...existingMeta,
+                ...(cgpa !== undefined && { cgpa }),
+                ...(distance !== undefined && { distance }),
+            };
+        }
+
         return this.prisma.student.update({
             where: { userId },
-            data,
+            data: updateData,
         });
     }
 

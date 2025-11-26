@@ -24,7 +24,6 @@ let StudentsService = class StudentsService {
                 user: {
                     select: { email: true, role: true }
                 },
-                payments: true,
                 allotment: {
                     include: {
                         room: {
@@ -60,9 +59,20 @@ let StudentsService = class StudentsService {
         });
     }
     async updateProfile(userId, data) {
+        const { cgpa, distance, ...rest } = data;
+        const updateData = { ...rest };
+        if (cgpa !== undefined || distance !== undefined) {
+            const student = await this.prisma.student.findUnique({ where: { userId }, select: { profileMeta: true } });
+            const existingMeta = student?.profileMeta || {};
+            updateData.profileMeta = {
+                ...existingMeta,
+                ...(cgpa !== undefined && { cgpa }),
+                ...(distance !== undefined && { distance }),
+            };
+        }
         return this.prisma.student.update({
             where: { userId },
-            data,
+            data: updateData,
         });
     }
     async generateUniqueId(userId) {

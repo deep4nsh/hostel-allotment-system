@@ -84,7 +84,7 @@ let AuthService = class AuthService {
             await this.prisma.student.create({
                 data: {
                     userId: user.id,
-                    name: '',
+                    name: registerDto.name || '',
                     gender: 'OTHER',
                 },
             });

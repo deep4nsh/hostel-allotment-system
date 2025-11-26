@@ -26,30 +26,78 @@ export class OpsService {
     const filePath = path.join(backupDir, fileName);
 
     // Mock backup - in real life use pg_dump
-    // For now we just write a dummy file
     fs.writeFileSync(filePath, '-- Dummy Backup File --\n-- Data would be here --');
 
     return { message: 'Backup created', path: filePath };
   }
 
   async getAnalytics() {
+    // 1. High-level stats
     const totalStudents = await this.prisma.student.count();
-    const totalUsers = await this.prisma.user.count();
-
-    const payments = await this.prisma.payment.findMany();
-    const totalRevenue = payments
-      .filter((p: any) => p.status === 'COMPLETED')
-      .reduce((sum: number, p: any) => sum + p.amount, 0);
-
-    const allotments = await this.prisma.allotment.count();
+    const allotmentsCount = await this.prisma.allotment.count();
     const refundRequests = await this.prisma.refundRequest.count({ where: { status: 'PENDING' } });
 
+    // 2. Financials
+    const payments = await this.prisma.payment.groupBy({
+      by: ['status'],
+      _sum: { amount: true },
+    });
+    const totalRevenue = payments.find(p => p.status === 'COMPLETED')?._sum.amount || 0;
+
+    // 3. Hostel Occupancy
+    const hostels = await this.prisma.hostel.findMany({
+      include: {
+        floors: {
+          include: {
+            rooms: {
+              select: { capacity: true, occupancy: true }
+            }
+          }
+        }
+      }
+    });
+
+    const hostelStats = hostels.map(h => {
+      let capacity = 0;
+      let occupancy = 0;
+      h.floors.forEach(f => {
+        f.rooms.forEach(r => {
+          capacity += r.capacity;
+          occupancy += r.occupancy;
+        });
+      });
+      return {
+        name: h.name,
+        capacity,
+        occupancy,
+        fillRate: capacity > 0 ? (occupancy / capacity) * 100 : 0
+      };
+    });
+
+    // 4. Student Demographics
+    const categoryStats = await this.prisma.student.groupBy({
+      by: ['category'],
+      _count: { id: true },
+    });
+
+    const yearStats = await this.prisma.student.groupBy({
+      by: ['year'],
+      _count: { id: true },
+      orderBy: { year: 'asc' }
+    });
+
     return {
-      totalStudents,
-      totalUsers,
-      totalRevenue,
-      allotments,
-      refundRequests
+      overview: {
+        totalStudents,
+        allotmentsCount,
+        totalRevenue,
+        pendingRefunds: refundRequests
+      },
+      hostelStats,
+      demographics: {
+        byCategory: categoryStats.map(c => ({ category: c.category, count: c._count.id })),
+        byYear: yearStats.map(y => ({ year: y.year || 'Unknown', count: y._count.id })),
+      }
     };
   }
 }

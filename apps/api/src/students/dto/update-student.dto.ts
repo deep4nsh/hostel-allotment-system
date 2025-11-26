@@ -1,7 +1,11 @@
-import { IsString, IsOptional, IsEnum, IsInt, Min, Max } from 'class-validator';
-import { Gender } from '@prisma/client';
+import { IsString, IsOptional, IsEnum, IsInt, Min, Max, IsNumber } from 'class-validator';
+import { Gender, Category } from '@prisma/client';
 
 export class UpdateStudentDto {
+    @IsString()
+    @IsOptional()
+    uniqueId?: string;
+
     @IsString()
     @IsOptional()
     name?: string;
@@ -18,6 +22,10 @@ export class UpdateStudentDto {
     @IsOptional()
     gender?: Gender;
 
+    @IsEnum(Category)
+    @IsOptional()
+    category?: Category;
+
     @IsString()
     @IsOptional()
     program?: string;
@@ -27,4 +35,14 @@ export class UpdateStudentDto {
     @Max(5)
     @IsOptional()
     year?: number;
+
+    @IsNumber()
+    @IsOptional()
+    @Min(0)
+    @Max(10)
+    cgpa?: number;
+
+    @IsNumber()
+    @IsOptional()
+    distance?: number;
 }

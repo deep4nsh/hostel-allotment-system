@@ -5,6 +5,7 @@ export declare class AllotmentController {
     triggerAllotment(hostelId: string): Promise<{
         totalEligible: number;
         allotted: number;
+        waitlisted: number;
         details: {
             id: string;
             studentId: string;

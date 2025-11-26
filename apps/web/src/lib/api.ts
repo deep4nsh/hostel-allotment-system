@@ -1,0 +1,230 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  return {
+    'Authorization': `Bearer ${token}`,
+  };
+}
+
+export async function registerUser(data: any) {
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Registration failed');
+  }
+
+  return response.json();
+}
+
+export async function loginUser(data: any) {
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Login failed');
+  }
+
+  return response.json();
+}
+
+export async function getProfile() {
+  const response = await fetch(`${API_URL}/students/me`, {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+      if (response.status === 401) {
+          throw new Error("Unauthorized");
+      }
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to fetch profile');
+  }
+
+  return response.json();
+}
+
+export async function updateProfile(data: any) {
+  const response = await fetch(`${API_URL}/students/me`, {
+    method: 'PATCH',
+    headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to update profile');
+  }
+
+  return response.json();
+}
+
+// --- Rebate APIs ---
+
+export async function createRebateRequest(data: any) {
+  const response = await fetch(`${API_URL}/rebates`, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to create rebate request');
+  }
+
+  return response.json();
+}
+
+export async function getMyRebates() {
+  const response = await fetch(`${API_URL}/rebates/me`, {
+    headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch rebates');
+  return response.json();
+}
+
+export async function getPendingRebates() {
+  const response = await fetch(`${API_URL}/rebates/pending`, {
+    headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch pending rebates');
+  return response.json();
+}
+
+export async function updateRebateStatus(id: string, status: 'APPROVED' | 'REJECTED') {
+  const response = await fetch(`${API_URL}/rebates/${id}/status`, {
+    method: 'PATCH',
+    headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) throw new Error('Failed to update status');
+  return response.json();
+}
+
+// --- Documents APIs ---
+
+export async function uploadDocument(file: File, type: string) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('type', type);
+
+  const response = await fetch(`${API_URL}/documents/upload`, {
+    method: 'POST',
+    headers: getAuthHeaders(), // No Content-Type for FormData, let browser set it
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to upload document');
+  }
+
+  return response.json();
+}
+
+export async function getMyDocuments() {
+  const response = await fetch(`${API_URL}/documents/my`, {
+    headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch documents');
+  return response.json();
+}
+
+// --- Analytics API ---
+
+export async function getAdminAnalytics() {
+    const response = await fetch(`${API_URL}/ops/analytics`, {
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
+    });
+    if (!response.ok) throw new Error('Failed to fetch analytics');
+    return response.json();
+}
+
+// --- Complaints API ---
+
+export async function createComplaint(data: any) {
+    const response = await fetch(`${API_URL}/complaints`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create complaint');
+    return response.json();
+}
+
+export async function getMyComplaints() {
+    const response = await fetch(`${API_URL}/complaints/my`, {
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
+    });
+    if (!response.ok) throw new Error('Failed to fetch complaints');
+    return response.json();
+}
+
+export async function getWardenComplaints() {
+    const response = await fetch(`${API_URL}/complaints/warden`, {
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
+    });
+    if (!response.ok) throw new Error('Failed to fetch complaints');
+    return response.json();
+}
+
+export async function updateComplaintStatus(id: string, status: string) {
+    const response = await fetch(`${API_URL}/complaints/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
+        body: JSON.stringify({ status }),
+    });
+    if (!response.ok) throw new Error('Failed to update status');
+    return response.json();
+}

@@ -20,6 +20,8 @@ import { ImportsModule } from './imports/imports.module';
 import { RefundsModule } from './refunds/refunds.module';
 import { DocumentsModule } from './documents/documents.module';
 import { OpsModule } from './ops/ops.module';
+import { RebatesModule } from './rebates/rebates.module';
+import { ComplaintsModule } from './complaints/complaints.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { OpsModule } from './ops/ops.module';
     RefundsModule,
     DocumentsModule,
     OpsModule,
+    RebatesModule,
+    ComplaintsModule,
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,
@@ -45,7 +49,6 @@ import { OpsModule } from './ops/ops.module';
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
-    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [

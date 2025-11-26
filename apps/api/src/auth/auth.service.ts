@@ -47,7 +47,7 @@ export class AuthService {
             await this.prisma.student.create({
                 data: {
                     userId: user.id,
-                    name: '', // Placeholder, to be filled in profile
+                    name: registerDto.name || '', // Use provided name or empty string
                     gender: 'OTHER', // Default
                 },
             });

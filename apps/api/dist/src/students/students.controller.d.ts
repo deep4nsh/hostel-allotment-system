@@ -37,16 +37,6 @@ export declare class StudentsController {
             letterUrl: string | null;
             createdAt: Date;
         }) | null;
-        payments: {
-            id: string;
-            studentId: string;
-            purpose: import(".prisma/client").$Enums.PaymentPurpose;
-            status: import(".prisma/client").$Enums.PaymentStatus;
-            amount: number;
-            txnRef: string | null;
-            gateway: string;
-            createdAt: Date;
-        }[];
     } & {
         id: string;
         userId: string;
