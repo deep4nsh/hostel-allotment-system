@@ -86,6 +86,7 @@ model Student {
 model Hostel {
   id        String   @id @default(uuid())
   name      String
+  isAC      Boolean  @default(false)
   floors    Floor[]
 }
 

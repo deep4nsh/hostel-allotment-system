@@ -20,7 +20,7 @@ export default function AdminHostelsPage() {
             }
 
             try {
-                const res = await fetch('http://localhost:3000/hostels', {
+                const res = await fetch('http://localhost:3001/hostels', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {

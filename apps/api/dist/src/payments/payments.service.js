@@ -82,12 +82,25 @@ let PaymentsService = class PaymentsService {
         else if (purpose === 'HOSTEL_FEE') {
             const allotment = await this.prisma.allotment.findUnique({
                 where: { studentId: student.id },
-                include: { room: true },
+                include: {
+                    room: {
+                        include: {
+                            floor: {
+                                include: {
+                                    hostel: true
+                                }
+                            }
+                        }
+                    }
+                },
             });
             if (!allotment)
                 throw new Error('No room allotted to pay hostel fee');
             const capacity = allotment.room.capacity;
-            if (capacity === 1)
+            const isAC = allotment.room.floor.hostel.isAC;
+            if (isAC && capacity === 3)
+                amount = 72000;
+            else if (capacity === 1)
                 amount = 60000;
             else if (capacity === 2)
                 amount = 56000;

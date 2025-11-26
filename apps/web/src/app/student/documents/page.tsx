@@ -21,7 +21,7 @@ export default function DocumentsPage() {
 
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:3000/documents/upload', {
+            const res = await fetch('http://localhost:3001/documents/upload', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -43,7 +43,7 @@ export default function DocumentsPage() {
     const handleScan = async () => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:3000/documents/ocr', {
+            const res = await fetch('http://localhost:3001/documents/ocr', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

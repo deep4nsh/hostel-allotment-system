@@ -25,7 +25,7 @@ export default function AdminImportsPage() {
 
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:3000/imports/students', {
+            const res = await fetch('http://localhost:3001/imports/students', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

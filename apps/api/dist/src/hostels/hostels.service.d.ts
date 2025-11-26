@@ -23,6 +23,7 @@ export declare class HostelsService {
     } & {
         id: string;
         name: string;
+        isAC: boolean;
     }>;
     findAll(): import(".prisma/client").Prisma.PrismaPromise<({
         floors: ({
@@ -43,6 +44,7 @@ export declare class HostelsService {
     } & {
         id: string;
         name: string;
+        isAC: boolean;
     })[]>;
     findOne(id: string): import(".prisma/client").Prisma.Prisma__HostelClient<({
         floors: ({
@@ -63,13 +65,16 @@ export declare class HostelsService {
     } & {
         id: string;
         name: string;
+        isAC: boolean;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: string, updateHostelDto: UpdateHostelDto): import(".prisma/client").Prisma.Prisma__HostelClient<{
         id: string;
         name: string;
+        isAC: boolean;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     remove(id: string): import(".prisma/client").Prisma.Prisma__HostelClient<{
         id: string;
         name: string;
+        isAC: boolean;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
 }

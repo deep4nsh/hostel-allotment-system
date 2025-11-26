@@ -18,7 +18,7 @@ export default function AdminRefundsPage() {
         }
 
         try {
-            const res = await fetch('http://localhost:3000/refunds', {
+            const res = await fetch('http://localhost:3001/refunds', {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (res.ok) {
@@ -39,7 +39,7 @@ export default function AdminRefundsPage() {
     const handleDecision = async (id: string, decision: 'APPROVED' | 'REJECTED') => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch(`http://localhost:3000/refunds/${id}/decide`, {
+            const res = await fetch(`http://localhost:3001/refunds/${id}/decide`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

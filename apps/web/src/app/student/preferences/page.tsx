@@ -29,7 +29,7 @@ export default function StudentPreferencesPage() {
             }
 
             try {
-                const res = await fetch('http://localhost:3000/hostels', {
+                const res = await fetch('http://localhost:3001/hostels', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
@@ -54,7 +54,7 @@ export default function StudentPreferencesPage() {
     const handleSubmit = async () => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:3000/students/preferences', {
+            const res = await fetch('http://localhost:3001/students/preferences', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export default function StudentPreferencesPage() {
         const token = localStorage.getItem('token')
         try {
             // 1. Get Amount
-            const res = await fetch('http://localhost:3000/payments/create-order', {
+            const res = await fetch('http://localhost:3001/payments/create-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ export default function StudentPreferencesPage() {
             const amountInRupees = order.amount / 100
 
             // 2. Mock Verify
-            const verifyRes = await fetch('http://localhost:3000/payments/mock-verify', {
+            const verifyRes = await fetch('http://localhost:3001/payments/mock-verify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

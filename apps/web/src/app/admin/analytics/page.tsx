@@ -21,13 +21,13 @@ export default function AnalyticsPage() {
 
             try {
                 // Fetch Analytics
-                const statsRes = await fetch('http://localhost:3000/ops/analytics', {
+                const statsRes = await fetch('http://localhost:3001/ops/analytics', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (statsRes.ok) setStats(await statsRes.json())
 
                 // Fetch Health
-                const healthRes = await fetch('http://localhost:3000/ops/health')
+                const healthRes = await fetch('http://localhost:3001/ops/health')
                 if (healthRes.ok) setHealth(await healthRes.json())
 
             } catch (error) {
@@ -43,7 +43,7 @@ export default function AnalyticsPage() {
     const handleBackup = async () => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:3000/ops/backup', {
+            const res = await fetch('http://localhost:3001/ops/backup', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

@@ -36,13 +36,26 @@ export class PaymentsService {
             // Dynamic Hostel Fee based on Room Capacity
             const allotment = await this.prisma.allotment.findUnique({
                 where: { studentId: student.id },
-                include: { room: true },
+                include: {
+                    room: {
+                        include: {
+                            floor: {
+                                include: {
+                                    hostel: true
+                                }
+                            }
+                        }
+                    }
+                },
             });
 
             if (!allotment) throw new Error('No room allotted to pay hostel fee');
 
             const capacity = allotment.room.capacity;
-            if (capacity === 1) amount = 60000;
+            const isAC = allotment.room.floor.hostel.isAC;
+
+            if (isAC && capacity === 3) amount = 72000; // AC Triple Seater
+            else if (capacity === 1) amount = 60000;
             else if (capacity === 2) amount = 56000;
             else if (capacity === 3) amount = 52000;
             else amount = 52000; // Default fallback
