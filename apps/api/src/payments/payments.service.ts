@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Razorpay from 'razorpay';
 import * as crypto from 'crypto';
@@ -10,15 +10,15 @@ export class PaymentsService {
 
     constructor(private prisma: PrismaService) {
         this.razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
-            key_secret: process.env.RAZORPAY_KEY_SECRET || 's42BN13v3y7S0Y4aoY4aoY4a',
+            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID_HERE', // Using placeholder to force error if not set
+            key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE',
         });
     }
 
     async createOrder(userId: string, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE') {
         let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
-            // Auto-create student record if missing (for legacy users or sync issues)
+            // Auto-create student record if missing
             student = await this.prisma.student.create({
                 data: {
                     userId,
@@ -29,11 +29,10 @@ export class PaymentsService {
         }
 
         let amount = 0;
-        if (purpose === 'REGISTRATION') amount = 1000; // Fixed Registration Fee
-        else if (purpose === 'SEAT_BOOKING') amount = 5000; // Fixed Seat Booking Fee
-        else if (purpose === 'MESS_FEE') amount = 20000; // Fixed Mess Fee (for now)
+        if (purpose === 'REGISTRATION') amount = 1000;
+        else if (purpose === 'SEAT_BOOKING') amount = 5000;
+        else if (purpose === 'MESS_FEE') amount = 20000;
         else if (purpose === 'HOSTEL_FEE') {
-            // Dynamic Hostel Fee based on Room Capacity
             const allotment = await this.prisma.allotment.findUnique({
                 where: { studentId: student.id },
                 include: {
@@ -49,16 +48,16 @@ export class PaymentsService {
                 },
             });
 
-            if (!allotment) throw new Error('No room allotted to pay hostel fee');
+            if (!allotment) throw new BadRequestException('No room allotted to pay hostel fee');
 
             const capacity = allotment.room.capacity;
             const isAC = allotment.room.floor.hostel.isAC;
 
-            if (isAC && capacity === 3) amount = 72000; // AC Triple Seater
+            if (isAC && capacity === 3) amount = 72000;
             else if (capacity === 1) amount = 60000;
             else if (capacity === 2) amount = 56000;
             else if (capacity === 3) amount = 52000;
-            else amount = 52000; // Default fallback
+            else amount = 52000;
         }
 
         const options = {
@@ -70,8 +69,6 @@ export class PaymentsService {
         try {
             const order = await this.razorpay.orders.create(options);
 
-            // Save initial payment record
-            const student = await this.prisma.student.findUnique({ where: { userId } });
             if (student) {
                 await this.prisma.payment.create({
                     data: {
@@ -87,9 +84,11 @@ export class PaymentsService {
 
             return order;
         } catch (error) {
-            throw new Error(error);
+            console.error("Razorpay Order Creation Error:", error);
+            throw new InternalServerErrorException(`Failed to create Razorpay order: ${error.error?.description || error.message}`);
         }
     }
+
     async verifyPayment(
         razorpayOrderId: string,
         razorpayPaymentId: string,
@@ -100,58 +99,55 @@ export class PaymentsService {
     ) {
         const body = razorpayOrderId + '|' + razorpayPaymentId;
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'test_key_secret')
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE')
             .update(body.toString())
             .digest('hex');
 
         if (expectedSignature === razorpaySignature) {
-            // Payment is successful
-            // Create or update Payment record
             const student = await this.prisma.student.findUnique({ where: { userId } });
 
             if (!student) {
-                // If student doesn't exist yet (Registration fee), we might need to handle this differently
-                // But usually Student record is created AFTER registration fee? 
-                // Or maybe we create Student record first with 'PENDING_REGISTRATION' status?
-                // For M1, let's assume we just record the payment linked to the User if Student not found, 
-                // but our schema links Payment to Student.
-                // So we MUST create a Student record before Payment?
-                // Let's assume the flow: Register User -> Pay Fee -> Create Student Profile.
-                // But Payment model needs studentId.
-                // FIX: We should probably link Payment to User initially or create a temporary Student record.
-                // For now, let's assume we create the Student record immediately upon User registration but mark it as 'INACTIVE' or similar?
-                // Or we change Payment model to link to User?
-                // Let's stick to the plan: User registers -> User exists.
-                // We need to fetch the Student associated with the User.
-                // If no student exists, we can't create a Payment record with current schema.
-                // TODO: Update Schema to allow Payment to be linked to User OR ensure Student exists.
-                // Let's assume Student is created on Register (as per M0 schema, User has Student?).
-                // Actually M0 schema: User -> Student (One-to-One).
-                // We should create the Student record when User registers.
                 throw new BadRequestException('Student record not found for user');
             }
 
-            return this.prisma.payment.create({
-                data: {
-                    studentId: student.id,
-                    purpose,
-                    status: PaymentStatus.COMPLETED,
-                    amount,
-                    txnRef: razorpayPaymentId,
-                    gateway: 'RAZORPAY',
-                },
+            // Ideally update existing PENDING payment instead of creating new one
+            const existingPayment = await this.prisma.payment.findFirst({
+                where: { txnRef: razorpayOrderId, status: 'PENDING' }
             });
+
+            if (existingPayment) {
+                return this.prisma.payment.update({
+                    where: { id: existingPayment.id },
+                    data: {
+                        status: PaymentStatus.COMPLETED,
+                        txnRef: razorpayPaymentId, // Update reference to payment ID? Or keep Order ID?
+                        // Keeping order ID is safer for idempotency, but let's follow schema. 
+                        // Schema has unique txnRef. If we update it to PaymentID, it's fine.
+                    }
+                });
+            } else {
+                // Create new if not found (fallback)
+                return this.prisma.payment.create({
+                    data: {
+                        studentId: student.id,
+                        purpose,
+                        status: PaymentStatus.COMPLETED,
+                        amount,
+                        txnRef: razorpayPaymentId,
+                        gateway: 'RAZORPAY',
+                    },
+                });
+            }
         } else {
             throw new BadRequestException('Invalid payment signature');
         }
     }
-    async mockVerify(userId: string, purpose: PaymentPurpose, amount: number) {
-        console.log(`Mock Verify called for User: ${userId}, Purpose: ${purpose}, Amount: ${amount}`);
-        let student = await this.prisma.student.findUnique({ where: { userId } });
 
+    async mockVerify(userId: string, purpose: PaymentPurpose, amount: number) {
+        // ... mock verify implementation (unchanged) ...
+        let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
-            console.log(`Student not found for userId: ${userId}, creating new record...`);
-            student = await this.prisma.student.create({
+             student = await this.prisma.student.create({
                 data: {
                     userId,
                     name: '',
@@ -159,32 +155,16 @@ export class PaymentsService {
                 }
             });
         }
-
-        console.log(`Student found: ${student.id}`);
-
-        try {
-            // Create successful payment record
-            const payment = await this.prisma.payment.create({
-                data: {
-                    studentId: student.id,
-                    purpose,
-                    status: PaymentStatus.COMPLETED,
-                    amount,
-                    txnRef: `mock_${Date.now()}`,
-                    gateway: 'MOCK',
-                },
-            });
-            console.log(`Payment created: ${payment.id}`);
-
-            // Update Student status based on purpose
-            if (purpose === 'REGISTRATION') {
-                // Logic to update student status if needed
-            }
-
-            return payment;
-        } catch (error) {
-            console.error('Error creating mock payment:', error);
-            throw error;
-        }
+        
+        return this.prisma.payment.create({
+            data: {
+                studentId: student.id,
+                purpose,
+                status: PaymentStatus.COMPLETED,
+                amount,
+                txnRef: `mock_${Date.now()}`,
+                gateway: 'MOCK',
+            },
+        });
     }
 }

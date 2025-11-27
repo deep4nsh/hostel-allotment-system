@@ -17,11 +17,14 @@ export declare class DocumentsController {
     }>;
     triggerOcr(req: any): Promise<{
         success: boolean;
+        message: string;
         data: {
             name: string;
-            rank: number;
-            category: string;
-            applicationNo: string;
+            uniqueId: string;
+            category: "OUTSIDE_DELHI";
+            gender: "MALE";
+            program: string;
+            year: number;
         };
     }>;
     getMyDocuments(req: any): Promise<{

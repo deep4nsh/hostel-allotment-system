@@ -9,7 +9,7 @@ export declare class DocumentsService {
             studentId: string;
             kind: string;
             fileUrl: string;
-            ocrFields: import(".prisma/client").Prisma.JsonValue | null;
+            ocrFields: import("@prisma/client").Prisma.JsonValue | null;
             uploadedAt: Date;
         };
     }>;
@@ -18,16 +18,19 @@ export declare class DocumentsService {
         studentId: string;
         kind: string;
         fileUrl: string;
-        ocrFields: import(".prisma/client").Prisma.JsonValue | null;
+        ocrFields: import("@prisma/client").Prisma.JsonValue | null;
         uploadedAt: Date;
     }[]>;
     processOcr(userId: string): Promise<{
         success: boolean;
+        message: string;
         data: {
             name: string;
-            rank: number;
-            category: string;
-            applicationNo: string;
+            uniqueId: string;
+            category: "OUTSIDE_DELHI";
+            gender: "MALE";
+            program: string;
+            year: number;
         };
     }>;
 }

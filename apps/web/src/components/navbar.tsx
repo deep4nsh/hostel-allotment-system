@@ -54,8 +54,13 @@ export function Navbar() {
     router.push("/login");
   };
 
-  // Hide navbar on auth pages and their sub-routes
-  if (pathname?.startsWith("/login") || pathname?.startsWith("/register") || pathname?.startsWith("/auth")) {
+  // Hide navbar on auth pages, sub-routes, and the root landing page
+  if (
+    pathname === "/" || 
+    pathname?.startsWith("/login") || 
+    pathname?.startsWith("/register") || 
+    pathname?.startsWith("/auth")
+  ) {
     return null;
   }
 

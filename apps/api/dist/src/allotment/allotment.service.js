@@ -34,7 +34,7 @@ let AllotmentService = class AllotmentService {
             where: {
                 payments: {
                     some: {
-                        purpose: 'SEAT_BOOKING',
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
                         status: 'COMPLETED',
                     },
                 },
@@ -45,7 +45,10 @@ let AllotmentService = class AllotmentService {
                     orderBy: { rank: 'asc' },
                 },
                 payments: {
-                    where: { purpose: 'SEAT_BOOKING', status: 'COMPLETED' },
+                    where: {
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
+                        status: 'COMPLETED'
+                    },
                 },
             },
         });

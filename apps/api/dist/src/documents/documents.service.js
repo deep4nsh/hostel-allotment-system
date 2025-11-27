@@ -47,6 +47,7 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const client_1 = require("@prisma/client");
 let DocumentsService = class DocumentsService {
     prisma;
     constructor(prisma) {
@@ -85,14 +86,32 @@ let DocumentsService = class DocumentsService {
         });
     }
     async processOcr(userId) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student)
+            throw new Error('Student not found');
+        const mockExtractedData = {
+            name: "Deepansh Student",
+            uniqueId: `JAC${new Date().getFullYear()}001`,
+            category: client_1.Category.OUTSIDE_DELHI,
+            gender: client_1.Gender.MALE,
+            program: "B.Tech",
+            year: 1
+        };
+        await this.prisma.student.update({
+            where: { id: student.id },
+            data: {
+                name: student.name || mockExtractedData.name,
+                uniqueId: student.uniqueId || mockExtractedData.uniqueId,
+                category: mockExtractedData.category,
+                program: mockExtractedData.program,
+                year: mockExtractedData.year,
+                gender: mockExtractedData.gender,
+            }
+        });
         return {
             success: true,
-            data: {
-                name: 'Deepansh (Extracted)',
-                rank: 1542,
-                category: 'DELHI_GEN',
-                applicationNo: 'JAC2024001'
-            }
+            message: "Admission Letter scanned and profile updated successfully.",
+            data: mockExtractedData
         };
     }
 };

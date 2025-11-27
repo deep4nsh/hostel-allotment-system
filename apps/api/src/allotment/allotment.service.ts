@@ -20,13 +20,13 @@ export class AllotmentService {
 
         if (!hostel) throw new Error('Hostel not found');
 
-        // 2. Fetch Eligible Students (Paid Seat Booking Fee)
-        // Also ensure they don't have an active allotment
+        // 2. Fetch Eligible Students
+        // Changed to include REGISTRATION fee as well, so newly registered students are considered
         const eligibleStudents = await this.prisma.student.findMany({
             where: {
                 payments: {
                     some: {
-                        purpose: 'SEAT_BOOKING',
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
                         status: 'COMPLETED',
                     },
                 },
@@ -37,7 +37,10 @@ export class AllotmentService {
                     orderBy: { rank: 'asc' },
                 },
                 payments: {
-                    where: { purpose: 'SEAT_BOOKING', status: 'COMPLETED' },
+                    where: { 
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] }, 
+                        status: 'COMPLETED' 
+                    },
                 },
             },
         });

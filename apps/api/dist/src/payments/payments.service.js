@@ -57,8 +57,8 @@ let PaymentsService = class PaymentsService {
     constructor(prisma) {
         this.prisma = prisma;
         this.razorpay = new razorpay_1.default({
-            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
-            key_secret: process.env.RAZORPAY_KEY_SECRET || 's42BN13v3y7S0Y4aoY4aoY4a',
+            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID_HERE',
+            key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE',
         });
     }
     async createOrder(userId, purpose) {
@@ -95,7 +95,7 @@ let PaymentsService = class PaymentsService {
                 },
             });
             if (!allotment)
-                throw new Error('No room allotted to pay hostel fee');
+                throw new common_1.BadRequestException('No room allotted to pay hostel fee');
             const capacity = allotment.room.capacity;
             const isAC = allotment.room.floor.hostel.isAC;
             if (isAC && capacity === 3)
@@ -116,7 +116,6 @@ let PaymentsService = class PaymentsService {
         };
         try {
             const order = await this.razorpay.orders.create(options);
-            const student = await this.prisma.student.findUnique({ where: { userId } });
             if (student) {
                 await this.prisma.payment.create({
                     data: {
@@ -132,13 +131,14 @@ let PaymentsService = class PaymentsService {
             return order;
         }
         catch (error) {
-            throw new Error(error);
+            console.error("Razorpay Order Creation Error:", error);
+            throw new common_1.InternalServerErrorException(`Failed to create Razorpay order: ${error.error?.description || error.message}`);
         }
     }
     async verifyPayment(razorpayOrderId, razorpayPaymentId, razorpaySignature, userId, purpose, amount) {
         const body = razorpayOrderId + '|' + razorpayPaymentId;
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'test_key_secret')
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE')
             .update(body.toString())
             .digest('hex');
         if (expectedSignature === razorpaySignature) {
@@ -146,26 +146,38 @@ let PaymentsService = class PaymentsService {
             if (!student) {
                 throw new common_1.BadRequestException('Student record not found for user');
             }
-            return this.prisma.payment.create({
-                data: {
-                    studentId: student.id,
-                    purpose,
-                    status: client_1.PaymentStatus.COMPLETED,
-                    amount,
-                    txnRef: razorpayPaymentId,
-                    gateway: 'RAZORPAY',
-                },
+            const existingPayment = await this.prisma.payment.findFirst({
+                where: { txnRef: razorpayOrderId, status: 'PENDING' }
             });
+            if (existingPayment) {
+                return this.prisma.payment.update({
+                    where: { id: existingPayment.id },
+                    data: {
+                        status: client_1.PaymentStatus.COMPLETED,
+                        txnRef: razorpayPaymentId,
+                    }
+                });
+            }
+            else {
+                return this.prisma.payment.create({
+                    data: {
+                        studentId: student.id,
+                        purpose,
+                        status: client_1.PaymentStatus.COMPLETED,
+                        amount,
+                        txnRef: razorpayPaymentId,
+                        gateway: 'RAZORPAY',
+                    },
+                });
+            }
         }
         else {
             throw new common_1.BadRequestException('Invalid payment signature');
         }
     }
     async mockVerify(userId, purpose, amount) {
-        console.log(`Mock Verify called for User: ${userId}, Purpose: ${purpose}, Amount: ${amount}`);
         let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
-            console.log(`Student not found for userId: ${userId}, creating new record...`);
             student = await this.prisma.student.create({
                 data: {
                     userId,
@@ -174,27 +186,16 @@ let PaymentsService = class PaymentsService {
                 }
             });
         }
-        console.log(`Student found: ${student.id}`);
-        try {
-            const payment = await this.prisma.payment.create({
-                data: {
-                    studentId: student.id,
-                    purpose,
-                    status: client_1.PaymentStatus.COMPLETED,
-                    amount,
-                    txnRef: `mock_${Date.now()}`,
-                    gateway: 'MOCK',
-                },
-            });
-            console.log(`Payment created: ${payment.id}`);
-            if (purpose === 'REGISTRATION') {
-            }
-            return payment;
-        }
-        catch (error) {
-            console.error('Error creating mock payment:', error);
-            throw error;
-        }
+        return this.prisma.payment.create({
+            data: {
+                studentId: student.id,
+                purpose,
+                status: client_1.PaymentStatus.COMPLETED,
+                amount,
+                txnRef: `mock_${Date.now()}`,
+                gateway: 'MOCK',
+            },
+        });
     }
 };
 exports.PaymentsService = PaymentsService;

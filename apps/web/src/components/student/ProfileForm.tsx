@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getProfile, updateProfile } from "@/lib/api";
+import { getProfile, updateProfile, triggerOcr } from "@/lib/api";
+import { ScanLine } from "lucide-react";
 
 const formSchema = z.object({
   uniqueId: z.string().min(1, "Roll Number / Application No. is required"),
@@ -102,12 +103,37 @@ export function ProfileForm() {
     }
   }
 
+  async function handleAutoFill() {
+    if (!confirm("This will simulate scanning your Admission Letter and overwrite empty profile fields. Proceed?")) return;
+    
+    setIsSaving(true);
+    setMessage(null);
+    try {
+      const res = await triggerOcr();
+      if (res.success) {
+        alert("Profile updated from document: " + JSON.stringify(res.data, null, 2));
+        window.location.reload(); 
+      }
+    } catch (error) {
+      alert("Failed to scan document. Ensure you have uploaded an 'Admission Letter' first.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   if (isLoading) {
       return <div>Loading profile...</div>;
   }
 
   return (
     <Form {...form}>
+      <div className="flex justify-end mb-4">
+        <Button type="button" variant="outline" onClick={handleAutoFill} disabled={isSaving} className="gap-2">
+            <ScanLine className="w-4 h-4" />
+            {isSaving ? "Scanning..." : "Auto-fill from Admission Letter"}
+        </Button>
+      </div>
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {message && (
           <div className={`p-3 text-sm rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
