@@ -36,6 +36,7 @@ export default function OnboardingPage() {
             if (!token) return router.push('/auth/login');
 
             try {
+                // Fetch Profile
                 const res = await fetch('http://localhost:4000/students/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -56,12 +57,23 @@ export default function OnboardingPage() {
                         type: data.bankAccountType || "PERSONAL"
                     });
                 }
+
+                // Fetch Documents
+                const docRes = await fetch('http://localhost:4000/documents/my', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (docRes.ok) {
+                    const docs = await docRes.json();
+                    setUploadedDocs(docs.map((d: any) => d.kind));
+                }
             } catch (e) {
                 console.error(e);
             }
         };
         fetchProfile();
     }, [router]);
+
+    const [uploadedDocs, setUploadedDocs] = useState<string[]>([]);
 
     // --- STEP 1: DOCUMENT UPLOAD ---
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
@@ -73,15 +85,43 @@ export default function OnboardingPage() {
 
         const token = localStorage.getItem('token');
         try {
-            await fetch('http://localhost:4000/documents/upload', {
+            const res = await fetch('http://localhost:4000/documents/upload', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
-            alert(`${type} uploaded!`);
+            if (res.ok) {
+                setUploadedDocs(prev => [...prev, type]);
+                alert(`${type} uploaded!`);
+            } else {
+                alert('Upload failed');
+            }
         } catch (error) {
             console.error(error);
             alert('Upload failed');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteDocument = async (type: string) => {
+        if (!confirm(`Are you sure you want to delete ${type}?`)) return;
+        setIsLoading(true);
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`http://localhost:4000/documents/${type}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setUploadedDocs(prev => prev.filter(d => d !== type));
+                alert(`${type} deleted!`);
+            } else {
+                alert('Delete failed');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Delete failed');
         } finally {
             setIsLoading(false);
         }
@@ -104,9 +144,13 @@ export default function OnboardingPage() {
                 });
                 setProfile(await pRes.json());
                 setStep(2);
+            } else {
+                const errorData = await res.json();
+                alert(`OCR Failed: ${errorData.message}`);
             }
         } catch (error) {
             console.error(error);
+            alert('An error occurred during OCR processing.');
         } finally {
             setIsLoading(false);
         }
@@ -192,27 +236,42 @@ export default function OnboardingPage() {
                             <CardDescription>Please upload clear copies of the following.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label>Admission Letter</Label>
-                                <Input type="file" onChange={(e) => handleFileUpload(e, 'ADMISSION_LETTER')} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Aadhar Card</Label>
-                                <Input type="file" onChange={(e) => handleFileUpload(e, 'AADHAR')} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Signature</Label>
-                                <Input type="file" onChange={(e) => handleFileUpload(e, 'SIGNATURE')} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Exception Documents (Optional)</Label>
-                                <Input type="file" onChange={(e) => handleFileUpload(e, 'EXCEPTION_DOC')} />
-                            </div>
+                            {['ADMISSION_LETTER', 'AADHAR', 'SIGNATURE', 'EXCEPTION_DOC'].map((type) => (
+                                <div key={type} className="grid gap-2">
+                                    <Label>{type.replace('_', ' ')}</Label>
+                                    {uploadedDocs.includes(type) ? (
+                                        <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded">
+                                            <div className="flex items-center gap-2 text-green-700">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                <span className="text-sm font-medium">Uploaded</span>
+                                            </div>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => handleDeleteDocument(type)}
+                                                disabled={isLoading}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <Input
+                                            type="file"
+                                            onChange={(e) => handleFileUpload(e, type)}
+                                            disabled={isLoading}
+                                        />
+                                    )}
+                                </div>
+                            ))}
                         </CardContent>
                         <CardFooter>
-                            <Button className="w-full" onClick={handleOCR} disabled={isLoading}>
+                            <Button
+                                className="w-full"
+                                onClick={handleOCR}
+                                disabled={isLoading || !uploadedDocs.includes('ADMISSION_LETTER')}
+                            >
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                                Process & Auto-Fill Profile
+                                {uploadedDocs.includes('ADMISSION_LETTER') ? 'Process & Auto-Fill Profile' : 'Upload Admission Letter to Proceed'}
                             </Button>
                         </CardFooter>
                     </Card>

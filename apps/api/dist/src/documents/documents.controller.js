@@ -31,6 +31,9 @@ let DocumentsController = class DocumentsController {
     async getMyDocuments(req) {
         return this.documentsService.findAllByStudent(req.user.userId);
     }
+    async deleteDocument(req, type) {
+        return this.documentsService.deleteDocument(req.user.userId, type);
+    }
 };
 exports.DocumentsController = DocumentsController;
 __decorate([
@@ -57,6 +60,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], DocumentsController.prototype, "getMyDocuments", null);
+__decorate([
+    (0, common_1.Delete)(':type'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('type')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], DocumentsController.prototype, "deleteDocument", null);
 exports.DocumentsController = DocumentsController = __decorate([
     (0, common_1.Controller)('documents'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),

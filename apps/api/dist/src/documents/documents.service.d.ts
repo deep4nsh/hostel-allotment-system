@@ -24,15 +24,21 @@ export declare class DocumentsService {
     processOcr(userId: string): Promise<{
         success: boolean;
         message: string;
+        data: null;
+    } | {
+        success: boolean;
+        message: string;
         data: {
-            name: string;
-            uniqueId: string;
-            category: "OUTSIDE_DELHI";
-            gender: "MALE";
-            program: "BTECH";
-            year: number;
-            guardianName: string;
-            guardianPhone: string;
+            textSnippet: string;
+            name: string | undefined;
+            uniqueId: string | undefined;
+            program: string | undefined;
+            category: string | undefined;
+            guardianName: string | undefined;
+            guardianPhone: string | undefined;
         };
+    }>;
+    deleteDocument(userId: string, type: string): Promise<{
+        message: string;
     }>;
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Request, Body, Param, Get } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Request, Body, Param, Get, Delete } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService } from './documents.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -25,6 +25,11 @@ export class DocumentsController {
 
   @Get('my')
   async getMyDocuments(@Request() req: any) {
-      return this.documentsService.findAllByStudent(req.user.userId);
+    return this.documentsService.findAllByStudent(req.user.userId);
+  }
+
+  @Delete(':type')
+  async deleteDocument(@Request() req: any, @Param('type') type: string) {
+    return this.documentsService.deleteDocument(req.user.userId, type);
   }
 }

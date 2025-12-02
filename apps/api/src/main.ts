@@ -7,6 +7,7 @@ async function bootstrap() {
   app.use(helmet());
   app.enableCors();
   // Changed default port to 3001 to match frontend configuration
-  await app.listen(process.env.PORT ?? 4000);
+  // Force port 4000 to avoid conflicts and match frontend
+  await app.listen(4000);
 }
 bootstrap();

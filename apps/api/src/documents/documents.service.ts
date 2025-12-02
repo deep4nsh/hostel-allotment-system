@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Category, Gender, Program } from '@prisma/client';
+import { createWorker } from 'tesseract.js';
 
 @Injectable()
 export class DocumentsService {
@@ -51,42 +52,120 @@ export class DocumentsService {
     const student = await this.prisma.student.findUnique({ where: { userId } });
     if (!student) throw new Error('Student not found');
 
-    // --- MOCK OCR EXTRACTION ---
-    // In a real app, we would fetch the ADMISSION_LETTER document and send it to Tesseract/Vision API.
-    // Here, we simulate finding data on the letter.
+    // 1. Find the Admission Letter
+    // 1. Find the Admission Letter
+    console.log(`Looking for ADMISSION_LETTER for studentId: ${student.id}`);
+    const admissionDoc = await this.prisma.document.findFirst({
+      where: { studentId: student.id, kind: 'ADMISSION_LETTER' },
+      orderBy: { uploadedAt: 'desc' }
+    });
 
-    const mockExtractedData = {
-      name: "Deepansh Student",
-      uniqueId: `JAC${new Date().getFullYear()}001`, // Simulated Roll No/App No
-      category: Category.OUTSIDE_DELHI, // Auto-detect category
-      gender: Gender.MALE,
-      program: Program.BTECH,
-      year: 1,
-      // Mocking some guardian info that might be on the form
-      guardianName: "Parent Name",
-      guardianPhone: "9876543210"
+    if (!admissionDoc) {
+      console.error(`Admission Letter not found for studentId: ${student.id}`);
+      throw new Error('Admission Letter not found. Please upload it first.');
+    }
+    console.log(`Found document: ${admissionDoc.id}, URL: ${admissionDoc.fileUrl}`);
+
+    // 2. Resolve File Path
+    // fileUrl is like /uploads/filename.ext, we need absolute path
+    const fileName = path.basename(admissionDoc.fileUrl);
+    const filePath = path.join(process.cwd(), 'uploads', fileName);
+
+    if (!fs.existsSync(filePath)) throw new Error('File not found on server');
+
+    // 3. Perform OCR
+    let text = '';
+    try {
+      const worker = await createWorker('eng');
+      const result = await worker.recognize(filePath);
+      text = result.data.text;
+      await worker.terminate();
+      console.log('OCR Success:', text.substring(0, 50) + '...');
+    } catch (error) {
+      console.error('OCR Failed:', error);
+      // We don't throw here to allow the process to continue with empty text
+      // or we could throw a specific error. For now, let's return a warning.
+      return {
+        success: false,
+        message: "OCR failed to process the image.",
+        data: null
+      };
+    }
+
+    // 4. Parse Data (Regex)
+    // Heuristic patterns to find data in the text
+    const extracted = {
+      name: text.match(/Name[:\s]+([A-Za-z\s]+)/i)?.[1]?.trim(),
+      uniqueId: text.match(/(Roll|Application|Registration)\s*No[:\s]+([A-Z0-9]+)/i)?.[2]?.trim(),
+      program: text.match(/(B\.?Tech|B\.?Sc|B\.?Des|M\.?Tech|M\.?Sc|MCA|PhD)/i)?.[0],
+      category: text.match(/(Delhi|Outside\s*Delhi)/i)?.[0],
+      guardianName: text.match(/Guardian[:\s]+([A-Za-z\s]+)/i)?.[1]?.trim(),
+      guardianPhone: text.match(/Phone[:\s]+(\d{10})/i)?.[1]?.trim(),
     };
 
-    // --- AUTO-FILL DASHBOARD (Update Student Record) ---
-    // Only update fields that are currently empty or explicitly override
-    await this.prisma.student.update({
+    // Normalize Program
+    let programEnum = null;
+    if (extracted.program) {
+      const p = extracted.program.toUpperCase().replace('.', '');
+      if (p.includes('BTECH')) programEnum = Program.BTECH;
+      else if (p.includes('BSC')) programEnum = Program.BSC;
+      else if (p.includes('BDES')) programEnum = Program.BDES;
+      else if (p.includes('MTECH')) programEnum = Program.MTECH;
+      else if (p.includes('MSC')) programEnum = Program.MSC;
+      else if (p.includes('MCA')) programEnum = Program.MCA;
+      else if (p.includes('PHD')) programEnum = Program.PHD;
+    }
+
+    // Normalize Category
+    let categoryEnum = null;
+    if (extracted.category) {
+      if (extracted.category.toLowerCase().includes('outside')) categoryEnum = Category.OUTSIDE_DELHI;
+      else categoryEnum = Category.DELHI;
+    }
+
+    // 5. Update Student
+    const updatedStudent = await this.prisma.student.update({
       where: { id: student.id },
       data: {
-        name: student.name || mockExtractedData.name, // Keep existing if set, or use extracted
-        uniqueId: student.uniqueId || mockExtractedData.uniqueId,
-        category: mockExtractedData.category, // Trust the document for category
-        program: mockExtractedData.program,
-        year: mockExtractedData.year,
-        gender: mockExtractedData.gender,
-        guardianName: student.guardianName || mockExtractedData.guardianName,
-        guardianPhone: student.guardianPhone || mockExtractedData.guardianPhone,
+        name: student.name || extracted.name,
+        uniqueId: student.uniqueId || extracted.uniqueId,
+        program: programEnum || student.program, // Only update if found
+        category: categoryEnum || student.category,
+        guardianName: student.guardianName || extracted.guardianName,
+        guardianPhone: student.guardianPhone || extracted.guardianPhone,
       }
     });
 
     return {
       success: true,
-      message: "Admission Letter scanned and profile updated successfully.",
-      data: mockExtractedData
+      message: "OCR processing complete.",
+      data: { ...extracted, textSnippet: text.substring(0, 100) }
     };
+  }
+
+  async deleteDocument(userId: string, type: string) {
+    const student = await this.prisma.student.findUnique({ where: { userId } });
+    if (!student) throw new Error('Student not found');
+
+    const document = await this.prisma.document.findFirst({
+      where: { studentId: student.id, kind: type },
+      orderBy: { uploadedAt: 'desc' }
+    });
+
+    if (!document) throw new Error('Document not found');
+
+    // Delete file from disk
+    const fileName = path.basename(document.fileUrl);
+    const filePath = path.join(process.cwd(), 'uploads', fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Delete from database
+    await this.prisma.document.delete({
+      where: { id: document.id }
+    });
+
+    return { message: 'Document deleted successfully' };
   }
 }
