@@ -23,8 +23,10 @@ export declare class DocumentsController {
             uniqueId: string;
             category: "OUTSIDE_DELHI";
             gender: "MALE";
-            program: string;
+            program: "BTECH";
             year: number;
+            guardianName: string;
+            guardianPhone: string;
         };
     }>;
     getMyDocuments(req: any): Promise<{

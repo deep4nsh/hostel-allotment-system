@@ -56,6 +56,26 @@ model User {
   hostels   Hostel[] @relation("HostelWarden")
 }
 
+enum Program {
+  BTECH
+  BSC
+  BDES
+  MTECH
+  MSC
+  MCA
+  PHD
+}
+
+enum FoodPreference {
+  VEG
+  NON_VEG
+}
+
+enum AccountType {
+  PERSONAL
+  JOINT
+}
+
 model Student {
   id          String   @id @default(uuid())
   userId      String   @unique
@@ -64,7 +84,7 @@ model Student {
   uniqueId    String?  @unique // JAC/GATE/DTU Exam No.
   name        String
   phone       String?
-  program     String?  // B.Tech, M.Tech, PhD
+  program     Program? // B.Tech, M.Tech, PhD
   year        Int?     // 1, 2, 3, 4
   gender      Gender
   category    Category @default(DELHI)
@@ -72,6 +92,16 @@ model Student {
   homeLat     Float?
   homeLng     Float?
   profileMeta Json?    // Flexible storage for other details
+
+  // New Onboarding Fields
+  foodPreference FoodPreference?
+  guardianName   String?
+  guardianPhone  String?
+  guardianAddress String?
+  bankAccountNo  String?
+  bankIfsc       String?
+  bankAccountType AccountType?
+  bankHolderName String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

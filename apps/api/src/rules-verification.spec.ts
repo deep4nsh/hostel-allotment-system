@@ -90,7 +90,8 @@ describe('Hostel Rules Verification', () => {
             orderBy: { createdAt: 'desc' }
         });
 
-        expect(payment.amount).toBe(72000);
+        expect(payment).toBeDefined();
+        expect(payment!.amount).toBe(72000);
     });
 
     it('should prioritize PH students in allotment', async () => {

@@ -94,8 +94,10 @@ let DocumentsService = class DocumentsService {
             uniqueId: `JAC${new Date().getFullYear()}001`,
             category: client_1.Category.OUTSIDE_DELHI,
             gender: client_1.Gender.MALE,
-            program: "B.Tech",
-            year: 1
+            program: client_1.Program.BTECH,
+            year: 1,
+            guardianName: "Parent Name",
+            guardianPhone: "9876543210"
         };
         await this.prisma.student.update({
             where: { id: student.id },
@@ -106,6 +108,8 @@ let DocumentsService = class DocumentsService {
                 program: mockExtractedData.program,
                 year: mockExtractedData.year,
                 gender: mockExtractedData.gender,
+                guardianName: student.guardianName || mockExtractedData.guardianName,
+                guardianPhone: student.guardianPhone || mockExtractedData.guardianPhone,
             }
         });
         return {

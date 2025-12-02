@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Category, Gender } from '@prisma/client';
+import { Category, Gender, Program } from '@prisma/client';
 
 @Injectable()
 export class DocumentsService {
@@ -54,28 +54,33 @@ export class DocumentsService {
     // --- MOCK OCR EXTRACTION ---
     // In a real app, we would fetch the ADMISSION_LETTER document and send it to Tesseract/Vision API.
     // Here, we simulate finding data on the letter.
-    
+
     const mockExtractedData = {
-        name: "Deepansh Student",
-        uniqueId: `JAC${new Date().getFullYear()}001`, // Simulated Roll No/App No
-        category: Category.OUTSIDE_DELHI, // Auto-detect category
-        gender: Gender.MALE,
-        program: "B.Tech",
-        year: 1
+      name: "Deepansh Student",
+      uniqueId: `JAC${new Date().getFullYear()}001`, // Simulated Roll No/App No
+      category: Category.OUTSIDE_DELHI, // Auto-detect category
+      gender: Gender.MALE,
+      program: Program.BTECH,
+      year: 1,
+      // Mocking some guardian info that might be on the form
+      guardianName: "Parent Name",
+      guardianPhone: "9876543210"
     };
 
     // --- AUTO-FILL DASHBOARD (Update Student Record) ---
     // Only update fields that are currently empty or explicitly override
     await this.prisma.student.update({
-        where: { id: student.id },
-        data: {
-            name: student.name || mockExtractedData.name, // Keep existing if set, or use extracted
-            uniqueId: student.uniqueId || mockExtractedData.uniqueId,
-            category: mockExtractedData.category, // Trust the document for category
-            program: mockExtractedData.program,
-            year: mockExtractedData.year,
-            gender: mockExtractedData.gender,
-        }
+      where: { id: student.id },
+      data: {
+        name: student.name || mockExtractedData.name, // Keep existing if set, or use extracted
+        uniqueId: student.uniqueId || mockExtractedData.uniqueId,
+        category: mockExtractedData.category, // Trust the document for category
+        program: mockExtractedData.program,
+        year: mockExtractedData.year,
+        gender: mockExtractedData.gender,
+        guardianName: student.guardianName || mockExtractedData.guardianName,
+        guardianPhone: student.guardianPhone || mockExtractedData.guardianPhone,
+      }
     });
 
     return {

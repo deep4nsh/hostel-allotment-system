@@ -12,12 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AllotmentService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const program_utils_1 = require("../utils/program.utils");
 let AllotmentService = class AllotmentService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async runAllotment(hostelId) {
+    async runAllotment(hostelId, targetProgramGroup) {
         const hostel = await this.prisma.hostel.findUnique({
             where: { id: hostelId },
             include: {
@@ -30,7 +31,7 @@ let AllotmentService = class AllotmentService {
         });
         if (!hostel)
             throw new Error('Hostel not found');
-        const eligibleStudents = await this.prisma.student.findMany({
+        let eligibleStudents = await this.prisma.student.findMany({
             where: {
                 payments: {
                     some: {
@@ -52,6 +53,9 @@ let AllotmentService = class AllotmentService {
                 },
             },
         });
+        if (targetProgramGroup) {
+            eligibleStudents = eligibleStudents.filter(s => (0, program_utils_1.getProgramGroup)(s.program) === targetProgramGroup);
+        }
         const categoryPriority = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
         eligibleStudents.sort((a, b) => {
             const isSeniorA = (a.year || 1) > 1;

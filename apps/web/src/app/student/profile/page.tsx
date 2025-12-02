@@ -106,6 +106,16 @@ export default function StudentProfilePage() {
         }
     }, [profile])
 
+    const programOptions = [
+        { value: 'BTECH', label: 'B.Tech' },
+        { value: 'BSC', label: 'B.Sc' },
+        { value: 'BDES', label: 'B.Des' },
+        { value: 'MTECH', label: 'M.Tech' },
+        { value: 'MSC', label: 'M.Sc' },
+        { value: 'MCA', label: 'MCA' },
+        { value: 'PHD', label: 'PhD' },
+    ];
+
     const handleUpdateProfile = async () => {
         const token = localStorage.getItem('token')
         try {
@@ -252,6 +262,23 @@ export default function StudentProfilePage() {
                                     </select>
                                 ) : (
                                     <p className="text-lg">{profile.gender || 'Not set'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-500">Program</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full p-2 border rounded"
+                                        value={formData.program}
+                                        onChange={e => setFormData({ ...formData, program: e.target.value })}
+                                    >
+                                        <option value="">Select Program</option>
+                                        {programOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="text-lg">{profile.program || 'Not set'}</p>
                                 )}
                             </div>
                             <div>

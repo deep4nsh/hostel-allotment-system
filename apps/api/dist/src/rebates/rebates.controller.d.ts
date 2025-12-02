@@ -65,7 +65,7 @@ export declare class RebatesController {
             uniqueId: string | null;
             name: string;
             phone: string | null;
-            program: string | null;
+            program: import("@prisma/client").$Enums.Program | null;
             year: number | null;
             gender: import("@prisma/client").$Enums.Gender;
             category: import("@prisma/client").$Enums.Category;
@@ -73,6 +73,14 @@ export declare class RebatesController {
             homeLat: number | null;
             homeLng: number | null;
             profileMeta: import("@prisma/client").Prisma.JsonValue | null;
+            foodPreference: import("@prisma/client").$Enums.FoodPreference | null;
+            guardianName: string | null;
+            guardianPhone: string | null;
+            guardianAddress: string | null;
+            bankAccountNo: string | null;
+            bankIfsc: string | null;
+            bankAccountType: import("@prisma/client").$Enums.AccountType | null;
+            bankHolderName: string | null;
             createdAt: Date;
             updatedAt: Date;
         };

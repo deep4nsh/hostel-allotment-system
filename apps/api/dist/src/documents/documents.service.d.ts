@@ -29,8 +29,10 @@ export declare class DocumentsService {
             uniqueId: string;
             category: "OUTSIDE_DELHI";
             gender: "MALE";
-            program: string;
+            program: "BTECH";
             year: number;
+            guardianName: string;
+            guardianPhone: string;
         };
     }>;
 }

@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+import { getProgramGroup } from '../utils/program.utils';
+
 @Injectable()
 export class AllotmentService {
     constructor(private prisma: PrismaService) { }
 
-    async runAllotment(hostelId: string) {
+    async runAllotment(hostelId: string, targetProgramGroup?: string) {
         // 1. Fetch Hostel with Rooms
         const hostel = await this.prisma.hostel.findUnique({
             where: { id: hostelId },
@@ -22,7 +24,7 @@ export class AllotmentService {
 
         // 2. Fetch Eligible Students
         // Changed to include REGISTRATION fee as well, so newly registered students are considered
-        const eligibleStudents = await this.prisma.student.findMany({
+        let eligibleStudents = await this.prisma.student.findMany({
             where: {
                 payments: {
                     some: {
@@ -37,13 +39,18 @@ export class AllotmentService {
                     orderBy: { rank: 'asc' },
                 },
                 payments: {
-                    where: { 
-                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] }, 
-                        status: 'COMPLETED' 
+                    where: {
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
+                        status: 'COMPLETED'
                     },
                 },
             },
         });
+
+        // Filter by Program Group if specified
+        if (targetProgramGroup) {
+            eligibleStudents = eligibleStudents.filter(s => getProgramGroup(s.program) === targetProgramGroup);
+        }
 
         // 3. Sort Students
         const categoryPriority: Record<string, number> = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
@@ -69,7 +76,7 @@ export class AllotmentService {
                 if (a.category === 'DELHI') {
                     if (metaA.medicalIssue && !metaB.medicalIssue) return -1;
                     if (metaB.medicalIssue && !metaA.medicalIssue) return 1;
-                    
+
                     const distA = Number(metaA.distance) || 0;
                     const distB = Number(metaB.distance) || 0;
                     if (distA !== distB) return distB - distA; // Higher distance first
@@ -150,7 +157,7 @@ export class AllotmentService {
                 allotments.push(allotment);
 
                 // Remove from waitlist if exists
-                 try {
+                try {
                     await this.prisma.waitlistEntry.delete({ where: { studentId: student.id } });
                 } catch (e) { /* ignore */ }
 
