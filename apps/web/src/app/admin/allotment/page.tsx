@@ -22,7 +22,7 @@ export default function AdminAllotmentPage() {
             }
 
             try {
-                const res = await fetch('http://localhost:3001/hostels', {
+                const res = await fetch('http://localhost:4000/hostels', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
@@ -42,7 +42,7 @@ export default function AdminAllotmentPage() {
     const fetchAllotments = async (hostelId: string) => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch(`http://localhost:3001/allotment/list/${hostelId}`, {
+            const res = await fetch(`http://localhost:4000/allotment/list/${hostelId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (res.ok) {
@@ -58,7 +58,7 @@ export default function AdminAllotmentPage() {
         if (!selectedHostel) return
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch(`http://localhost:3001/allotment/trigger/${selectedHostel}`, {
+            const res = await fetch(`http://localhost:4000/allotment/trigger/${selectedHostel}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

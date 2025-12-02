@@ -35,14 +35,20 @@ let StudentsController = class StudentsController {
         return this.studentsService.generateUniqueId(req.user.userId);
     }
     async downloadSlip(req, res) {
-        const student = await this.studentsService.findOne(req.user.userId);
-        const buffer = await this.pdfService.generateRegistrationSlip(student);
-        res.set({
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': 'attachment; filename=registration-slip.pdf',
-            'Content-Length': buffer.length,
-        });
-        res.end(buffer);
+        try {
+            const student = await this.studentsService.findOne(req.user.userId);
+            const buffer = await this.pdfService.generateRegistrationSlip(student);
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'attachment; filename=registration-slip.pdf',
+                'Content-Length': buffer.length,
+            });
+            res.end(buffer);
+        }
+        catch (error) {
+            console.error('Error downloading slip:', error);
+            res.status(500).json({ message: 'Failed to generate registration slip' });
+        }
     }
     savePreferences(req, body) {
         return this.studentsService.savePreferences(req.user.userId, body.preferences);

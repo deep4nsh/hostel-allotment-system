@@ -25,7 +25,7 @@ export default function RegisterPage() {
         }
 
         try {
-            const res = await fetch('http://localhost:3001/auth/register', {
+            const res = await fetch('http://localhost:4000/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -37,7 +37,7 @@ export default function RegisterPage() {
             }
 
             // Auto login after register to get token
-            const loginRes = await fetch('http://localhost:3001/auth/login', {
+            const loginRes = await fetch('http://localhost:4000/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })

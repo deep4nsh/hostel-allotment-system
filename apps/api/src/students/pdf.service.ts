@@ -3,11 +3,15 @@ import puppeteer from 'puppeteer';
 
 @Injectable()
 export class PdfService {
-    async generateRegistrationSlip(student: any): Promise<Buffer> {
-        const browser = await puppeteer.launch({ headless: true });
-        const page = await browser.newPage();
+  async generateRegistrationSlip(student: any): Promise<Buffer> {
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      const page = await browser.newPage();
 
-        const htmlContent = `
+      const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -58,10 +62,14 @@ export class PdfService {
       </html>
     `;
 
-        await page.setContent(htmlContent);
-        const pdfBuffer = await page.pdf({ format: 'A4' });
+      await page.setContent(htmlContent);
+      const pdfBuffer = await page.pdf({ format: 'A4' });
 
-        await browser.close();
-        return Buffer.from(pdfBuffer);
+      await browser.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new Error('Failed to generate registration slip');
     }
+  }
 }

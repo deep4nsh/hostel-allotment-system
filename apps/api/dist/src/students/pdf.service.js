@@ -14,9 +14,13 @@ const common_1 = require("@nestjs/common");
 const puppeteer_1 = __importDefault(require("puppeteer"));
 let PdfService = class PdfService {
     async generateRegistrationSlip(student) {
-        const browser = await puppeteer_1.default.launch({ headless: true });
-        const page = await browser.newPage();
-        const htmlContent = `
+        try {
+            const browser = await puppeteer_1.default.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+            const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -66,10 +70,15 @@ let PdfService = class PdfService {
       </body>
       </html>
     `;
-        await page.setContent(htmlContent);
-        const pdfBuffer = await page.pdf({ format: 'A4' });
-        await browser.close();
-        return Buffer.from(pdfBuffer);
+            await page.setContent(htmlContent);
+            const pdfBuffer = await page.pdf({ format: 'A4' });
+            await browser.close();
+            return Buffer.from(pdfBuffer);
+        }
+        catch (error) {
+            console.error('Error generating PDF:', error);
+            throw new Error('Failed to generate registration slip');
+        }
     }
 };
 exports.PdfService = PdfService;

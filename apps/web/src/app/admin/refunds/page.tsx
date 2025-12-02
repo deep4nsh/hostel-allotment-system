@@ -18,7 +18,7 @@ export default function AdminRefundsPage() {
         }
 
         try {
-            const res = await fetch('http://localhost:3001/refunds', {
+            const res = await fetch('http://localhost:4000/refunds', {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (res.ok) {
@@ -39,7 +39,7 @@ export default function AdminRefundsPage() {
     const handleDecision = async (id: string, decision: 'APPROVED' | 'REJECTED') => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch(`http://localhost:3001/refunds/${id}/decide`, {
+            const res = await fetch(`http://localhost:4000/refunds/${id}/decide`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -90,8 +90,8 @@ export default function AdminRefundsPage() {
                                     <td className="p-4">₹{req.amount}</td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                                req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
+                                            req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                'bg-yellow-100 text-yellow-800'
                                             }`}>
                                             {req.status}
                                         </span>

@@ -33,16 +33,21 @@ export class StudentsController {
     @UseGuards(AuthGuard('jwt'))
     @Get('me/slip')
     async downloadSlip(@Request() req: any, @Res() res: Response) {
-        const student = await this.studentsService.findOne(req.user.userId);
-        const buffer = await this.pdfService.generateRegistrationSlip(student);
+        try {
+            const student = await this.studentsService.findOne(req.user.userId);
+            const buffer = await this.pdfService.generateRegistrationSlip(student);
 
-        res.set({
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': 'attachment; filename=registration-slip.pdf',
-            'Content-Length': buffer.length,
-        });
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'attachment; filename=registration-slip.pdf',
+                'Content-Length': buffer.length,
+            });
 
-        res.end(buffer);
+            res.end(buffer);
+        } catch (error) {
+            console.error('Error downloading slip:', error);
+            res.status(500).json({ message: 'Failed to generate registration slip' });
+        }
     }
 
     @UseGuards(AuthGuard('jwt'))

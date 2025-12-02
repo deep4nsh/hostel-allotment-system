@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 function getAuthHeaders() {
   const token = localStorage.getItem("token");
@@ -45,15 +45,15 @@ export async function getProfile() {
   const response = await fetch(`${API_URL}/students/me`, {
     method: 'GET',
     headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
   });
 
   if (!response.ok) {
-      if (response.status === 401) {
-          throw new Error("Unauthorized");
-      }
+    if (response.status === 401) {
+      throw new Error("Unauthorized");
+    }
     const error = await response.json();
     throw new Error(error.message || 'Failed to fetch profile');
   }
@@ -65,8 +65,8 @@ export async function updateProfile(data: any) {
   const response = await fetch(`${API_URL}/students/me`, {
     method: 'PATCH',
     headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
     body: JSON.stringify(data),
   });
@@ -85,8 +85,8 @@ export async function createRebateRequest(data: any) {
   const response = await fetch(`${API_URL}/rebates`, {
     method: 'POST',
     headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
     body: JSON.stringify(data),
   });
@@ -102,8 +102,8 @@ export async function createRebateRequest(data: any) {
 export async function getMyRebates() {
   const response = await fetch(`${API_URL}/rebates/me`, {
     headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
   });
   if (!response.ok) throw new Error('Failed to fetch rebates');
@@ -113,8 +113,8 @@ export async function getMyRebates() {
 export async function getPendingRebates() {
   const response = await fetch(`${API_URL}/rebates/pending`, {
     headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
   });
   if (!response.ok) throw new Error('Failed to fetch pending rebates');
@@ -125,8 +125,8 @@ export async function updateRebateStatus(id: string, status: 'APPROVED' | 'REJEC
   const response = await fetch(`${API_URL}/rebates/${id}/status`, {
     method: 'PATCH',
     headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
     body: JSON.stringify({ status }),
   });
@@ -158,8 +158,8 @@ export async function uploadDocument(file: File, type: string) {
 export async function getMyDocuments() {
   const response = await fetch(`${API_URL}/documents/my`, {
     headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
   });
   if (!response.ok) throw new Error('Failed to fetch documents');
@@ -167,76 +167,76 @@ export async function getMyDocuments() {
 }
 
 export async function triggerOcr() {
-    const response = await fetch(`${API_URL}/documents/ocr`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
-    });
-    if (!response.ok) throw new Error('Failed to process document');
-    return response.json();
+  const response = await fetch(`${API_URL}/documents/ocr`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to process document');
+  return response.json();
 }
 
 // --- Analytics API ---
 
 export async function getAdminAnalytics() {
-    const response = await fetch(`${API_URL}/ops/analytics`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
-    });
-    if (!response.ok) throw new Error('Failed to fetch analytics');
-    return response.json();
+  const response = await fetch(`${API_URL}/ops/analytics`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch analytics');
+  return response.json();
 }
 
 // --- Complaints API ---
 
 export async function createComplaint(data: any) {
-    const response = await fetch(`${API_URL}/complaints`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
-        body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to create complaint');
-    return response.json();
+  const response = await fetch(`${API_URL}/complaints`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to create complaint');
+  return response.json();
 }
 
 export async function getMyComplaints() {
-    const response = await fetch(`${API_URL}/complaints/my`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
-    });
-    if (!response.ok) throw new Error('Failed to fetch complaints');
-    return response.json();
+  const response = await fetch(`${API_URL}/complaints/my`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch complaints');
+  return response.json();
 }
 
 export async function getWardenComplaints() {
-    const response = await fetch(`${API_URL}/complaints/warden`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
-    });
-    if (!response.ok) throw new Error('Failed to fetch complaints');
-    return response.json();
+  const response = await fetch(`${API_URL}/complaints/warden`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch complaints');
+  return response.json();
 }
 
 export async function updateComplaintStatus(id: string, status: string) {
-    const response = await fetch(`${API_URL}/complaints/${id}/status`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
-        body: JSON.stringify({ status }),
-    });
-    if (!response.ok) throw new Error('Failed to update status');
-    return response.json();
+  const response = await fetch(`${API_URL}/complaints/${id}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) throw new Error('Failed to update status');
+  return response.json();
 }

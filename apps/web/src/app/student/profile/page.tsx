@@ -22,7 +22,7 @@ export default function StudentProfilePage() {
             }
 
             try {
-                const res = await fetch('http://localhost:3001/students/me', {
+                const res = await fetch('http://localhost:4000/students/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
@@ -37,7 +37,7 @@ export default function StudentProfilePage() {
                     console.error('Failed to fetch profile:', res.status, res.statusText)
                 }
 
-                const wlRes = await fetch('http://localhost:3001/waitlist/me', {
+                const wlRes = await fetch('http://localhost:4000/waitlist/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (wlRes.ok) {
@@ -58,7 +58,7 @@ export default function StudentProfilePage() {
 
     const handleDownloadSlip = async () => {
         const token = localStorage.getItem('token')
-        const res = await fetch('http://localhost:3001/students/me/slip', {
+        const res = await fetch('http://localhost:4000/students/me/slip', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {
@@ -75,7 +75,7 @@ export default function StudentProfilePage() {
 
     const handleDownloadAllotmentLetter = async () => {
         const token = localStorage.getItem('token')
-        const res = await fetch('http://localhost:3001/letters/allotment', {
+        const res = await fetch('http://localhost:4000/letters/allotment', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {
@@ -109,7 +109,7 @@ export default function StudentProfilePage() {
     const handleUpdateProfile = async () => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:3001/students/me', {
+            const res = await fetch('http://localhost:4000/students/me', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export default function StudentProfilePage() {
     const handleGenerateId = async () => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:3001/students/me/generate-id', {
+            const res = await fetch('http://localhost:4000/students/me/generate-id', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

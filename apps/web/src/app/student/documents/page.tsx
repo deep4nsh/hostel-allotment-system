@@ -87,11 +87,11 @@ export default function DocumentsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Select File</label>
-                  <Input 
-                    type="file" 
+                  <Input
+                    type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    required 
+                    required
                   />
                 </div>
               </div>
@@ -128,9 +128,9 @@ export default function DocumentsPage() {
                         Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <a 
-                      href={`http://localhost:3001${doc.fileUrl}`} 
-                      target="_blank" 
+                    <a
+                      href={`http://localhost:4000${doc.fileUrl}`}
+                      target="_blank"
                       rel="noreferrer"
                       className="text-sm text-blue-600 hover:underline ml-2"
                     >
