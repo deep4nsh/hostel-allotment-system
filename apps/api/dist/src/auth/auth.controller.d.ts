@@ -14,8 +14,6 @@ export declare class AuthController {
     }>;
     login(loginDto: LoginDto): Promise<{
         access_token: string;
-    } | {
-        message: string;
     }>;
     getProfile(req: any): any;
 }

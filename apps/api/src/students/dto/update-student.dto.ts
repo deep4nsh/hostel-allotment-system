@@ -65,4 +65,12 @@ export class UpdateStudentDto {
     @IsNumber()
     @IsOptional()
     distance?: number;
+
+    @IsString()
+    @IsOptional()
+    roomTypePreference?: string;
+
+    @IsString()
+    @IsOptional()
+    floorPreference?: string;
 }

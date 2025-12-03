@@ -15,4 +15,6 @@ export declare class UpdateStudentDto {
     year?: number;
     cgpa?: number;
     distance?: number;
+    roomTypePreference?: string;
+    floorPreference?: string;
 }

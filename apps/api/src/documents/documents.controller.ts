@@ -13,7 +13,7 @@ export class DocumentsController {
   async uploadFile(
     @Request() req: any,
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { type: 'PHOTO' | 'SIGNATURE' | 'ADMISSION_LETTER' | 'UNDERTAKING' | 'MEDICAL_CERTIFICATE' }
+    @Body() body: { type: 'PHOTO' | 'SIGNATURE' | 'ADMISSION_LETTER' | 'UNDERTAKING' | 'MEDICAL_CERTIFICATE' | 'AADHAR_FRONT' | 'AADHAR_BACK' }
   ) {
     return this.documentsService.uploadFile(req.user.userId, file, body.type);
   }

@@ -53,6 +53,8 @@ const formSchema = z.object({
   year: z.coerce.number().min(1).max(5),
   cgpa: z.coerce.number().min(0).max(10).optional().default(0),
   distance: z.coerce.number().min(0).optional().default(0),
+  roomTypePreference: z.string().optional(),
+  floorPreference: z.string().optional(),
 });
 
 export function ProfileForm() {
@@ -86,6 +88,8 @@ export function ProfileForm() {
       year: 1,
       cgpa: 0,
       distance: 0,
+      roomTypePreference: "",
+      floorPreference: "",
     },
   });
 
@@ -119,10 +123,12 @@ export function ProfileForm() {
             country: profile.country || "India",
             gender: profile.gender || "MALE",
             category: profile.category || "DELHI",
-            program: profile.program || "B.Tech",
+            program: profile.program || "BTECH",
             year: profile.year || 1,
-            cgpa: meta.cgpa || 0,
+            cgpa: profile.cgpa || 0, // Now using top-level cgpa
             distance: meta.distance || 0,
+            roomTypePreference: profile.roomTypePreference || "",
+            floorPreference: profile.floorPreference || "",
           });
         }
       } catch (error) {
@@ -254,7 +260,7 @@ export function ProfileForm() {
                 <FormItem>
                   <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input placeholder="John Doe" {...field} disabled={isFrozen} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -268,7 +274,7 @@ export function ProfileForm() {
                 <FormItem>
                   <FormLabel>Roll No. / Application No. <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="2K24/..." {...field} />
+                    <Input placeholder="2K24/..." {...field} disabled={isFrozen} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -284,7 +290,7 @@ export function ProfileForm() {
                 <FormItem>
                   <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="9876543210" {...field} />
+                    <Input placeholder="9876543210" {...field} disabled={isFrozen} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -328,12 +334,12 @@ export function ProfileForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="B.Tech">B.Tech</SelectItem>
-                      <SelectItem value="M.Tech">M.Tech</SelectItem>
+                      <SelectItem value="BTECH">B.Tech</SelectItem>
+                      <SelectItem value="MTECH">M.Tech</SelectItem>
                       <SelectItem value="MBA">MBA</SelectItem>
-                      <SelectItem value="M.Sc">M.Sc</SelectItem>
-                      <SelectItem value="Ph.D">Ph.D</SelectItem>
-                      <SelectItem value="B.Des">B.Des</SelectItem>
+                      <SelectItem value="MSC">M.Sc</SelectItem>
+                      <SelectItem value="PHD">Ph.D</SelectItem>
+                      <SelectItem value="BDES">B.Des</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -397,7 +403,7 @@ export function ProfileForm() {
                 <FormItem>
                   <FormLabel>Distance (km)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0" {...field} />
+                    <Input type="number" placeholder="0" {...field} disabled={isFrozen} />
                   </FormControl>
                   <FormDescription>Approx. distance from DTU. Will be verified.</FormDescription>
                   <FormMessage />
@@ -415,8 +421,66 @@ export function ProfileForm() {
                   <FormItem>
                     <FormLabel>CGPA / Percentage</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={isFrozen} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          {selectedYear >= 2 && form.watch("cgpa") >= 8.0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="col-span-2">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2">Merit Preferences</h3>
+                <p className="text-xs text-blue-700 mb-4">
+                  Since your CGPA is 8.0+, you are eligible to express room and floor preferences.
+                  Note: Allotment is subject to availability.
+                </p>
+              </div>
+              <FormField
+                control={form.control}
+                name="roomTypePreference"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Room Type Preference</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFrozen}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select preference" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="SINGLE">Single Seater</SelectItem>
+                        <SelectItem value="DOUBLE">Double Seater</SelectItem>
+                        <SelectItem value="DORM">Dormitory</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="floorPreference"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Floor Preference</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFrozen}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select preference" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="GROUND">Ground Floor</SelectItem>
+                        <SelectItem value="FIRST">First Floor</SelectItem>
+                        <SelectItem value="SECOND">Second Floor</SelectItem>
+                        <SelectItem value="TOP">Top Floor</SelectItem>
+                        <SelectItem value="ANY">Any Floor</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -432,7 +496,7 @@ export function ProfileForm() {
                 <FormItem>
                   <FormLabel>Address Line 1 (House No., Street) <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="H.No 123, Street Name" {...field} />
+                    <Input placeholder="H.No 123, Street Name" {...field} disabled={isFrozen} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -445,7 +509,7 @@ export function ProfileForm() {
                 <FormItem>
                   <FormLabel>Address Line 2 (Locality, Landmark)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Locality, Landmark" {...field} />
+                    <Input placeholder="Locality, Landmark" {...field} disabled={isFrozen} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -523,7 +587,7 @@ export function ProfileForm() {
                 <FormItem>
                   <FormLabel>Pincode <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="110042" {...field} />
+                    <Input placeholder="110042" {...field} disabled={isFrozen} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

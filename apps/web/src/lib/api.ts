@@ -1,3 +1,4 @@
+// Force rebuild
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export function getAuthHeaders() {
@@ -74,6 +75,86 @@ export async function updateProfile(data: any) {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to update profile');
+  }
+
+  return response.json();
+}
+
+export async function requestEditAccess(reason: string) {
+  const response = await fetch(`${API_URL}/students/me/request-edit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ reason }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to request edit access');
+  }
+
+  return response.json();
+}
+
+export async function getProfileEditRequests() {
+  const response = await fetch(`${API_URL}/students/me/edit-requests`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch edit requests');
+  }
+
+  return response.json();
+}
+
+export async function getPendingEditRequests() {
+  const response = await fetch(`${API_URL}/students/admin/edit-requests`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch pending requests');
+  }
+
+  return response.json();
+}
+
+export async function approveEditRequest(requestId: string) {
+  const response = await fetch(`${API_URL}/students/admin/edit-requests/${requestId}/approve`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to approve request');
+  }
+
+  return response.json();
+}
+
+export async function rejectEditRequest(requestId: string) {
+  const response = await fetch(`${API_URL}/students/admin/edit-requests/${requestId}/reject`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to reject request');
   }
 
   return response.json();

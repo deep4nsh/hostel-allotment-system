@@ -115,7 +115,13 @@ model Student {
   bankAccountNo  String?
   bankIfsc       String?
   bankAccountType AccountType?
+
   bankHolderName String?
+
+  // CGPA & Preferences
+  cgpa               Float    @default(0)
+  roomTypePreference String?  // SINGLE, DOUBLE, DORM
+  floorPreference    String?  // GROUND, FIRST, SECOND, TOP, ANY
 
   isProfileFrozen Boolean @default(false)
 

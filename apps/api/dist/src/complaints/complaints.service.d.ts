@@ -53,6 +53,9 @@ export declare class ComplaintsService {
             bankIfsc: string | null;
             bankAccountType: import(".prisma/client").$Enums.AccountType | null;
             bankHolderName: string | null;
+            cgpa: number;
+            roomTypePreference: string | null;
+            floorPreference: string | null;
             isProfileFrozen: boolean;
             createdAt: Date;
             updatedAt: Date;

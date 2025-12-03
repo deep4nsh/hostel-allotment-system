@@ -3,7 +3,7 @@ export declare class DocumentsController {
     private readonly documentsService;
     constructor(documentsService: DocumentsService);
     uploadFile(req: any, file: Express.Multer.File, body: {
-        type: 'PHOTO' | 'SIGNATURE' | 'ADMISSION_LETTER' | 'UNDERTAKING' | 'MEDICAL_CERTIFICATE';
+        type: 'PHOTO' | 'SIGNATURE' | 'ADMISSION_LETTER' | 'UNDERTAKING' | 'MEDICAL_CERTIFICATE' | 'AADHAR_FRONT' | 'AADHAR_BACK';
     }): Promise<{
         message: string;
         document: {

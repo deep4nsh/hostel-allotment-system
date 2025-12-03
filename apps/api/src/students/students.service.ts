@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -7,7 +7,7 @@ export class StudentsService {
 
     async findOne(userId: string) {
         // Removed 'payments: true' to prevent errors if payment relation is empty or problematic
-        return this.prisma.student.findUnique({
+        const student = await this.prisma.student.findUnique({
             where: { userId },
             include: {
                 user: {
@@ -25,6 +25,31 @@ export class StudentsService {
                 }
             }
         });
+
+        if (!student) {
+            // Lazy creation for users who don't have a student record
+            console.log(`Student record not found for user ${userId}. Creating default record.`);
+
+            // Verify user exists first
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            if (!user) throw new NotFoundException('User not found');
+
+            const newStudent = await this.prisma.student.create({
+                data: {
+                    userId,
+                    name: user.email.split('@')[0] || 'Student', // Fallback name from email
+                    gender: 'OTHER',
+                },
+                include: {
+                    user: {
+                        select: { email: true, role: true }
+                    }
+                }
+            });
+            return newStudent;
+        }
+
+        return student;
     }
 
     async update(userId: string, data: any) {
@@ -36,7 +61,7 @@ export class StudentsService {
 
     async savePreferences(userId: string, preferences: any[]) {
         const student = await this.findOne(userId);
-        if (!student) throw new Error('Student not found');
+        if (!student) throw new NotFoundException('Student not found');
 
         // Delete existing preferences
         await this.prisma.preference.deleteMany({
@@ -55,24 +80,25 @@ export class StudentsService {
     }
 
     async updateProfile(userId: string, data: any) {
+        console.log('Updating profile for user:', userId);
         const student = await this.prisma.student.findUnique({ where: { userId } });
-        if (!student) throw new Error('Student not found');
+        if (!student) throw new NotFoundException('Student not found');
 
         if (student.isProfileFrozen) {
             throw new ForbiddenException('Profile is frozen. Request edit access to make changes.');
         }
 
-        const { cgpa, distance, ...rest } = data;
+        const { distance, ...rest } = data;
 
         const updateData: any = { ...rest };
 
-        if (cgpa !== undefined || distance !== undefined) {
+        // Handle profileMeta fields (currently only distance)
+        if (distance !== undefined) {
             const existingMeta = (student.profileMeta as any) || {};
 
             updateData.profileMeta = {
                 ...existingMeta,
-                ...(cgpa !== undefined && { cgpa }),
-                ...(distance !== undefined && { distance }),
+                distance,
             };
         }
 
@@ -88,7 +114,7 @@ export class StudentsService {
         ];
 
         const isComplete = mandatoryFields.every(field => {
-            const value = updatedStudent[field];
+            const value = (updatedStudent as any)[field];
             return value !== null && value !== undefined && value !== '';
         });
 
@@ -97,14 +123,16 @@ export class StudentsService {
                 where: { id: student.id },
                 data: { isProfileFrozen: true }
             });
+            updatedStudent.isProfileFrozen = true;
         }
 
         return updatedStudent;
     }
 
     async requestEditAccess(userId: string, reason: string) {
+        console.log('Requesting edit access for user:', userId);
         const student = await this.prisma.student.findUnique({ where: { userId } });
-        if (!student) throw new Error('Student not found');
+        if (!student) throw new NotFoundException('Student not found');
 
         return this.prisma.profileEditRequest.create({
             data: {
@@ -115,9 +143,63 @@ export class StudentsService {
         });
     }
 
+    async getAllPendingEditRequests() {
+        return this.prisma.profileEditRequest.findMany({
+            where: { status: 'PENDING' },
+            include: {
+                student: {
+                    select: {
+                        name: true,
+                        uniqueId: true,
+                        program: true,
+                        year: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    async approveEditRequest(requestId: string) {
+        const request = await this.prisma.profileEditRequest.findUnique({ where: { id: requestId } });
+        if (!request) throw new NotFoundException('Request not found');
+
+        // Update request status
+        await this.prisma.profileEditRequest.update({
+            where: { id: requestId },
+            data: { status: 'APPROVED' }
+        });
+
+        // Unfreeze profile
+        return this.prisma.student.update({
+            where: { id: request.studentId },
+            data: { isProfileFrozen: false }
+        });
+    }
+
+    async rejectEditRequest(requestId: string) {
+        const request = await this.prisma.profileEditRequest.findUnique({ where: { id: requestId } });
+        if (!request) throw new NotFoundException('Request not found');
+
+        return this.prisma.profileEditRequest.update({
+            where: { id: requestId },
+            data: { status: 'REJECTED' }
+        });
+    }
+
+    async getEditRequests(userId: string) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) throw new NotFoundException('Student not found');
+
+        return this.prisma.profileEditRequest.findMany({
+            where: { studentId: student.id },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
     async generateUniqueId(userId: string) {
         const student = await this.findOne(userId);
-        if (!student) throw new Error('Student not found');
+        if (!student) throw new NotFoundException('Student not found');
         if (student.uniqueId) return student; // Already has ID
 
         const year = new Date().getFullYear();

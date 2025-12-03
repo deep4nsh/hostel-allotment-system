@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Patch, UseGuards, Request, Res, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, UseGuards, Request, Res, NotFoundException, Param } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { PdfService } from './pdf.service';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 import type { Response } from 'express';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
@@ -42,6 +45,12 @@ export class StudentsController {
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @Get('me/edit-requests')
+    getEditRequests(@Request() req: any) {
+        return this.studentsService.getEditRequests(req.user.userId);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
     @Get('me/slip')
     async downloadSlip(@Request() req: any, @Res() res: Response) {
         try {
@@ -65,5 +74,26 @@ export class StudentsController {
     @Post('preferences')
     savePreferences(@Request() req: any, @Body() body: { preferences: any[] }) {
         return this.studentsService.savePreferences(req.user.userId, body.preferences);
+    }
+
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.ADMIN)
+    @Get('admin/edit-requests')
+    getAllPendingEditRequests() {
+        return this.studentsService.getAllPendingEditRequests();
+    }
+
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.ADMIN)
+    @Post('admin/edit-requests/:id/approve')
+    approveEditRequest(@Param('id') id: string) {
+        return this.studentsService.approveEditRequest(id);
+    }
+
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.ADMIN)
+    @Post('admin/edit-requests/:id/reject')
+    rejectEditRequest(@Param('id') id: string) {
+        return this.studentsService.rejectEditRequest(id);
     }
 }

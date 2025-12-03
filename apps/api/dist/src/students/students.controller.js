@@ -17,6 +17,9 @@ const common_1 = require("@nestjs/common");
 const students_service_1 = require("./students.service");
 const pdf_service_1 = require("./pdf.service");
 const passport_1 = require("@nestjs/passport");
+const roles_guard_1 = require("../auth/roles.guard");
+const roles_decorator_1 = require("../auth/roles.decorator");
+const client_1 = require("@prisma/client");
 const update_student_dto_1 = require("./dto/update-student.dto");
 let StudentsController = class StudentsController {
     studentsService;
@@ -41,6 +44,9 @@ let StudentsController = class StudentsController {
     requestEditAccess(req, body) {
         return this.studentsService.requestEditAccess(req.user.userId, body.reason);
     }
+    getEditRequests(req) {
+        return this.studentsService.getEditRequests(req.user.userId);
+    }
     async downloadSlip(req, res) {
         try {
             const student = await this.studentsService.findOne(req.user.userId);
@@ -59,6 +65,15 @@ let StudentsController = class StudentsController {
     }
     savePreferences(req, body) {
         return this.studentsService.savePreferences(req.user.userId, body.preferences);
+    }
+    getAllPendingEditRequests() {
+        return this.studentsService.getAllPendingEditRequests();
+    }
+    approveEditRequest(id) {
+        return this.studentsService.approveEditRequest(id);
+    }
+    rejectEditRequest(id) {
+        return this.studentsService.rejectEditRequest(id);
     }
 };
 exports.StudentsController = StudentsController;
@@ -98,6 +113,14 @@ __decorate([
 ], StudentsController.prototype, "requestEditAccess", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)('me/edit-requests'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "getEditRequests", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Get)('me/slip'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Res)()),
@@ -114,6 +137,32 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], StudentsController.prototype, "savePreferences", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, common_1.Get)('admin/edit-requests'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "getAllPendingEditRequests", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, common_1.Post)('admin/edit-requests/:id/approve'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "approveEditRequest", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, common_1.Post)('admin/edit-requests/:id/reject'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "rejectEditRequest", null);
 exports.StudentsController = StudentsController = __decorate([
     (0, common_1.Controller)('students'),
     __metadata("design:paramtypes", [students_service_1.StudentsService,

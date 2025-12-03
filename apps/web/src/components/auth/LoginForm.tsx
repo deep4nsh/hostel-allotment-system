@@ -45,11 +45,20 @@ export function LoginForm() {
     try {
       const data = await loginUser(values);
       const token = data.access_token;
+      if (!token) throw new Error("No access token received");
       localStorage.setItem("token", token);
 
       // Decode token to find role
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const base64Url = token.split('.')[1];
+        if (!base64Url) throw new Error("Invalid token format");
+
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const payload = JSON.parse(jsonPayload);
         const role = payload.role;
 
         if (role === 'ADMIN') {
@@ -61,6 +70,7 @@ export function LoginForm() {
         }
       } catch (e) {
         // Fallback if decode fails
+        console.error("Failed to decode token", e);
         router.push("/dashboard");
       }
 

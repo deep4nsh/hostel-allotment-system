@@ -2,39 +2,11 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class StudentsService {
     private prisma;
     constructor(prisma: PrismaService);
-    findOne(userId: string): Promise<({
+    findOne(userId: string): Promise<{
         user: {
             email: string;
             role: import(".prisma/client").$Enums.Role;
         };
-        allotment: ({
-            room: {
-                floor: {
-                    id: string;
-                    hostelId: string;
-                    number: number;
-                    gender: import(".prisma/client").$Enums.Gender;
-                };
-            } & {
-                id: string;
-                floorId: string;
-                number: string;
-                capacity: number;
-                occupancy: number;
-                yearAllowed: number[];
-            };
-        } & {
-            id: string;
-            studentId: string;
-            roomId: string;
-            type: string;
-            issueDate: Date;
-            validTill: Date | null;
-            letterUrl: string | null;
-            isPossessed: boolean;
-            possessionDate: Date | null;
-            createdAt: Date;
-        }) | null;
     } & {
         id: string;
         userId: string;
@@ -62,10 +34,13 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        cgpa: number;
+        roomTypePreference: string | null;
+        floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
-    }) | null>;
+    }>;
     update(userId: string, data: any): Promise<{
         id: string;
         userId: string;
@@ -93,6 +68,9 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        cgpa: number;
+        roomTypePreference: string | null;
+        floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -125,6 +103,9 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        cgpa: number;
+        roomTypePreference: string | null;
+        floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -137,6 +118,71 @@ export declare class StudentsService {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    getAllPendingEditRequests(): Promise<({
+        student: {
+            name: string;
+            uniqueId: string | null;
+            program: import(".prisma/client").$Enums.Program | null;
+            year: number | null;
+        };
+    } & {
+        id: string;
+        studentId: string;
+        reason: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    })[]>;
+    approveEditRequest(requestId: string): Promise<{
+        id: string;
+        userId: string;
+        uniqueId: string | null;
+        name: string;
+        phone: string | null;
+        program: import(".prisma/client").$Enums.Program | null;
+        year: number | null;
+        gender: import(".prisma/client").$Enums.Gender;
+        category: import(".prisma/client").$Enums.Category;
+        addressLine1: string | null;
+        addressLine2: string | null;
+        city: string | null;
+        state: string | null;
+        pincode: string | null;
+        country: string | null;
+        homeLat: number | null;
+        homeLng: number | null;
+        profileMeta: import(".prisma/client").Prisma.JsonValue | null;
+        foodPreference: import(".prisma/client").$Enums.FoodPreference | null;
+        guardianName: string | null;
+        guardianPhone: string | null;
+        guardianAddress: string | null;
+        bankAccountNo: string | null;
+        bankIfsc: string | null;
+        bankAccountType: import(".prisma/client").$Enums.AccountType | null;
+        bankHolderName: string | null;
+        cgpa: number;
+        roomTypePreference: string | null;
+        floorPreference: string | null;
+        isProfileFrozen: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    rejectEditRequest(requestId: string): Promise<{
+        id: string;
+        studentId: string;
+        reason: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    getEditRequests(userId: string): Promise<{
+        id: string;
+        studentId: string;
+        reason: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }[]>;
     generateUniqueId(userId: string): Promise<{
         id: string;
         userId: string;
@@ -164,6 +210,9 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        cgpa: number;
+        roomTypePreference: string | null;
+        floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;

@@ -34,12 +34,22 @@ export function Navbar() {
     if (token) {
       setIsLoggedIn(true);
       try {
-        // Simple JWT decode without library
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        // Safe JWT decode
+        const base64Url = token.split('.')[1];
+        if (!base64Url) throw new Error("Invalid token format");
+
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const payload = JSON.parse(jsonPayload);
         setRole(payload.role);
       } catch (e) {
-        console.error("Failed to decode token", e);
-        // If token is invalid, maybe logout?
+        // Silent cleanup for invalid tokens
+        localStorage.removeItem("token");
+        setIsLoggedIn(false);
+        setRole(null);
       }
     } else {
       setIsLoggedIn(false);
@@ -92,13 +102,18 @@ export function Navbar() {
 
                 {(role === "ADMIN" || role === "WARDEN") && (
                   <>
-                    <NavLink href="/warden/dashboard" active={isActive("/warden/dashboard")}>Requests</NavLink>
+                    {role === "ADMIN" ? (
+                      <NavLink href="/admin/requests" active={isActive("/admin/requests")}>Requests</NavLink>
+                    ) : (
+                      <NavLink href="/warden/dashboard" active={isActive("/warden/dashboard")}>Requests</NavLink>
+                    )}
                     <NavLink href="/warden/complaints" active={isActive("/warden/complaints")}>Complaints</NavLink>
                     {role === "ADMIN" && (
                       <>
                         <NavLink href="/admin/hostels" active={isActive("/admin/hostels")}>Hostels</NavLink>
                         <NavLink href="/admin/allotment" active={isActive("/admin/allotment")}>Allotment</NavLink>
                         <NavLink href="/admin/refunds" active={isActive("/admin/refunds")}>Refunds</NavLink>
+                        <NavLink href="/admin/imports" active={isActive("/admin/imports")}>Imports</NavLink>
                         <NavLink href="/admin/analytics" active={isActive("/admin/analytics")}>Analytics</NavLink>
                       </>
                     )}

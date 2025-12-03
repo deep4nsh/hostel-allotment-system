@@ -28,6 +28,8 @@ class UpdateStudentDto {
     year;
     cgpa;
     distance;
+    roomTypePreference;
+    floorPreference;
 }
 exports.UpdateStudentDto = UpdateStudentDto;
 __decorate([
@@ -109,4 +111,14 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateStudentDto.prototype, "distance", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "roomTypePreference", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "floorPreference", void 0);
 //# sourceMappingURL=update-student.dto.js.map
