@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ProfileForm } from "@/components/student/ProfileForm"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -17,7 +18,7 @@ export default function StudentProfilePage() {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token')
             if (!token) {
-                router.push('/auth/login')
+                router.push('/login')
                 return
             }
 
@@ -28,8 +29,6 @@ export default function StudentProfilePage() {
                 if (res.ok) {
                     const data = await res.json()
                     setProfile(data)
-                    // Check for allotment in profile data if included, or fetch separately
-                    // Assuming students/me includes allotment based on previous service updates
                     if (data.allotment) {
                         setAllotment(data.allotment)
                     }
@@ -43,8 +42,6 @@ export default function StudentProfilePage() {
                 if (wlRes.ok) {
                     const wlData = await wlRes.json()
                     setWaitlist(wlData)
-                } else {
-                    console.warn('Failed to fetch waitlist:', wlRes.status, wlRes.statusText)
                 }
             } catch (error) {
                 console.error(error)
@@ -90,79 +87,6 @@ export default function StudentProfilePage() {
         }
     }
 
-    const [isEditing, setIsEditing] = useState(false)
-    const [formData, setFormData] = useState<any>({})
-
-    useEffect(() => {
-        if (profile) {
-            setFormData({
-                name: profile.name,
-                phone: profile.phone || '',
-                address: profile.address || '',
-                gender: profile.gender || '',
-                year: profile.year || '',
-                program: profile.program || ''
-            })
-        }
-    }, [profile])
-
-    const programOptions = [
-        { value: 'BTECH', label: 'B.Tech' },
-        { value: 'BSC', label: 'B.Sc' },
-        { value: 'BDES', label: 'B.Des' },
-        { value: 'MTECH', label: 'M.Tech' },
-        { value: 'MSC', label: 'M.Sc' },
-        { value: 'MCA', label: 'MCA' },
-        { value: 'PHD', label: 'PhD' },
-    ];
-
-    const handleUpdateProfile = async () => {
-        const token = localStorage.getItem('token')
-        try {
-            const res = await fetch('http://localhost:4000/students/me', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    year: formData.year ? parseInt(formData.year) : undefined
-                })
-            })
-            if (res.ok) {
-                const updated = await res.json()
-                setProfile(updated)
-                setIsEditing(false)
-                alert('Profile updated successfully')
-            } else {
-                alert('Failed to update profile')
-            }
-        } catch (error) {
-            console.error(error)
-            alert('Error updating profile')
-        }
-    }
-
-    const handleGenerateId = async () => {
-        const token = localStorage.getItem('token')
-        try {
-            const res = await fetch('http://localhost:4000/students/me/generate-id', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            if (res.ok) {
-                const updated = await res.json()
-                setProfile(updated)
-                alert('Unique ID generated!')
-            } else {
-                alert('Failed to generate ID')
-            }
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
     if (isLoading) return <div className="p-8">Loading...</div>
     if (!profile) return <div className="p-8">Failed to load profile</div>
 
@@ -173,7 +97,7 @@ export default function StudentProfilePage() {
                     <h1 className="text-3xl font-bold text-slate-900">Student Dashboard</h1>
                     <Button variant="outline" onClick={() => {
                         localStorage.removeItem('token')
-                        router.push('/')
+                        router.push('/login')
                     }}>Logout</Button>
                 </div>
 
@@ -212,102 +136,12 @@ export default function StudentProfilePage() {
                 )}
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Profile Details</CardTitle>
-                            <CardDescription>Your registered information</CardDescription>
-                        </div>
-                        <Button variant={isEditing ? "secondary" : "default"} onClick={() => setIsEditing(!isEditing)}>
-                            {isEditing ? 'Cancel' : 'Edit Profile'}
-                        </Button>
+                    <CardHeader>
+                        <CardTitle>Profile Details</CardTitle>
+                        <CardDescription>Your registered information</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Name</label>
-                                {isEditing ? (
-                                    <input className="w-full p-2 border rounded" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                                ) : (
-                                    <p className="text-lg">{profile.name || 'Not set'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Email</label>
-                                <p className="text-lg">{profile.user?.email}</p>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Phone</label>
-                                {isEditing ? (
-                                    <input className="w-full p-2 border rounded" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-                                ) : (
-                                    <p className="text-lg">{profile.phone || 'Not set'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Address</label>
-                                {isEditing ? (
-                                    <input className="w-full p-2 border rounded" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
-                                ) : (
-                                    <p className="text-lg">{profile.address || 'Not set'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Gender</label>
-                                {isEditing ? (
-                                    <select className="w-full p-2 border rounded" value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })}>
-                                        <option value="">Select</option>
-                                        <option value="MALE">Male</option>
-                                        <option value="FEMALE">Female</option>
-                                        <option value="OTHER">Other</option>
-                                    </select>
-                                ) : (
-                                    <p className="text-lg">{profile.gender || 'Not set'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Program</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full p-2 border rounded"
-                                        value={formData.program}
-                                        onChange={e => setFormData({ ...formData, program: e.target.value })}
-                                    >
-                                        <option value="">Select Program</option>
-                                        {programOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <p className="text-lg">{profile.program || 'Not set'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Year</label>
-                                {isEditing ? (
-                                    <input type="number" className="w-full p-2 border rounded" value={formData.year} onChange={e => setFormData({ ...formData, year: e.target.value })} />
-                                ) : (
-                                    <p className="text-lg">{profile.year || 'Not set'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Student ID</label>
-                                <div className="flex items-center gap-2">
-                                    <p className="text-lg">{profile.uniqueId || 'Pending Allocation'}</p>
-                                    {!profile.uniqueId && !isEditing && (
-                                        <Button size="sm" onClick={handleGenerateId}>Generate ID</Button>
-                                    )}
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-500">Status</label>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    {allotment ? 'Allotted' : 'Registered'}
-                                </span>
-                            </div>
-                        </div>
-                        {isEditing && (
-                            <Button className="w-full" onClick={handleUpdateProfile}>Save Changes</Button>
-                        )}
+                    <CardContent>
+                        <ProfileForm />
                     </CardContent>
                 </Card>
 

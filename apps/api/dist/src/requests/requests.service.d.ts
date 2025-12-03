@@ -114,6 +114,7 @@ export declare class RequestsService {
             bankIfsc: string | null;
             bankAccountType: import(".prisma/client").$Enums.AccountType | null;
             bankHolderName: string | null;
+            isProfileFrozen: boolean;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -176,6 +177,7 @@ export declare class RequestsService {
             bankIfsc: string | null;
             bankAccountType: import(".prisma/client").$Enums.AccountType | null;
             bankHolderName: string | null;
+            isProfileFrozen: boolean;
             createdAt: Date;
             updatedAt: Date;
         };

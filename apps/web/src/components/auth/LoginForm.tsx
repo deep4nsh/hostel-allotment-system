@@ -46,18 +46,18 @@ export function LoginForm() {
       const data = await loginUser(values);
       const token = data.access_token;
       localStorage.setItem("token", token);
-      
+
       // Decode token to find role
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const role = payload.role;
 
         if (role === 'ADMIN') {
-            router.push("/admin/analytics");
+          router.push("/admin/analytics");
         } else if (role === 'WARDEN') {
-            router.push("/warden/dashboard");
+          router.push("/warden/dashboard");
         } else {
-            router.push("/dashboard");
+          router.push("/student/profile");
         }
       } catch (e) {
         // Fallback if decode fails

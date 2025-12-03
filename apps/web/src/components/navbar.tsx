@@ -58,8 +58,7 @@ export function Navbar() {
   if (
     pathname === "/" ||
     pathname?.startsWith("/login") ||
-    pathname?.startsWith("/register") ||
-    pathname?.startsWith("/auth")
+    pathname?.startsWith("/register")
   ) {
     return null;
   }
@@ -81,8 +80,10 @@ export function Navbar() {
               <div className="hidden md:flex items-center space-x-4">
                 {role === "STUDENT" && (
                   <>
-                    <NavLink href="/dashboard" active={isActive("/dashboard")}>Dashboard</NavLink>
+                    <NavLink href="/student/profile" active={isActive("/student/profile")}>Profile</NavLink>
                     <NavLink href="/student/documents" active={isActive("/student/documents")}>Documents</NavLink>
+                    <NavLink href="/student/preferences" active={isActive("/student/preferences")}>Preferences</NavLink>
+                    <NavLink href="/student/payments" active={isActive("/student/payments")}>Payments</NavLink>
                     <NavLink href="/student/complaints" active={isActive("/student/complaints")}>Complaints</NavLink>
                     <NavLink href="/student/rebate" active={isActive("/student/rebate")}>Mess Rebate</NavLink>
                     <NavLink href="/student/requests" active={isActive("/student/requests")}>Requests</NavLink>
@@ -95,7 +96,9 @@ export function Navbar() {
                     <NavLink href="/warden/complaints" active={isActive("/warden/complaints")}>Complaints</NavLink>
                     {role === "ADMIN" && (
                       <>
+                        <NavLink href="/admin/hostels" active={isActive("/admin/hostels")}>Hostels</NavLink>
                         <NavLink href="/admin/allotment" active={isActive("/admin/allotment")}>Allotment</NavLink>
+                        <NavLink href="/admin/refunds" active={isActive("/admin/refunds")}>Refunds</NavLink>
                         <NavLink href="/admin/analytics" active={isActive("/admin/analytics")}>Analytics</NavLink>
                       </>
                     )}

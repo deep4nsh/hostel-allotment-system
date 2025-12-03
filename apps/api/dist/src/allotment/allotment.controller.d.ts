@@ -56,6 +56,7 @@ export declare class AllotmentController {
             bankIfsc: string | null;
             bankAccountType: import("@prisma/client").$Enums.AccountType | null;
             bankHolderName: string | null;
+            isProfileFrozen: boolean;
             createdAt: Date;
             updatedAt: Date;
         };

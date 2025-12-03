@@ -25,14 +25,21 @@ let StudentsController = class StudentsController {
         this.studentsService = studentsService;
         this.pdfService = pdfService;
     }
-    getProfile(req) {
-        return this.studentsService.findOne(req.user.userId);
+    async getProfile(req) {
+        const student = await this.studentsService.findOne(req.user.userId);
+        if (!student) {
+            throw new common_1.NotFoundException('Student profile not found');
+        }
+        return student;
     }
     updateProfile(req, updateStudentDto) {
         return this.studentsService.updateProfile(req.user.userId, updateStudentDto);
     }
     generateId(req) {
         return this.studentsService.generateUniqueId(req.user.userId);
+    }
+    requestEditAccess(req, body) {
+        return this.studentsService.requestEditAccess(req.user.userId, body.reason);
     }
     async downloadSlip(req, res) {
         try {
@@ -61,7 +68,7 @@ __decorate([
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], StudentsController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
@@ -80,6 +87,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], StudentsController.prototype, "generateId", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('me/request-edit'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "requestEditAccess", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Get)('me/slip'),

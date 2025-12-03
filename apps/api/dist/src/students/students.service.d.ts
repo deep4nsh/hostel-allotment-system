@@ -62,6 +62,7 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }) | null>;
@@ -92,6 +93,7 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -123,6 +125,15 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        isProfileFrozen: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    requestEditAccess(userId: string, reason: string): Promise<{
+        id: string;
+        studentId: string;
+        reason: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -153,6 +164,7 @@ export declare class StudentsService {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;

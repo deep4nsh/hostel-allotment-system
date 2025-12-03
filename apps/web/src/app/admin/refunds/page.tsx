@@ -13,7 +13,7 @@ export default function AdminRefundsPage() {
     const fetchRequests = async () => {
         const token = localStorage.getItem('token')
         if (!token) {
-            router.push('/auth/login')
+            router.push('/login')
             return
         }
 

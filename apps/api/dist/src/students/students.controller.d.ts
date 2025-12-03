@@ -6,7 +6,7 @@ export declare class StudentsController {
     private readonly studentsService;
     private readonly pdfService;
     constructor(studentsService: StudentsService, pdfService: PdfService);
-    getProfile(req: any): Promise<({
+    getProfile(req: any): Promise<{
         user: {
             email: string;
             role: import(".prisma/client").$Enums.Role;
@@ -66,9 +66,10 @@ export declare class StudentsController {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
-    }) | null>;
+    }>;
     updateProfile(req: any, updateStudentDto: UpdateStudentDto): Promise<{
         id: string;
         userId: string;
@@ -96,6 +97,7 @@ export declare class StudentsController {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -126,6 +128,17 @@ export declare class StudentsController {
         bankIfsc: string | null;
         bankAccountType: import(".prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
+        isProfileFrozen: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    requestEditAccess(req: any, body: {
+        reason: string;
+    }): Promise<{
+        id: string;
+        studentId: string;
+        reason: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
         createdAt: Date;
         updatedAt: Date;
     }>;

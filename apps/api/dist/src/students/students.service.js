@@ -59,20 +59,52 @@ let StudentsService = class StudentsService {
         });
     }
     async updateProfile(userId, data) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student)
+            throw new Error('Student not found');
+        if (student.isProfileFrozen) {
+            throw new common_1.ForbiddenException('Profile is frozen. Request edit access to make changes.');
+        }
         const { cgpa, distance, ...rest } = data;
         const updateData = { ...rest };
         if (cgpa !== undefined || distance !== undefined) {
-            const student = await this.prisma.student.findUnique({ where: { userId }, select: { profileMeta: true } });
-            const existingMeta = student?.profileMeta || {};
+            const existingMeta = student.profileMeta || {};
             updateData.profileMeta = {
                 ...existingMeta,
                 ...(cgpa !== undefined && { cgpa }),
                 ...(distance !== undefined && { distance }),
             };
         }
-        return this.prisma.student.update({
+        const updatedStudent = await this.prisma.student.update({
             where: { userId },
             data: updateData,
+        });
+        const mandatoryFields = [
+            'name', 'uniqueId', 'phone', 'gender', 'program', 'year', 'category',
+            'addressLine1', 'city', 'state', 'pincode', 'country'
+        ];
+        const isComplete = mandatoryFields.every(field => {
+            const value = updatedStudent[field];
+            return value !== null && value !== undefined && value !== '';
+        });
+        if (isComplete) {
+            await this.prisma.student.update({
+                where: { id: student.id },
+                data: { isProfileFrozen: true }
+            });
+        }
+        return updatedStudent;
+    }
+    async requestEditAccess(userId, reason) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student)
+            throw new Error('Student not found');
+        return this.prisma.profileEditRequest.create({
+            data: {
+                studentId: student.id,
+                reason,
+                status: 'PENDING'
+            }
         });
     }
     async generateUniqueId(userId) {

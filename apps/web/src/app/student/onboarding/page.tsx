@@ -33,7 +33,7 @@ export default function OnboardingPage() {
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token');
-            if (!token) return router.push('/auth/login');
+            if (!token) return router.push('/login');
 
             try {
                 // Fetch Profile

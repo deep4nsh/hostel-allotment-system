@@ -15,7 +15,7 @@ export default function AdminHostelsPage() {
         const fetchHostels = async () => {
             const token = localStorage.getItem('token')
             if (!token) {
-                router.push('/auth/login')
+                router.push('/login')
                 return
             }
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, UseGuards, Request, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, UseGuards, Request, Res, NotFoundException } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { PdfService } from './pdf.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -14,8 +14,13 @@ export class StudentsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Get('me')
-    getProfile(@Request() req: any) {
-        return this.studentsService.findOne(req.user.userId);
+    async getProfile(@Request() req: any) {
+        const student = await this.studentsService.findOne(req.user.userId);
+        if (!student) {
+            // If the user exists but has no student record (e.g. Admin/Warden accessing student route)
+            throw new NotFoundException('Student profile not found');
+        }
+        return student;
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -28,6 +33,12 @@ export class StudentsController {
     @Post('me/generate-id')
     generateId(@Request() req: any) {
         return this.studentsService.generateUniqueId(req.user.userId);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('me/request-edit')
+    requestEditAccess(@Request() req: any, @Body() body: { reason: string }) {
+        return this.studentsService.requestEditAccess(req.user.userId, body.reason);
     }
 
     @UseGuards(AuthGuard('jwt'))

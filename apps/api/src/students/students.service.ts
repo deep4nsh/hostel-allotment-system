@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -53,16 +53,22 @@ export class StudentsService {
             })),
         });
     }
-    
+
     async updateProfile(userId: string, data: any) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) throw new Error('Student not found');
+
+        if (student.isProfileFrozen) {
+            throw new ForbiddenException('Profile is frozen. Request edit access to make changes.');
+        }
+
         const { cgpa, distance, ...rest } = data;
-        
+
         const updateData: any = { ...rest };
 
         if (cgpa !== undefined || distance !== undefined) {
-            const student = await this.prisma.student.findUnique({ where: { userId }, select: { profileMeta: true } });
-            const existingMeta = (student?.profileMeta as any) || {};
-            
+            const existingMeta = (student.profileMeta as any) || {};
+
             updateData.profileMeta = {
                 ...existingMeta,
                 ...(cgpa !== undefined && { cgpa }),
@@ -70,9 +76,42 @@ export class StudentsService {
             };
         }
 
-        return this.prisma.student.update({
+        const updatedStudent = await this.prisma.student.update({
             where: { userId },
             data: updateData,
+        });
+
+        // Check if all mandatory fields are filled to freeze the profile
+        const mandatoryFields = [
+            'name', 'uniqueId', 'phone', 'gender', 'program', 'year', 'category',
+            'addressLine1', 'city', 'state', 'pincode', 'country'
+        ];
+
+        const isComplete = mandatoryFields.every(field => {
+            const value = updatedStudent[field];
+            return value !== null && value !== undefined && value !== '';
+        });
+
+        if (isComplete) {
+            await this.prisma.student.update({
+                where: { id: student.id },
+                data: { isProfileFrozen: true }
+            });
+        }
+
+        return updatedStudent;
+    }
+
+    async requestEditAccess(userId: string, reason: string) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) throw new Error('Student not found');
+
+        return this.prisma.profileEditRequest.create({
+            data: {
+                studentId: student.id,
+                reason,
+                status: 'PENDING'
+            }
         });
     }
 
