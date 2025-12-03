@@ -46,13 +46,33 @@ async function main() {
 
   // 2. Seed Hostels
   const hostels = [
-    { name: 'Aryabhatta Hostel', isAC: false, gender: Gender.MALE },
-    { name: 'Ramanujan Hostel', isAC: true, gender: Gender.MALE },
+    { name: 'Aryabhatta/Type 2', isAC: false, gender: Gender.MALE },
+    { name: 'Ramanujan/Transit', isAC: true, gender: Gender.MALE },
     { name: 'Kalpana Chawla Hostel', isAC: false, gender: Gender.FEMALE },
   ];
 
   for (const h of hostels) {
-    const existingHostel = await prisma.hostel.findFirst({ where: { name: h.name } });
+    // Check for existing hostel by new name
+    let existingHostel = await prisma.hostel.findFirst({ where: { name: h.name } });
+
+    // If not found, check if it exists by OLD name and rename it
+    if (!existingHostel) {
+      let oldName = null;
+      if (h.name === 'Aryabhatta/Type 2') oldName = 'Aryabhatta Hostel';
+      else if (h.name === 'Ramanujan/Transit') oldName = 'Ramanujan Hostel';
+
+      if (oldName) {
+        const oldHostel = await prisma.hostel.findFirst({ where: { name: oldName } });
+        if (oldHostel) {
+          console.log(`Renaming ${oldName} to ${h.name}...`);
+          existingHostel = await prisma.hostel.update({
+            where: { id: oldHostel.id },
+            data: { name: h.name, isAC: h.isAC }
+          });
+        }
+      }
+    }
+
     if (!existingHostel) {
       const hostel = await prisma.hostel.create({
         data: {
@@ -90,7 +110,7 @@ async function main() {
         }
       }
     } else {
-      console.log(`Hostel ${h.name} already exists`);
+      console.log(`Hostel ${h.name} already exists (or was renamed)`);
     }
   }
 }

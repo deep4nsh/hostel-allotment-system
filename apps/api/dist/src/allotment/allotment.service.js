@@ -56,6 +56,12 @@ let AllotmentService = class AllotmentService {
         if (targetProgramGroup) {
             eligibleStudents = eligibleStudents.filter(s => (0, program_utils_1.getProgramGroup)(s.program) === targetProgramGroup);
         }
+        if (hostel.name.includes('Aryabhatta') || hostel.name.includes('Type 2')) {
+            eligibleStudents = eligibleStudents.filter(s => s.category !== 'NRI');
+        }
+        else if (hostel.name.includes('Ramanujan') || hostel.name.includes('Transit')) {
+            eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI');
+        }
         const categoryPriority = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
         eligibleStudents.sort((a, b) => {
             const isSeniorA = (a.year || 1) > 1;
