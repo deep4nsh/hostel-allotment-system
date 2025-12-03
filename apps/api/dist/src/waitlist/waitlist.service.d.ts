@@ -2,9 +2,44 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class WaitlistService {
     private prisma;
     constructor(prisma: PrismaService);
-    getWaitlistPosition(userId: string): Promise<{
-        position: null;
+    joinWaitlist(userId: string): Promise<{
+        id: string;
+        studentId: string;
+        position: number;
         status: string;
+        createdAt: Date;
+    } | {
+        message: string;
+        entry: {
+            id: string;
+            studentId: string;
+            position: number;
+            status: string;
+            createdAt: Date;
+        };
+    }>;
+    getPriorityWaitlist(): Promise<({
+        student: {
+            id: string;
+            uniqueId: string | null;
+            name: string;
+            program: import(".prisma/client").$Enums.Program | null;
+            year: number | null;
+            profileMeta: import(".prisma/client").Prisma.JsonValue;
+            payments: {
+                createdAt: Date;
+            }[];
+        };
+    } & {
+        id: string;
+        studentId: string;
+        position: number;
+        status: string;
+        createdAt: Date;
+    })[]>;
+    getWaitlistPosition(userId: string): Promise<{
+        status: string;
+        position?: undefined;
     } | {
         position: number;
         status: string;

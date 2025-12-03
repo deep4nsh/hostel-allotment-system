@@ -24,6 +24,12 @@ let WaitlistController = class WaitlistController {
     getWaitlistPosition(req) {
         return this.waitlistService.getWaitlistPosition(req.user.userId);
     }
+    joinWaitlist(req) {
+        return this.waitlistService.joinWaitlist(req.user.userId);
+    }
+    getPriorityWaitlist() {
+        return this.waitlistService.getPriorityWaitlist();
+    }
 };
 exports.WaitlistController = WaitlistController;
 __decorate([
@@ -34,6 +40,21 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], WaitlistController.prototype, "getWaitlistPosition", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('join'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], WaitlistController.prototype, "joinWaitlist", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)('admin'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], WaitlistController.prototype, "getPriorityWaitlist", null);
 exports.WaitlistController = WaitlistController = __decorate([
     (0, common_1.Controller)('waitlist'),
     __metadata("design:paramtypes", [waitlist_service_1.WaitlistService])

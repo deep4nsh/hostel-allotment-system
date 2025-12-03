@@ -41,6 +41,7 @@ enum PaymentPurpose {
   SEAT_BOOKING
   MESS_FEE
   HOSTEL_FEE
+  ALLOTMENT_REQUEST
 }
 
 enum RequestStatus {

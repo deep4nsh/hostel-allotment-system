@@ -347,3 +347,68 @@ export async function calculateDistance(addressData: any) {
   }
   return response.json()
 }
+
+export async function joinWaitlist() {
+  const response = await fetch(`${API_URL}/waitlist/join`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to join waitlist');
+  }
+  return response.json();
+}
+
+export async function getWaitlistPosition() {
+  const response = await fetch(`${API_URL}/waitlist/me`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch waitlist position');
+  return response.json();
+}
+
+export async function createPaymentOrder(purpose: string) {
+  const response = await fetch(`${API_URL}/payments/create-order`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ purpose })
+  });
+  if (!response.ok) throw new Error('Failed to create payment order');
+  return response.json();
+}
+
+export async function verifyPayment(data: any) {
+  const response = await fetch(`${API_URL}/payments/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error('Payment verification failed');
+  return response.json();
+}
+
+export async function mockVerifyPayment(purpose: string, amount: number) {
+  const response = await fetch(`${API_URL}/payments/mock-verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ purpose, amount })
+  });
+  if (!response.ok) throw new Error('Mock payment failed');
+  return response.json();
+}

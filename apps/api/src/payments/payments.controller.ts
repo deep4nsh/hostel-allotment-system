@@ -9,7 +9,7 @@ export class PaymentsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Post('create-order')
-    async createOrder(@Request() req: any, @Body() body: { purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' }) {
+    async createOrder(@Request() req: any, @Body() body: { purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST' }) {
         if (!body.purpose) {
             throw new BadRequestException('Purpose is required');
         }

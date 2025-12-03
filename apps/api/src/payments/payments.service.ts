@@ -15,7 +15,7 @@ export class PaymentsService {
         });
     }
 
-    async createOrder(userId: string, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE') {
+    async createOrder(userId: string, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST') {
         let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
             // Auto-create student record if missing
@@ -30,6 +30,7 @@ export class PaymentsService {
 
         let amount = 0;
         if (purpose === 'REGISTRATION') amount = 1000;
+        else if (purpose === 'ALLOTMENT_REQUEST') amount = 1000;
         else if (purpose === 'SEAT_BOOKING') amount = 5000;
         else if (purpose === 'MESS_FEE') amount = 20000;
         else if (purpose === 'HOSTEL_FEE') {
@@ -147,7 +148,7 @@ export class PaymentsService {
         // ... mock verify implementation (unchanged) ...
         let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
-             student = await this.prisma.student.create({
+            student = await this.prisma.student.create({
                 data: {
                     userId,
                     name: '',
@@ -155,7 +156,7 @@ export class PaymentsService {
                 }
             });
         }
-        
+
         return this.prisma.payment.create({
             data: {
                 studentId: student.id,
