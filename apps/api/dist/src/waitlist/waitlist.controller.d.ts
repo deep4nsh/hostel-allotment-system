@@ -28,8 +28,8 @@ export declare class WaitlistController {
     getPriorityWaitlist(): Promise<({
         student: {
             id: string;
-            uniqueId: string | null;
             name: string;
+            uniqueId: string | null;
             program: import(".prisma/client").$Enums.Program | null;
             year: number | null;
             profileMeta: import(".prisma/client").Prisma.JsonValue;

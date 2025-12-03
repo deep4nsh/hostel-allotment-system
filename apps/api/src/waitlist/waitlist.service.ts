@@ -79,19 +79,26 @@ export class WaitlistService {
     }
 
     async getWaitlistPosition(userId: string) {
-        const student = await this.prisma.student.findUnique({ where: { userId } });
+        const student = await this.prisma.student.findUnique({
+            where: { userId },
+            include: { payments: true }
+        });
         if (!student) return { status: 'NOT_REGISTERED' };
 
         const entry = await this.prisma.waitlistEntry.findUnique({
             where: { studentId: student.id },
         });
 
-        if (!entry) return { status: 'NOT_IN_WAITLIST' };
+        if (entry) {
+            const list = await this.getPriorityWaitlist();
+            const position = list.findIndex(e => e.studentId === student.id) + 1;
+            return { position, status: entry.status };
+        }
 
-        // Calculate dynamic position
-        const list = await this.getPriorityWaitlist();
-        const position = list.findIndex(e => e.studentId === student.id) + 1;
+        // Not in waitlist, check payment
+        const payment = student.payments.find((p: any) => p.purpose === 'ALLOTMENT_REQUEST' && p.status === 'COMPLETED');
+        if (payment) return { status: 'PAID_NOT_JOINED' };
 
-        return { position, status: entry.status };
+        return { status: 'NOT_PAID' };
     }
 }
