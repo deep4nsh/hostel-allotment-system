@@ -1,9 +1,13 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DistanceService } from '../utils/distance.service';
 
 @Injectable()
 export class StudentsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private distanceService: DistanceService
+    ) { }
 
     async findOne(userId: string) {
         // Removed 'payments: true' to prevent errors if payment relation is empty or problematic
@@ -28,7 +32,7 @@ export class StudentsService {
 
         if (!student) {
             // Lazy creation for users who don't have a student record
-            console.log(`Student record not found for user ${userId}. Creating default record.`);
+            console.log(`Student record not found for user ${userId}.Creating default record.`);
 
             // Verify user exists first
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -204,11 +208,23 @@ export class StudentsService {
 
         const year = new Date().getFullYear();
         const random = Math.floor(1000 + Math.random() * 9000);
-        const uniqueId = `DTU-${year}-${random}`;
+        const uniqueId = `DTU - ${year} -${random} `;
 
         return this.prisma.student.update({
             where: { userId },
             data: { uniqueId },
         });
+    }
+    async calculateDistance(addressData: { addressLine1: string, city: string, state: string, pincode: string }) {
+        const fullAddress = `${addressData.addressLine1}, ${addressData.city}, ${addressData.state}, ${addressData.pincode}, India`;
+        console.log(`Calculating distance for: ${fullAddress}`);
+
+        const coords = await this.distanceService.geocodeAddress(fullAddress);
+        if (!coords) {
+            throw new NotFoundException('Could not geocode address');
+        }
+
+        const distance = this.distanceService.calculateDistanceFromDTU(coords.lat, coords.lng);
+        return { distance, coords };
     }
 }

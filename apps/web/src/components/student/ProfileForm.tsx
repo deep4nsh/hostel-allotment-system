@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getProfile, updateProfile, triggerOcr, requestEditAccess } from "@/lib/api";
+import { getProfile, updateProfile, triggerOcr, requestEditAccess, calculateDistance } from "@/lib/api";
 import { ScanLine, Lock } from "lucide-react";
 import { State, City } from 'country-state-city';
 import {
@@ -402,9 +402,37 @@ export function ProfileForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Distance (km)</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="0" {...field} disabled={isFrozen} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} disabled={isFrozen} />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={isFrozen}
+                      onClick={async () => {
+                        const address = {
+                          addressLine1: form.getValues("addressLine1"),
+                          city: form.getValues("city"),
+                          state: form.getValues("state"),
+                          pincode: form.getValues("pincode"),
+                        };
+                        if (!address.addressLine1 || !address.city || !address.state || !address.pincode) {
+                          alert("Please fill in all address fields first.");
+                          return;
+                        }
+                        try {
+                          const res = await calculateDistance(address);
+                          form.setValue("distance", res.distance);
+                          alert(`Calculated Distance: ${res.distance} km`);
+                        } catch (e) {
+                          alert("Failed to calculate distance. Please try again.");
+                        }
+                      }}
+                    >
+                      Calculate
+                    </Button>
+                  </div>
                   <FormDescription>Approx. distance from DTU. Will be verified.</FormDescription>
                   <FormMessage />
                 </FormItem>

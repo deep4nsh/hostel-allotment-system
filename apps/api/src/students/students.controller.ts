@@ -39,6 +39,12 @@ export class StudentsController {
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @Post('calculate-distance')
+    calculateDistance(@Body() body: { addressLine1: string, city: string, state: string, pincode: string }) {
+        return this.studentsService.calculateDistance(body);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
     @Post('me/request-edit')
     requestEditAccess(@Request() req: any, @Body() body: { reason: string }) {
         return this.studentsService.requestEditAccess(req.user.userId, body.reason);

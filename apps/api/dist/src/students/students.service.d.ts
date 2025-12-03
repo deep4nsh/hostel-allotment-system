@@ -1,7 +1,9 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { DistanceService } from '../utils/distance.service';
 export declare class StudentsService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private distanceService;
+    constructor(prisma: PrismaService, distanceService: DistanceService);
     findOne(userId: string): Promise<{
         user: {
             email: string;
@@ -216,5 +218,17 @@ export declare class StudentsService {
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
+    }>;
+    calculateDistance(addressData: {
+        addressLine1: string;
+        city: string;
+        state: string;
+        pincode: string;
+    }): Promise<{
+        distance: number;
+        coords: {
+            lat: number;
+            lng: number;
+        };
     }>;
 }

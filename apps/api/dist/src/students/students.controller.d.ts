@@ -113,6 +113,18 @@ export declare class StudentsController {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    calculateDistance(body: {
+        addressLine1: string;
+        city: string;
+        state: string;
+        pincode: string;
+    }): Promise<{
+        distance: number;
+        coords: {
+            lat: number;
+            lng: number;
+        };
+    }>;
     requestEditAccess(req: any, body: {
         reason: string;
     }): Promise<{

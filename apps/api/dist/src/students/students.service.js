@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StudentsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const distance_service_1 = require("../utils/distance.service");
 let StudentsService = class StudentsService {
     prisma;
-    constructor(prisma) {
+    distanceService;
+    constructor(prisma, distanceService) {
         this.prisma = prisma;
+        this.distanceService = distanceService;
     }
     async findOne(userId) {
         const student = await this.prisma.student.findUnique({
@@ -36,7 +39,7 @@ let StudentsService = class StudentsService {
             }
         });
         if (!student) {
-            console.log(`Student record not found for user ${userId}. Creating default record.`);
+            console.log(`Student record not found for user ${userId}.Creating default record.`);
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (!user)
                 throw new common_1.NotFoundException('User not found');
@@ -184,16 +187,27 @@ let StudentsService = class StudentsService {
             return student;
         const year = new Date().getFullYear();
         const random = Math.floor(1000 + Math.random() * 9000);
-        const uniqueId = `DTU-${year}-${random}`;
+        const uniqueId = `DTU - ${year} -${random} `;
         return this.prisma.student.update({
             where: { userId },
             data: { uniqueId },
         });
     }
+    async calculateDistance(addressData) {
+        const fullAddress = `${addressData.addressLine1}, ${addressData.city}, ${addressData.state}, ${addressData.pincode}, India`;
+        console.log(`Calculating distance for: ${fullAddress}`);
+        const coords = await this.distanceService.geocodeAddress(fullAddress);
+        if (!coords) {
+            throw new common_1.NotFoundException('Could not geocode address');
+        }
+        const distance = this.distanceService.calculateDistanceFromDTU(coords.lat, coords.lng);
+        return { distance, coords };
+    }
 };
 exports.StudentsService = StudentsService;
 exports.StudentsService = StudentsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        distance_service_1.DistanceService])
 ], StudentsService);
 //# sourceMappingURL=students.service.js.map

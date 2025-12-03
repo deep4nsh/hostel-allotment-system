@@ -12,6 +12,7 @@ const students_service_1 = require("./students.service");
 const students_controller_1 = require("./students.controller");
 const prisma_module_1 = require("../prisma/prisma.module");
 const pdf_service_1 = require("./pdf.service");
+const distance_service_1 = require("../utils/distance.service");
 let StudentsModule = class StudentsModule {
 };
 exports.StudentsModule = StudentsModule;
@@ -19,7 +20,7 @@ exports.StudentsModule = StudentsModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule],
         controllers: [students_controller_1.StudentsController],
-        providers: [students_service_1.StudentsService, pdf_service_1.PdfService],
+        providers: [students_service_1.StudentsService, pdf_service_1.PdfService, distance_service_1.DistanceService],
         exports: [students_service_1.StudentsService],
     })
 ], StudentsModule);

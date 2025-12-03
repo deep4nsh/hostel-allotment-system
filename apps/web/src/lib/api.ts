@@ -330,3 +330,20 @@ export async function updateComplaintStatus(id: string, status: string) {
   if (!response.ok) throw new Error('Failed to update status');
   return response.json();
 }
+
+export async function calculateDistance(addressData: any) {
+  const response = await fetch(`${API_URL}/students/calculate-distance`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(addressData)
+  })
+  if (!response.ok) {
+    const text = await response.text();
+    console.error('Calculate distance failed:', response.status, text);
+    throw new Error(`Failed to calculate distance: ${response.status} ${text}`)
+  }
+  return response.json()
+}

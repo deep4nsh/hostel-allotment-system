@@ -41,6 +41,9 @@ let StudentsController = class StudentsController {
     generateId(req) {
         return this.studentsService.generateUniqueId(req.user.userId);
     }
+    calculateDistance(body) {
+        return this.studentsService.calculateDistance(body);
+    }
     requestEditAccess(req, body) {
         return this.studentsService.requestEditAccess(req.user.userId, body.reason);
     }
@@ -102,6 +105,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], StudentsController.prototype, "generateId", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('calculate-distance'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "calculateDistance", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Post)('me/request-edit'),
