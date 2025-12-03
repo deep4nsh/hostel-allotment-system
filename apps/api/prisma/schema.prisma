@@ -91,7 +91,12 @@ model Student {
   year        Int?     // 1, 2, 3, 4
   gender      Gender
   category    Category @default(DELHI)
-  address     String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  pincode      String?
+  country      String? @default("India")
   homeLat     Float?
   homeLng     Float?
   profileMeta Json?    // Flexible storage for other details

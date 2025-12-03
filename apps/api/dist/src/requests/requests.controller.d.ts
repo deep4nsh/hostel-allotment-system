@@ -97,7 +97,12 @@ export declare class RequestsController {
             year: number | null;
             gender: import(".prisma/client").$Enums.Gender;
             category: import(".prisma/client").$Enums.Category;
-            address: string | null;
+            addressLine1: string | null;
+            addressLine2: string | null;
+            city: string | null;
+            state: string | null;
+            pincode: string | null;
+            country: string | null;
             homeLat: number | null;
             homeLng: number | null;
             profileMeta: import(".prisma/client").Prisma.JsonValue | null;
@@ -157,7 +162,12 @@ export declare class RequestsController {
             year: number | null;
             gender: import(".prisma/client").$Enums.Gender;
             category: import(".prisma/client").$Enums.Category;
-            address: string | null;
+            addressLine1: string | null;
+            addressLine2: string | null;
+            city: string | null;
+            state: string | null;
+            pincode: string | null;
+            country: string | null;
             homeLat: number | null;
             homeLng: number | null;
             profileMeta: import(".prisma/client").Prisma.JsonValue | null;

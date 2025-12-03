@@ -55,6 +55,24 @@ async function main() {
     else {
         console.log('Admin user already exists');
     }
+    const wardenEmail = 'warden@dtu.ac.in';
+    const existingWarden = await prisma.user.findUnique({
+        where: { email: wardenEmail },
+    });
+    if (!existingWarden) {
+        const hashedPassword = await bcrypt.hash('warden123', 10);
+        await prisma.user.create({
+            data: {
+                email: wardenEmail,
+                password: hashedPassword,
+                role: client_1.Role.WARDEN,
+            },
+        });
+        console.log('Warden user created (warden@dtu.ac.in / warden123)');
+    }
+    else {
+        console.log('Warden user already exists');
+    }
     const hostels = [
         { name: 'Aryabhatta Hostel', isAC: false, gender: client_1.Gender.MALE },
         { name: 'Ramanujan Hostel', isAC: true, gender: client_1.Gender.MALE },

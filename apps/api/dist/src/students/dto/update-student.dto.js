@@ -16,7 +16,12 @@ class UpdateStudentDto {
     uniqueId;
     name;
     phone;
-    address;
+    addressLine1;
+    addressLine2;
+    city;
+    state;
+    pincode;
+    country;
     gender;
     category;
     program;
@@ -44,7 +49,32 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], UpdateStudentDto.prototype, "address", void 0);
+], UpdateStudentDto.prototype, "addressLine1", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "addressLine2", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "city", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "state", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "pincode", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateStudentDto.prototype, "country", void 0);
 __decorate([
     (0, class_validator_1.IsEnum)(client_1.Gender),
     (0, class_validator_1.IsOptional)(),

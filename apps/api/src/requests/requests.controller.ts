@@ -8,25 +8,25 @@ export class RequestsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Post('change')
-    async requestChange(@Request() req, @Body() body: { reason: string; preferredHostelId?: string }) {
+    async requestChange(@Request() req: any, @Body() body: { reason: string; preferredHostelId?: string }) {
         return this.requestsService.createChangeRequest(req.user.studentId, body);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Post('surrender')
-    async requestSurrender(@Request() req, @Body() body: { reason: string; clearanceUrl?: string }) {
+    async requestSurrender(@Request() req: any, @Body() body: { reason: string; clearanceUrl?: string }) {
         return this.requestsService.createSurrenderRequest(req.user.studentId, body);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Post('possession')
-    async confirmPossession(@Request() req) {
+    async confirmPossession(@Request() req: any) {
         return this.requestsService.confirmPossession(req.user.studentId);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Get('my')
-    async getMyRequests(@Request() req) {
+    async getMyRequests(@Request() req: any) {
         return this.requestsService.getMyRequests(req.user.studentId);
     }
 

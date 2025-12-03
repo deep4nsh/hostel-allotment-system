@@ -24,6 +24,26 @@ async function main() {
     console.log('Admin user already exists');
   }
 
+  // 1.5 Seed Warden
+  const wardenEmail = 'warden@dtu.ac.in';
+  const existingWarden = await prisma.user.findUnique({
+    where: { email: wardenEmail },
+  });
+
+  if (!existingWarden) {
+    const hashedPassword = await bcrypt.hash('warden123', 10);
+    await prisma.user.create({
+      data: {
+        email: wardenEmail,
+        password: hashedPassword,
+        role: Role.WARDEN,
+      },
+    });
+    console.log('Warden user created (warden@dtu.ac.in / warden123)');
+  } else {
+    console.log('Warden user already exists');
+  }
+
   // 2. Seed Hostels
   const hostels = [
     { name: 'Aryabhatta Hostel', isAC: false, gender: Gender.MALE },

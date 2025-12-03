@@ -16,7 +16,27 @@ export class UpdateStudentDto {
 
     @IsString()
     @IsOptional()
-    address?: string;
+    addressLine1?: string;
+
+    @IsString()
+    @IsOptional()
+    addressLine2?: string;
+
+    @IsString()
+    @IsOptional()
+    city?: string;
+
+    @IsString()
+    @IsOptional()
+    state?: string;
+
+    @IsString()
+    @IsOptional()
+    pincode?: string;
+
+    @IsString()
+    @IsOptional()
+    country?: string;
 
     @IsEnum(Gender)
     @IsOptional()
