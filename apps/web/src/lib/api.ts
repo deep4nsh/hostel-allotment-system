@@ -1,6 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-function getAuthHeaders() {
+export function getAuthHeaders() {
   const token = localStorage.getItem("token");
   return {
     'Authorization': `Bearer ${token}`,
@@ -163,6 +163,15 @@ export async function getMyDocuments() {
     },
   });
   if (!response.ok) throw new Error('Failed to fetch documents');
+  return response.json();
+}
+
+export async function deleteDocument(type: string) {
+  const response = await fetch(`${API_URL}/documents/${type}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error('Failed to delete document');
   return response.json();
 }
 

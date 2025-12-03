@@ -104,9 +104,57 @@ let AllotmentService = class AllotmentService {
             const paymentB = new Date(b.payments[0]?.createdAt).getTime() || 0;
             return paymentA - paymentB;
         });
+        const SEAT_MATRIX = {
+            BTECH: { MALE: 1674, FEMALE: 649 },
+            BDES: { MALE: 32, FEMALE: 32 },
+            MTECH: { MALE: 82, FEMALE: 36 },
+            MBA: { MALE: 16, FEMALE: 22 },
+            MSC: { MALE: 16, FEMALE: 28 },
+            IMSC: { MALE: 10, FEMALE: 8 },
+            MDES: { MALE: 4, FEMALE: 4 },
+            PHD: { MALE: 0, FEMALE: 14 },
+            BSC: { MALE: 0, FEMALE: 0 },
+            MCA: { MALE: 0, FEMALE: 0 },
+        };
         const allotments = [];
         let waitlistCounter = 1;
+        const currentCounts = {
+            BTECH: { MALE: 0, FEMALE: 0 },
+            BDES: { MALE: 0, FEMALE: 0 },
+            MTECH: { MALE: 0, FEMALE: 0 },
+            MBA: { MALE: 0, FEMALE: 0 },
+            MSC: { MALE: 0, FEMALE: 0 },
+            IMSC: { MALE: 0, FEMALE: 0 },
+            MDES: { MALE: 0, FEMALE: 0 },
+            PHD: { MALE: 0, FEMALE: 0 },
+            BSC: { MALE: 0, FEMALE: 0 },
+            MCA: { MALE: 0, FEMALE: 0 },
+        };
         for (const student of eligibleStudents) {
+            if (student.program === 'IMSC' && (student.year || 1) > 3) {
+                console.log(`Skipping IMSc student ${student.id} (Year ${student.year} > 3)`);
+                continue;
+            }
+            const prog = student.program;
+            if (!prog)
+                continue;
+            const gender = student.gender === 'FEMALE' ? 'FEMALE' : 'MALE';
+            if (SEAT_MATRIX[prog] && currentCounts[prog]) {
+                const limit = SEAT_MATRIX[prog][gender] || 0;
+                if (currentCounts[prog][gender] >= limit) {
+                    await this.prisma.waitlistEntry.upsert({
+                        where: { studentId: student.id },
+                        update: { position: waitlistCounter, status: 'ACTIVE' },
+                        create: {
+                            studentId: student.id,
+                            position: waitlistCounter,
+                            status: 'ACTIVE',
+                        }
+                    });
+                    waitlistCounter++;
+                    continue;
+                }
+            }
             let allottedRoom = null;
             for (const pref of student.preferences) {
                 const floor = hostel.floors.find((f) => f.id === pref.floorId);
@@ -141,6 +189,10 @@ let AllotmentService = class AllotmentService {
                 });
                 allottedRoom.occupancy++;
                 allotments.push(allotment);
+                if (student.program && currentCounts[student.program]) {
+                    const g = student.gender === 'FEMALE' ? 'FEMALE' : 'MALE';
+                    currentCounts[student.program][g]++;
+                }
                 try {
                     await this.prisma.waitlistEntry.delete({ where: { studentId: student.id } });
                 }

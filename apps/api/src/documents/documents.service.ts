@@ -69,27 +69,44 @@ export class DocumentsService {
     // 2. Resolve File Path
     // fileUrl is like /uploads/filename.ext, we need absolute path
     const fileName = path.basename(admissionDoc.fileUrl);
-    const filePath = path.join(process.cwd(), 'uploads', fileName);
+    let filePath = path.join(process.cwd(), 'uploads', fileName);
 
     if (!fs.existsSync(filePath)) throw new Error('File not found on server');
 
     // 3. Perform OCR
     let text = '';
+    let tempImagePath = null;
+
     try {
-      const worker = await createWorker('eng');
-      const result = await worker.recognize(filePath);
-      text = result.data.text;
-      await worker.terminate();
-      console.log('OCR Success:', text.substring(0, 50) + '...');
+      // Check for PDF
+      if (path.extname(filePath).toLowerCase() === '.pdf') {
+        console.log('Processing PDF with pdf-parse...');
+        const dataBuffer = fs.readFileSync(filePath);
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const pdf = require('pdf-parse');
+        const data = await pdf(dataBuffer);
+        text = data.text;
+        console.log('PDF Text Extracted:', text.substring(0, 50) + '...');
+      } else {
+        // Image OCR
+        const worker = await createWorker('eng');
+        const result = await worker.recognize(filePath);
+        text = result.data.text;
+        await worker.terminate();
+        console.log('OCR Success:', text.substring(0, 50) + '...');
+      }
     } catch (error) {
       console.error('OCR Failed:', error);
-      // We don't throw here to allow the process to continue with empty text
-      // or we could throw a specific error. For now, let's return a warning.
       return {
         success: false,
-        message: "OCR failed to process the image.",
+        message: "OCR failed to process the document. Please ensure it is clear and legible.",
         data: null
       };
+    } finally {
+      // Cleanup temp file
+      if (tempImagePath && fs.existsSync(tempImagePath)) {
+        fs.unlinkSync(tempImagePath);
+      }
     }
 
     // 4. Parse Data (Regex)

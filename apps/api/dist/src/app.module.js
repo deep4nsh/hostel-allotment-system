@@ -30,6 +30,7 @@ const documents_module_1 = require("./documents/documents.module");
 const ops_module_1 = require("./ops/ops.module");
 const rebates_module_1 = require("./rebates/rebates.module");
 const complaints_module_1 = require("./complaints/complaints.module");
+const requests_module_1 = require("./requests/requests.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -52,6 +53,7 @@ exports.AppModule = AppModule = __decorate([
             ops_module_1.OpsModule,
             rebates_module_1.RebatesModule,
             complaints_module_1.ComplaintsModule,
+            requests_module_1.RequestsModule,
             throttler_1.ThrottlerModule.forRoot([{
                     ttl: 60000,
                     limit: 100,

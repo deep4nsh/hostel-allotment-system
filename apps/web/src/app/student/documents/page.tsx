@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getMyDocuments, uploadDocument } from "@/lib/api";
+import { getMyDocuments, uploadDocument, deleteDocument } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,14 +128,32 @@ export default function DocumentsPage() {
                         Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <a
-                      href={`http://localhost:4000${doc.fileUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-blue-600 hover:underline ml-2"
-                    >
-                      View
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`http://localhost:4000${doc.fileUrl}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        View
+                      </a>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={async () => {
+                          if (!confirm('Are you sure you want to delete this document?')) return;
+                          try {
+                            await deleteDocument(doc.kind);
+                            alert('Document deleted successfully');
+                            loadDocuments();
+                          } catch (error: any) {
+                            alert(error.message || 'Delete failed');
+                          }
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

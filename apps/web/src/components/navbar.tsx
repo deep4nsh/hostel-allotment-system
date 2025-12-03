@@ -4,13 +4,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  AlertCircle, 
-  Utensils, 
-  BarChart3, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  FileText,
+  AlertCircle,
+  Utensils,
+  BarChart3,
+  LogOut,
   User as UserIcon,
   Menu
 } from "lucide-react";
@@ -56,9 +56,9 @@ export function Navbar() {
 
   // Hide navbar on auth pages, sub-routes, and the root landing page
   if (
-    pathname === "/" || 
-    pathname?.startsWith("/login") || 
-    pathname?.startsWith("/register") || 
+    pathname === "/" ||
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/register") ||
     pathname?.startsWith("/auth")
   ) {
     return null;
@@ -85,6 +85,7 @@ export function Navbar() {
                     <NavLink href="/student/documents" active={isActive("/student/documents")}>Documents</NavLink>
                     <NavLink href="/student/complaints" active={isActive("/student/complaints")}>Complaints</NavLink>
                     <NavLink href="/student/rebate" active={isActive("/student/rebate")}>Mess Rebate</NavLink>
+                    <NavLink href="/student/requests" active={isActive("/student/requests")}>Requests</NavLink>
                   </>
                 )}
 
@@ -107,7 +108,7 @@ export function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <div className="h-8 w-8 bg-slate-100 rounded-full flex items-center justify-center">
-                        <UserIcon className="h-4 w-4" />
+                      <UserIcon className="h-4 w-4" />
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
@@ -148,9 +149,8 @@ function NavLink({ href, active, children }: { href: string; active: boolean; ch
   return (
     <Link
       href={href}
-      className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-        active ? "text-blue-600 font-bold" : "text-slate-600"
-      }`}
+      className={`text-sm font-medium transition-colors hover:text-blue-600 ${active ? "text-blue-600 font-bold" : "text-slate-600"
+        }`}
     >
       {children}
     </Link>

@@ -14,6 +14,8 @@ export declare class AllotmentController {
             issueDate: Date;
             validTill: Date | null;
             letterUrl: string | null;
+            isPossessed: boolean;
+            possessionDate: Date | null;
             createdAt: Date;
         }[];
     }>;
@@ -75,6 +77,8 @@ export declare class AllotmentController {
         issueDate: Date;
         validTill: Date | null;
         letterUrl: string | null;
+        isPossessed: boolean;
+        possessionDate: Date | null;
         createdAt: Date;
     })[]>;
 }

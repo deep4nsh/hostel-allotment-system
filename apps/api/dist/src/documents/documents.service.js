@@ -101,24 +101,40 @@ let DocumentsService = class DocumentsService {
         }
         console.log(`Found document: ${admissionDoc.id}, URL: ${admissionDoc.fileUrl}`);
         const fileName = path.basename(admissionDoc.fileUrl);
-        const filePath = path.join(process.cwd(), 'uploads', fileName);
+        let filePath = path.join(process.cwd(), 'uploads', fileName);
         if (!fs.existsSync(filePath))
             throw new Error('File not found on server');
         let text = '';
+        let tempImagePath = null;
         try {
-            const worker = await (0, tesseract_js_1.createWorker)('eng');
-            const result = await worker.recognize(filePath);
-            text = result.data.text;
-            await worker.terminate();
-            console.log('OCR Success:', text.substring(0, 50) + '...');
+            if (path.extname(filePath).toLowerCase() === '.pdf') {
+                console.log('Processing PDF with pdf-parse...');
+                const dataBuffer = fs.readFileSync(filePath);
+                const pdf = require('pdf-parse');
+                const data = await pdf(dataBuffer);
+                text = data.text;
+                console.log('PDF Text Extracted:', text.substring(0, 50) + '...');
+            }
+            else {
+                const worker = await (0, tesseract_js_1.createWorker)('eng');
+                const result = await worker.recognize(filePath);
+                text = result.data.text;
+                await worker.terminate();
+                console.log('OCR Success:', text.substring(0, 50) + '...');
+            }
         }
         catch (error) {
             console.error('OCR Failed:', error);
             return {
                 success: false,
-                message: "OCR failed to process the image.",
+                message: "OCR failed to process the document. Please ensure it is clear and legible.",
                 data: null
             };
+        }
+        finally {
+            if (tempImagePath && fs.existsSync(tempImagePath)) {
+                fs.unlinkSync(tempImagePath);
+            }
         }
         const extracted = {
             name: text.match(/Name[:\s]+([A-Za-z\s]+)/i)?.[1]?.trim(),

@@ -64,6 +64,9 @@ enum Program {
   MSC
   MCA
   PHD
+  MBA
+  IMSC
+  MDES
 }
 
 enum FoodPreference {
@@ -114,6 +117,9 @@ model Student {
   documents     Document[]
   rebateRequests MessRebateRequest[]
   complaints    MaintenanceRequest[]
+  roomChangeRequests RoomChangeRequest[]
+  roomSurrenderRequests RoomSurrenderRequest[]
+  hostelSwapRequests HostelSwapRequest[]
 }
 
 model Hostel {
@@ -178,6 +184,8 @@ model Allotment {
   issueDate DateTime @default(now())
   validTill DateTime?
   letterUrl String?
+  isPossessed Boolean  @default(false)
+  possessionDate DateTime?
 
   createdAt DateTime @default(now())
 }
@@ -249,4 +257,44 @@ model AuditLog {
   entityId  String?
   metadata  Json?
   timestamp DateTime @default(now())
+}
+
+
+model RoomChangeRequest {
+  id              String   @id @default(uuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id])
+  currentRoomId   String
+  preferredHostelId String?
+  reason          String
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminComment    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RoomSurrenderRequest {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  allotmentId String
+  reason      String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  clearanceUrl String? // Proof of clearance
+  adminComment String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HostelSwapRequest {
+  id              String   @id @default(uuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id])
+  currentHostelId String
+  targetHostelId  String
+  reason          String
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminComment    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

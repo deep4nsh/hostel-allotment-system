@@ -102,11 +102,68 @@ export class AllotmentService {
             return paymentA - paymentB;
         });
 
+        // --- SEAT MATRIX LIMITS ---
+        const SEAT_MATRIX = {
+            BTECH: { MALE: 1674, FEMALE: 649 },
+            BDES: { MALE: 32, FEMALE: 32 },
+            MTECH: { MALE: 82, FEMALE: 36 },
+            MBA: { MALE: 16, FEMALE: 22 },
+            MSC: { MALE: 16, FEMALE: 28 },
+            IMSC: { MALE: 10, FEMALE: 8 },
+            MDES: { MALE: 4, FEMALE: 4 },
+            PHD: { MALE: 0, FEMALE: 14 },
+            BSC: { MALE: 0, FEMALE: 0 }, // Not in matrix
+            MCA: { MALE: 0, FEMALE: 0 }, // Not in matrix
+        };
+
         const allotments = [];
         let waitlistCounter = 1;
 
+        // Track current counts
+        const currentCounts: Record<string, { MALE: number, FEMALE: number }> = {
+            BTECH: { MALE: 0, FEMALE: 0 },
+            BDES: { MALE: 0, FEMALE: 0 },
+            MTECH: { MALE: 0, FEMALE: 0 },
+            MBA: { MALE: 0, FEMALE: 0 },
+            MSC: { MALE: 0, FEMALE: 0 },
+            IMSC: { MALE: 0, FEMALE: 0 },
+            MDES: { MALE: 0, FEMALE: 0 },
+            PHD: { MALE: 0, FEMALE: 0 },
+            BSC: { MALE: 0, FEMALE: 0 },
+            MCA: { MALE: 0, FEMALE: 0 },
+        };
+
         // 4. Iterate and Assign
         for (const student of eligibleStudents) {
+            // RULE: IMSc students only eligible for first 3 years
+            if (student.program === 'IMSC' && (student.year || 1) > 3) {
+                console.log(`Skipping IMSc student ${student.id} (Year ${student.year} > 3)`);
+                continue;
+            }
+
+            const prog = student.program;
+            if (!prog) continue; // Skip if no program defined
+
+            const gender = student.gender === 'FEMALE' ? 'FEMALE' : 'MALE';
+
+            // Check Matrix Limit
+            if (SEAT_MATRIX[prog] && currentCounts[prog]) {
+                const limit = SEAT_MATRIX[prog][gender] || 0;
+                if (currentCounts[prog][gender] >= limit) {
+                    // Limit Reached -> Add to Waitlist
+                    await this.prisma.waitlistEntry.upsert({
+                        where: { studentId: student.id },
+                        update: { position: waitlistCounter, status: 'ACTIVE' },
+                        create: {
+                            studentId: student.id,
+                            position: waitlistCounter,
+                            status: 'ACTIVE',
+                        }
+                    });
+                    waitlistCounter++;
+                    continue; // Skip allotment
+                }
+            }
             let allottedRoom = null;
 
             // Try preferences first
@@ -155,6 +212,12 @@ export class AllotmentService {
                 // Update local object for next iteration
                 allottedRoom.occupancy++;
                 allotments.push(allotment);
+
+                // Update Matrix Counts
+                if (student.program && currentCounts[student.program]) {
+                    const g = student.gender === 'FEMALE' ? 'FEMALE' : 'MALE';
+                    currentCounts[student.program][g]++;
+                }
 
                 // Remove from waitlist if exists
                 try {

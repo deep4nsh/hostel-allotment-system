@@ -35,6 +35,8 @@ export declare class StudentsController {
             issueDate: Date;
             validTill: Date | null;
             letterUrl: string | null;
+            isPossessed: boolean;
+            possessionDate: Date | null;
             createdAt: Date;
         }) | null;
     } & {

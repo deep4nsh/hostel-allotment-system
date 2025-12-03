@@ -19,7 +19,11 @@ export function getProgramGroup(program: Program | null): string {
         case Program.MTECH:
         case Program.MSC:
         case Program.MCA:
+        case Program.MBA:
+        case Program.MDES:
             return ProgramGroups.PG_MIX;
+        case Program.IMSC:
+            return ProgramGroups.BSC_BDES;
         case Program.PHD:
             return ProgramGroups.PHD;
         default:

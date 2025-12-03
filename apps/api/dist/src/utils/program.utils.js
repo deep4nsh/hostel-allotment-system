@@ -21,7 +21,11 @@ function getProgramGroup(program) {
         case client_1.Program.MTECH:
         case client_1.Program.MSC:
         case client_1.Program.MCA:
+        case client_1.Program.MBA:
+        case client_1.Program.MDES:
             return exports.ProgramGroups.PG_MIX;
+        case client_1.Program.IMSC:
+            return exports.ProgramGroups.BSC_BDES;
         case client_1.Program.PHD:
             return exports.ProgramGroups.PHD;
         default:
