@@ -6,8 +6,8 @@ import * as http from 'http';
 @Injectable()
 export class DistanceService {
     private readonly DTU_COORDINATES = {
-        lat: 28.7501,
-        lng: 77.1177,
+        lat: 28.7450732,
+        lng: 77.1601306, // Bawana Road, Shahbad Daulatpur, Delhi - 110042, India
     };
 
     /**

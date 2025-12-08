@@ -28,6 +28,8 @@ export function Navbar() {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -45,6 +47,24 @@ export function Navbar() {
 
         const payload = JSON.parse(jsonPayload);
         setRole(payload.role);
+
+        // Fetch Profile & Photo if Student
+        if (payload.role === 'STUDENT') {
+          import("@/lib/api").then(async (api) => {
+            try {
+              const profile = await api.getProfile();
+              setUserName(profile.name);
+
+              const docs = await api.getMyDocuments();
+              const photoDoc = docs.find((d: any) => d.kind === 'PHOTO');
+              if (photoDoc) {
+                setUserPhoto(`http://localhost:4000${photoDoc.fileUrl}`);
+              }
+            } catch (e) {
+              console.error("Failed to fetch user details", e);
+            }
+          });
+        }
       } catch (e) {
         // Silent cleanup for invalid tokens
         localStorage.removeItem("token");
@@ -61,6 +81,8 @@ export function Navbar() {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
     setRole(null);
+    setUserName(null);
+    setUserPhoto(null);
     router.push("/login");
   };
 
@@ -125,16 +147,24 @@ export function Navbar() {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <div className="h-8 w-8 bg-slate-100 rounded-full flex items-center justify-center">
-                      <UserIcon className="h-4 w-4" />
-                    </div>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full overflow-hidden aspect-square p-0">
+                    {userPhoto ? (
+                      <img
+                        src={userPhoto}
+                        alt="Profile"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-slate-100 flex items-center justify-center">
+                        <UserIcon className="h-4 w-4" />
+                      </div>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">My Account</p>
+                      <p className="text-sm font-medium leading-none">{userName || 'My Account'}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {role}
                       </p>
