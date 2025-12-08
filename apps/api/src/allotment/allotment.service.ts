@@ -28,7 +28,7 @@ export class AllotmentService {
             where: {
                 payments: {
                     some: {
-                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'] },
                         status: 'COMPLETED',
                     },
                 },
@@ -40,7 +40,7 @@ export class AllotmentService {
                 },
                 payments: {
                     where: {
-                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'] },
                         status: 'COMPLETED'
                     },
                 },

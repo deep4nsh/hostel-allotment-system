@@ -31,7 +31,7 @@ export class PaymentsService {
         let amount = 0;
         if (purpose === 'REGISTRATION') amount = 1000;
         else if (purpose === 'ALLOTMENT_REQUEST') amount = 1000;
-        else if (purpose === 'SEAT_BOOKING') amount = 5000;
+
         else if (purpose === 'MESS_FEE') amount = 20000;
         else if (purpose === 'HOSTEL_FEE') {
             const allotment = await this.prisma.allotment.findUnique({

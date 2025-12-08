@@ -18,6 +18,11 @@ export class AuthService {
         const user = await this.usersService.findByEmail(email);
         if (user && (await bcrypt.compare(pass, user.password))) {
             const { password, ...result } = user;
+
+            // Enforce Role Access Control
+            if (user.role === 'ADMIN' && user.email !== 'admin@dtu.ac.in') return null;
+            if (user.role === 'WARDEN' && user.email !== 'warden@dtu.ac.in') return null;
+
             return result;
         }
         return null;
@@ -31,6 +36,14 @@ export class AuthService {
     }
 
     async register(registerDto: RegisterDto) {
+        // Enforce Role Registration Restriction
+        if (registerDto.role === 'ADMIN' && registerDto.email !== 'admin@dtu.ac.in') {
+            throw new UnauthorizedException('Invalid email for Admin role');
+        }
+        if (registerDto.role === 'WARDEN' && registerDto.email !== 'warden@dtu.ac.in') {
+            throw new UnauthorizedException('Invalid email for Warden role');
+        }
+
         // Check if user exists
         const existingUser = await this.usersService.findByEmail(registerDto.email);
         if (existingUser) {

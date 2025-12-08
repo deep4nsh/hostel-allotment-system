@@ -5,19 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Script from "next/script"
 
-declare global {
-    interface Window {
-        Razorpay: any;
-    }
-}
 
 export default function PreferencesPageContent() {
     const [hostels, setHostels] = useState<any[]>([])
     const [preferences, setPreferences] = useState<{ floorId: string, rank: number }[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [isPaid, setIsPaid] = useState(false)
     const router = useRouter()
 
     const [studentYear, setStudentYear] = useState<number | null>(null)
@@ -87,43 +80,7 @@ export default function PreferencesPageContent() {
         }
     }
 
-    const handlePayment = async () => {
-        const token = localStorage.getItem('token')
-        try {
-            // 1. Get Amount
-            const res = await fetch('/api/payments/create-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ purpose: 'SEAT_BOOKING' })
-            })
-            if (!res.ok) throw new Error('Failed')
-            const order = await res.json()
-            const amountInRupees = order.amount / 100
 
-            // 2. Mock Verify
-            const verifyRes = await fetch('/api/payments/mock-verify', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    purpose: 'SEAT_BOOKING',
-                    amount: amountInRupees
-                })
-            })
-            if (verifyRes.ok) {
-                alert('Payment Successful (Mock)')
-                setIsPaid(true)
-            }
-        } catch (e) {
-            console.error(e)
-            alert('Payment failed')
-        }
-    }
 
     if (isLoading) return <div className="p-8">Loading...</div>
 
@@ -137,16 +94,7 @@ export default function PreferencesPageContent() {
         )
     }
 
-    if (!isPaid) {
-        return (
-            <div className="p-8 text-center space-y-4">
-                <h1 className="text-2xl font-bold">Seat Booking Fee Required</h1>
-                <p>You must pay the seat booking fee of ₹5,000 to submit preferences.</p>
-                <Button onClick={handlePayment}>Pay ₹5,000</Button>
-                <Script src="https://checkout.razorpay.com/v1/checkout.js" />
-            </div>
-        )
-    }
+
 
     return (
         <div className="p-8 space-y-6">

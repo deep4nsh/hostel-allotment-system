@@ -49,8 +49,8 @@ const https = __importStar(require("https"));
 const http = __importStar(require("http"));
 let DistanceService = class DistanceService {
     DTU_COORDINATES = {
-        lat: 28.7501,
-        lng: 77.1177,
+        lat: 28.7450732,
+        lng: 77.1601306,
     };
     calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371;

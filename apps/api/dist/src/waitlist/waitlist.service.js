@@ -20,10 +20,16 @@ let WaitlistService = class WaitlistService {
     async joinWaitlist(userId) {
         const student = await this.prisma.student.findUnique({
             where: { userId },
-            include: { payments: true },
+            include: { payments: true, documents: true },
         });
         if (!student)
             throw new Error('Student not found');
+        const requiredDocs = ['ADMISSION_LETTER', 'AADHAR_FRONT', 'AADHAR_BACK', 'PHOTO', 'SIGNATURE'];
+        const uploadedDocs = student.documents.map(d => d.kind);
+        const missingDocs = requiredDocs.filter(d => !uploadedDocs.includes(d));
+        if (missingDocs.length > 0) {
+            throw new Error(`Missing mandatory documents: ${missingDocs.join(', ')}`);
+        }
         const existingEntry = await this.prisma.waitlistEntry.findUnique({
             where: { studentId: student.id },
         });
