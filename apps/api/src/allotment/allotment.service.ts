@@ -9,19 +9,63 @@ export class AllotmentService {
 
     async runAllotment(hostelId: string, targetProgramGroup?: string) {
         try {
-            // 1. Fetch Hostel with Rooms
+            // 1. Fetch Hostel with Rooms AND current occupants for compatibility checks
             const hostel = await this.prisma.hostel.findUnique({
                 where: { id: hostelId },
                 include: {
                     floors: {
                         include: {
-                            rooms: true,
+                            rooms: {
+                                include: {
+                                    allotments: {
+                                        where: { isPossessed: true }, // Only check actual occupants or confirmed allotments
+                                        include: { student: true },
+                                    }
+                                }
+                            },
                         },
                     },
                 },
             });
 
             if (!hostel) throw new NotFoundException('Hostel not found');
+
+            // Helper to determine Course Level
+            const getCourseLevel = (program: string | null) => {
+                if (!program) return 'UNKNOWN';
+                const bachelors = ['BTECH', 'BSC', 'BDES', 'IMSC'];
+                const masters = ['MTECH', 'MSC', 'MCA', 'MBA', 'MDES'];
+                if (bachelors.includes(program)) return 'BACHELOR';
+                if (masters.includes(program)) return 'MASTER';
+                if (program === 'PHD') return 'PHD';
+                return 'OTHER';
+            };
+
+            // Helper to check room compatibility
+            const isRoomCompatible = (room: any, student: any) => {
+                if (room.occupancy === 0) return true; // Empty room is always compatible
+
+                // Get existing students in the room
+                const occupants = room.allotments.map((a: any) => a.student);
+                if (occupants.length === 0) return true; // Should ideally match occupancy, safe fallback
+
+                const studentLevel = getCourseLevel(student.program);
+                const studentYear = student.year || 1;
+
+                // Check compatibility with ALL current occupants
+                for (const occupant of occupants) {
+                    const occupantLevel = getCourseLevel(occupant.program);
+                    const occupantYear = occupant.year || 1;
+
+                    // Rule 1: Bachelors with Bachelors, Masters with Masters
+                    if (studentLevel !== occupantLevel) return false;
+
+                    // Rule 2: Same Year Students together
+                    if (studentYear !== occupantYear) return false;
+                }
+
+                return true;
+            };
 
             // 2. Fetch Eligible Students
             // Changed to include REGISTRATION fee as well, so newly registered students are considered
@@ -47,9 +91,6 @@ export class AllotmentService {
                     },
                 },
             });
-
-
-
 
             // Filter by Program Group if specified
             if (targetProgramGroup) {
@@ -90,17 +131,8 @@ export class AllotmentService {
                     // Rule 3: 2nd to 4th Year Students (Indian)
                     // Hostels: CVR, JCB, VMH, HJB, BCH, VVS, APJ
                     eligibleStudents = eligibleStudents.filter(s => (s.year || 1) >= 2 && (s.year || 1) <= 4 && (s.country === 'India' || !s.country));
-
-                    // Special Case: HJB (User: "only double and triple seats")
-                    // Our DB matrix for HJB: 13 Single, 50 Triple. 
-                    // Creating a preference or strict filter for room types happens at Room Assignment, not student eligibility.
-                    // However, if we strongly want to avoid single rooms for general, we'd handle it in loop.
-                    // For now, eligibility is purely Year based.
                 }
             }
-
-            // Remove old generic filtering that might conflict
-            // (Removed lines 69-74 and previous logic)
 
             // 3. Sort Students
             const categoryPriority: Record<string, number> = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
@@ -214,6 +246,7 @@ export class AllotmentService {
                         continue; // Skip allotment
                     }
                 }
+
                 let allottedRoom = null;
 
                 // Try preferences first
@@ -221,7 +254,7 @@ export class AllotmentService {
                     const floor = hostel.floors.find((f: any) => f.id === pref.floorId);
                     if (floor) {
                         const availableRoom = floor.rooms.find(
-                            (r: any) => r.occupancy < r.capacity,
+                            (r: any) => r.occupancy < r.capacity && isRoomCompatible(r, student)
                         );
                         if (availableRoom) {
                             allottedRoom = availableRoom;
@@ -234,7 +267,7 @@ export class AllotmentService {
                 if (!allottedRoom) {
                     for (const floor of hostel.floors) {
                         const availableRoom = floor.rooms.find(
-                            (r: any) => r.occupancy < r.capacity,
+                            (r: any) => r.occupancy < r.capacity && isRoomCompatible(r, student)
                         );
                         if (availableRoom) {
                             allottedRoom = availableRoom;
@@ -261,6 +294,10 @@ export class AllotmentService {
 
                     // Update local object for next iteration
                     allottedRoom.occupancy++;
+                    // Add this student to local allotments array so strictly sequential checks within this run also work
+                    if (!allottedRoom.allotments) allottedRoom.allotments = [];
+                    allottedRoom.allotments.push({ student });
+
                     allotments.push(allotment);
 
                     // Update Matrix Counts
