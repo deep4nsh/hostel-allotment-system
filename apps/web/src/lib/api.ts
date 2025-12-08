@@ -376,6 +376,17 @@ export async function getWaitlistPosition() {
   return response.json();
 }
 
+export async function getPriorityWaitlist() {
+  const response = await fetch(`${API_URL}/waitlist/admin`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch priority waitlist');
+  return response.json();
+}
+
 export async function createPaymentOrder(purpose: string) {
   const response = await fetch(`${API_URL}/payments/create-order`, {
     method: 'POST',

@@ -64,14 +64,15 @@ export default function AdminAllotmentContent() {
             })
             if (res.ok) {
                 const result = await res.json()
-                alert(`Allotment Complete! Allotted: ${result.allotted}/${result.totalEligible}`)
+                alert(`Allotment Complete!\nEligible Students: ${result.totalEligible}\nAllotted Seats: ${result.allotted}\nWaitlisted: ${result.waitlisted}`)
                 fetchAllotments(selectedHostel)
             } else {
-                alert('Failed to trigger allotment')
+                const err = await res.json()
+                alert(`Failed to trigger allotment: ${err.message}`)
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error)
-            alert('Error triggering allotment')
+            alert(`Error triggering allotment: ${error.message}`)
         }
     }
 
