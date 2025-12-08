@@ -214,6 +214,18 @@ export default function AllotmentPageContent() {
                 <p className="text-slate-500">Request a hostel seat by paying the token fee and joining the priority waitlist.</p>
             </div>
 
+            {missingDocs.length > 0 && status !== 'WAITLISTED' && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong className="font-bold">Missing Documents! </strong>
+                    <span className="block sm:inline">You must upload the following documents before applying: {missingDocs.join(', ')}</span>
+                    <div className="mt-2">
+                        <Button variant="destructive" size="sm" onClick={() => window.location.href = '/student/documents'}>
+                            Go to Documents Upload
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <Card>
                 <CardHeader>
                     <CardTitle>Request Status</CardTitle>

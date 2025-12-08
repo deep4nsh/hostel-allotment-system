@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { getProfile, updateProfile, requestEditAccess, calculateDistance } from "@/lib/api";
 import { Lock } from "lucide-react";
-import { State, City } from 'country-state-city';
+import { State, City, Country } from 'country-state-city';
 import {
   Dialog,
   DialogContent,
@@ -64,6 +64,7 @@ export function ProfileForm() {
   const [editReason, setEditReason] = useState("");
   const [isRequestingEdit, setIsRequestingEdit] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [countryCode, setCountryCode] = useState("IN");
 
   type ProfileFormValues = z.infer<typeof formSchema>;
 
@@ -96,10 +97,17 @@ export function ProfileForm() {
   const selectedYear = form.watch("year");
   const selectedProgram = form.watch("program");
   const selectedState = form.watch("state");
+  const currentCategory = form.watch("category");
 
-  const states = State.getStatesOfCountry('IN');
-  const cities = selectedState
-    ? City.getCitiesOfState('IN', states.find(s => s.name === selectedState)?.isoCode || '')
+  // Fetch states based on countryCode
+  const states = State.getStatesOfCountry(countryCode);
+
+  // Fetch cities based on selected state and countryCode
+  // Note: City.getCitiesOfState requires ISO code of country and ISO code of state.
+  // We store state NAME in the DB, so we need to find the ISO code from the name.
+  const stateIso = states.find(s => s.name === selectedState)?.isoCode || '';
+  const cities = selectedState && stateIso
+    ? City.getCitiesOfState(countryCode, stateIso)
     : [];
 
   useEffect(() => {
@@ -111,6 +119,18 @@ export function ProfileForm() {
           // Extract meta fields
           const meta = profile.profileMeta as any || {};
 
+          const countryName = profile.country || "India";
+          // Find country code
+          const foundCountry = Country.getAllCountries().find(c => c.name === countryName);
+          const cCode = foundCountry ? foundCountry.isoCode : "IN";
+          setCountryCode(cCode);
+
+          // Logic: If Not India -> Category is NRI
+          let category = profile.category || "DELHI";
+          if (countryName !== "India") {
+            category = "NRI";
+          }
+
           form.reset({
             uniqueId: profile.uniqueId || "",
             name: profile.name || "",
@@ -120,9 +140,9 @@ export function ProfileForm() {
             city: profile.city || "",
             state: profile.state || "",
             pincode: profile.pincode || "",
-            country: profile.country || "India",
+            country: countryName,
             gender: profile.gender || "MALE",
-            category: profile.category || "DELHI",
+            category: category,
             program: profile.program || "BTECH",
             year: profile.year || 1,
             cgpa: profile.cgpa || 0, // Now using top-level cgpa
@@ -155,8 +175,6 @@ export function ProfileForm() {
       setIsSaving(false);
     }
   }
-
-
 
   async function handleRequestEdit() {
     if (!editReason.trim()) {
@@ -363,7 +381,12 @@ export function ProfileForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFrozen}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isFrozen || countryCode !== "IN"} // Automatically disabled if not India
+                    value={countryCode !== "IN" ? "NRI" : field.value} // Force NRI if not India
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
@@ -388,36 +411,50 @@ export function ProfileForm() {
                   <FormLabel>Distance (km)</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
-                      <Input type="number" placeholder="0" {...field} disabled={isFrozen} />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        // Disable if already frozen OR if NRI
+                        disabled={isFrozen || currentCategory === 'NRI' || countryCode !== 'IN'}
+                        value={(currentCategory === 'NRI' || countryCode !== 'IN') ? 0 : field.value}
+                      />
                     </FormControl>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={isFrozen}
-                      onClick={async () => {
-                        const address = {
-                          addressLine1: form.getValues("addressLine1"),
-                          city: form.getValues("city"),
-                          state: form.getValues("state"),
-                          pincode: form.getValues("pincode"),
-                        };
-                        if (!address.addressLine1 || !address.city || !address.state || !address.pincode) {
-                          alert("Please fill in all address fields first.");
-                          return;
-                        }
-                        try {
-                          const res = await calculateDistance(address);
-                          form.setValue("distance", res.distance);
-                          alert(`Calculated Distance: ${res.distance} km`);
-                        } catch (e) {
-                          alert("Failed to calculate distance. Please try again.");
-                        }
-                      }}
-                    >
-                      Calculate
-                    </Button>
+                    {countryCode === 'IN' && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={isFrozen}
+                        onClick={async () => {
+                          const address = {
+                            addressLine1: form.getValues("addressLine1"),
+                            city: form.getValues("city"),
+                            state: form.getValues("state"),
+                            pincode: form.getValues("pincode"),
+                          };
+                          if (!address.addressLine1 || !address.city || !address.state || !address.pincode) {
+                            alert("Please fill in all address fields first.");
+                            return;
+                          }
+                          try {
+                            const res = await calculateDistance(address);
+                            form.setValue("distance", res.distance);
+                            alert(`Calculated Distance: ${res.distance} km`);
+                          } catch (e) {
+                            alert("Failed to calculate distance. Please try again.");
+                          }
+                        }}
+                      >
+                        Calculate
+                      </Button>
+                    )}
                   </div>
-                  <FormDescription>Approx. distance from DTU. Will be verified.</FormDescription>
+                  <FormDescription>
+                    {(currentCategory === 'NRI' || countryCode !== 'IN')
+                      ? "Not applicable for NRI/International students."
+                      : "Approx. distance from DTU. Will be verified."
+                    }
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
