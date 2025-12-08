@@ -78,6 +78,15 @@ let StudentsController = class StudentsController {
     rejectEditRequest(id) {
         return this.studentsService.rejectEditRequest(id);
     }
+    searchStudents(search, hostelId, roomNumber) {
+        return this.studentsService.searchStudents({ search, hostelId, roomNumber });
+    }
+    async getStudentByUserId(userId) {
+        const student = await this.studentsService.findOne(userId);
+        if (!student)
+            throw new common_1.NotFoundException('Student not found');
+        return student;
+    }
 };
 exports.StudentsController = StudentsController;
 __decorate([
@@ -174,6 +183,26 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], StudentsController.prototype, "rejectEditRequest", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.WARDEN),
+    (0, common_1.Get)('admin/search'),
+    __param(0, (0, common_1.Query)('search')),
+    __param(1, (0, common_1.Query)('hostelId')),
+    __param(2, (0, common_1.Query)('roomNumber')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "searchStudents", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.WARDEN),
+    (0, common_1.Get)('admin/:userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], StudentsController.prototype, "getStudentByUserId", null);
 exports.StudentsController = StudentsController = __decorate([
     (0, common_1.Controller)('students'),
     __metadata("design:paramtypes", [students_service_1.StudentsService,

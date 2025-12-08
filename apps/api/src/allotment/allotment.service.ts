@@ -50,6 +50,21 @@ export class AllotmentService {
 
 
 
+        // Filter by Program Group if specified
+        if (targetProgramGroup) {
+            eligibleStudents = eligibleStudents.filter(s => getProgramGroup(s.program) === targetProgramGroup);
+        }
+
+        // --- NEW RULE: Hostel-Specific Category Filtering ---
+        // Aryabhatta/Type 2 -> Indian Students Only (Non-NRI)
+        if (hostel.name.includes('Aryabhatta') || hostel.name.includes('Type 2')) {
+            eligibleStudents = eligibleStudents.filter(s => s.category !== 'NRI');
+        }
+        // Ramanujan/Transit -> NRI Students Only
+        else if (hostel.name.includes('Ramanujan') || hostel.name.includes('Transit')) {
+            eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI');
+        }
+
         // 3. Sort Students
         const categoryPriority: Record<string, number> = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
 
