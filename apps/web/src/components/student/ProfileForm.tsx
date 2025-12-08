@@ -22,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getProfile, updateProfile, triggerOcr, requestEditAccess, calculateDistance } from "@/lib/api";
-import { ScanLine, Lock } from "lucide-react";
+import { getProfile, updateProfile, requestEditAccess, calculateDistance } from "@/lib/api";
+import { Lock } from "lucide-react";
 import { State, City } from 'country-state-city';
 import {
   Dialog,
@@ -54,7 +54,6 @@ const formSchema = z.object({
   cgpa: z.coerce.number().min(0).max(10).optional().default(0),
   distance: z.coerce.number().min(0).optional().default(0),
   roomTypePreference: z.string().optional(),
-  floorPreference: z.string().optional(),
 });
 
 export function ProfileForm() {
@@ -128,7 +127,6 @@ export function ProfileForm() {
             cgpa: profile.cgpa || 0, // Now using top-level cgpa
             distance: meta.distance || 0,
             roomTypePreference: profile.roomTypePreference || "",
-            floorPreference: profile.floorPreference || "",
           });
         }
       } catch (error) {
@@ -157,23 +155,7 @@ export function ProfileForm() {
     }
   }
 
-  async function handleAutoFill() {
-    if (!confirm("This will simulate scanning your Admission Letter and overwrite empty profile fields. Proceed?")) return;
 
-    setIsSaving(true);
-    setMessage(null);
-    try {
-      const res = await triggerOcr();
-      if (res.success) {
-        alert("Profile updated from document: " + JSON.stringify(res.data, null, 2));
-        window.location.reload();
-      }
-    } catch (error) {
-      alert("Failed to scan document. Ensure you have uploaded an 'Admission Letter' first.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
 
   async function handleRequestEdit() {
     if (!editReason.trim()) {
@@ -200,12 +182,7 @@ export function ProfileForm() {
   return (
     <Form {...form}>
       <div className="flex justify-end mb-4 gap-2">
-        {!isFrozen && (
-          <Button type="button" variant="outline" onClick={handleAutoFill} disabled={isSaving} className="gap-2">
-            <ScanLine className="w-4 h-4" />
-            {isSaving ? "Scanning..." : "Auto-fill from Admission Letter"}
-          </Button>
-        )}
+
         {isFrozen && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -269,13 +246,24 @@ export function ProfileForm() {
 
             <FormField
               control={form.control}
-              name="uniqueId"
+              name="year"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Roll No. / Application No. <span className="text-red-500">*</span></FormLabel>
-                  <FormControl>
-                    <Input placeholder="2K24/..." {...field} disabled={isFrozen} />
-                  </FormControl>
+                  <FormLabel>Year <span className="text-red-500">*</span></FormLabel>
+                  <Select onValueChange={(val) => field.onChange(parseInt(val))} defaultValue={String(field.value)} disabled={isFrozen}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="1">1st Year</SelectItem>
+                      <SelectItem value="2">2nd Year</SelectItem>
+                      <SelectItem value="3">3rd Year</SelectItem>
+                      <SelectItem value="4">4th Year</SelectItem>
+                      <SelectItem value="5">5th Year</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -348,24 +336,19 @@ export function ProfileForm() {
             />
             <FormField
               control={form.control}
-              name="year"
+              name="uniqueId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Year <span className="text-red-500">*</span></FormLabel>
-                  <Select onValueChange={(val) => field.onChange(parseInt(val))} defaultValue={String(field.value)} disabled={isFrozen}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select year" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="1">1st Year</SelectItem>
-                      <SelectItem value="2">2nd Year</SelectItem>
-                      <SelectItem value="3">3rd Year</SelectItem>
-                      <SelectItem value="4">4th Year</SelectItem>
-                      <SelectItem value="5">5th Year</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>
+                    {selectedYear === 1 ? "Application Number" : "Roll Number"} <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={selectedYear === 1 ? "e.g. 524123456" : "e.g. 2K24/A1/123"}
+                      {...field}
+                      disabled={isFrozen}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -449,7 +432,7 @@ export function ProfileForm() {
                   <FormItem>
                     <FormLabel>CGPA / Percentage</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={isFrozen} />
+                      <Input type="number" step="0.01" max={10} placeholder="0.00" {...field} disabled={isFrozen} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -482,37 +465,15 @@ export function ProfileForm() {
                       <SelectContent>
                         <SelectItem value="SINGLE">Single Seater</SelectItem>
                         <SelectItem value="DOUBLE">Double Seater</SelectItem>
-                        <SelectItem value="DORM">Dormitory</SelectItem>
+                        <SelectItem value="TRIPLE">Triple Seater</SelectItem>
+                        <SelectItem value="TRIPLE_AC">Triple Seater (AC)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="floorPreference"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Floor Preference</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFrozen}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select preference" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="GROUND">Ground Floor</SelectItem>
-                        <SelectItem value="FIRST">First Floor</SelectItem>
-                        <SelectItem value="SECOND">Second Floor</SelectItem>
-                        <SelectItem value="TOP">Top Floor</SelectItem>
-                        <SelectItem value="ANY">Any Floor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
             </div>
           )}
 

@@ -258,17 +258,7 @@ export async function deleteDocument(type: string) {
   return response.json();
 }
 
-export async function triggerOcr() {
-  const response = await fetch(`${API_URL}/documents/ocr`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders()
-    },
-  });
-  if (!response.ok) throw new Error('Failed to process document');
-  return response.json();
-}
+
 
 // --- Analytics API ---
 
