@@ -20,7 +20,7 @@ export default function Home() {
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Button asChild className="w-full">
-            <Link href="/login">Student Login</Link>
+            <Link href="/login">Login</Link>
           </Button>
           <Button variant="outline" asChild className="w-full">
             <Link href="/register">New Registration</Link>

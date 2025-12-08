@@ -10,9 +10,26 @@ export default function AllotmentPageContent() {
     const [position, setPosition] = useState<number | null>(null)
     const [loading, setLoading] = useState(false)
 
+    const [documents, setDocuments] = useState<any[]>([])
+    const [missingDocs, setMissingDocs] = useState<string[]>([])
+
     useEffect(() => {
         checkStatus()
+        checkDocuments()
     }, [])
+
+    const checkDocuments = async () => {
+        try {
+            const docs = await import("@/lib/api").then(m => m.getMyDocuments())
+            setDocuments(docs)
+            const required = ['ADMISSION_LETTER', 'AADHAR_FRONT', 'AADHAR_BACK', 'PHOTO', 'SIGNATURE']
+            const uploaded = docs.map((d: any) => d.kind)
+            const missing = required.filter(r => !uploaded.includes(r))
+            setMissingDocs(missing)
+        } catch (e) {
+            console.error("Failed to fetch documents", e)
+        }
+    }
 
     const checkStatus = async () => {
         try {
@@ -32,6 +49,10 @@ export default function AllotmentPageContent() {
     }
 
     const handlePaymentAndJoin = async () => {
+        if (missingDocs.length > 0) {
+            alert(`Please upload missing documents: ${missingDocs.join(', ')}`)
+            return
+        }
         setLoading(true)
         try {
             // 1. Create Order (Skipped for Mock)
@@ -55,6 +76,10 @@ export default function AllotmentPageContent() {
     }
 
     const handleJoinOnly = async () => {
+        if (missingDocs.length > 0) {
+            alert(`Please upload missing documents: ${missingDocs.join(', ')}`)
+            return
+        }
         setLoading(true)
         try {
             await joinWaitlist()
@@ -77,6 +102,18 @@ export default function AllotmentPageContent() {
                 <h1 className="text-3xl font-bold tracking-tight">Hostel Allotment Request</h1>
                 <p className="text-slate-500">Request a hostel seat by paying the token fee and joining the priority waitlist.</p>
             </div>
+
+            {missingDocs.length > 0 && status !== 'WAITLISTED' && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong className="font-bold">Missing Documents! </strong>
+                    <span className="block sm:inline">You must upload the following documents before applying: {missingDocs.join(', ')}</span>
+                    <div className="mt-2">
+                        <Button variant="destructive" size="sm" onClick={() => window.location.href = '/student/documents'}>
+                            Go to Documents Upload
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <Card>
                 <CardHeader>
@@ -110,7 +147,7 @@ export default function AllotmentPageContent() {
                                 <h3 className="text-2xl font-bold">Payment Complete</h3>
                                 <p className="text-slate-500">You have paid the fee but haven't joined the waitlist yet.</p>
                             </div>
-                            <Button size="lg" onClick={handleJoinOnly} disabled={loading}>
+                            <Button size="lg" onClick={handleJoinOnly} disabled={loading || missingDocs.length > 0}>
                                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 Join Waitlist Now
                             </Button>
@@ -132,7 +169,7 @@ export default function AllotmentPageContent() {
                                     <p className="text-sm text-slate-500 mb-1">Token Fee Amount</p>
                                     <p className="text-3xl font-bold">₹1,000</p>
                                 </div>
-                                <Button size="lg" className="w-full max-w-sm" onClick={handlePaymentAndJoin} disabled={loading}>
+                                <Button size="lg" className="w-full max-w-sm" onClick={handlePaymentAndJoin} disabled={loading || missingDocs.length > 0}>
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Pay & Request Allotment
                                 </Button>
