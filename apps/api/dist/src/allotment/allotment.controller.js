@@ -30,6 +30,9 @@ let AllotmentController = class AllotmentController {
     getAllotments(hostelId) {
         return this.allotmentService.getAllotments(hostelId);
     }
+    expireAllotments() {
+        return this.allotmentService.expireUnpaidAllotments();
+    }
 };
 exports.AllotmentController = AllotmentController;
 __decorate([
@@ -50,6 +53,12 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AllotmentController.prototype, "getAllotments", null);
+__decorate([
+    (0, common_1.Post)('expire'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AllotmentController.prototype, "expireAllotments", null);
 exports.AllotmentController = AllotmentController = __decorate([
     (0, common_1.Controller)('allotment'),
     __metadata("design:paramtypes", [allotment_service_1.AllotmentService])

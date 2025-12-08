@@ -146,6 +146,12 @@ let PaymentsService = class PaymentsService {
             if (!student) {
                 throw new common_1.BadRequestException('Student record not found for user');
             }
+            if (purpose === 'HOSTEL_FEE') {
+                await this.prisma.allotment.update({
+                    where: { studentId: student.id },
+                    data: { isPossessed: true, possessionDate: new Date() }
+                });
+            }
             const existingPayment = await this.prisma.payment.findFirst({
                 where: { txnRef: razorpayOrderId, status: 'PENDING' }
             });
@@ -184,6 +190,12 @@ let PaymentsService = class PaymentsService {
                     name: '',
                     gender: 'OTHER',
                 }
+            });
+        }
+        if (purpose === 'HOSTEL_FEE') {
+            await this.prisma.allotment.update({
+                where: { studentId: student.id },
+                data: { isPossessed: true, possessionDate: new Date() }
             });
         }
         return this.prisma.payment.create({

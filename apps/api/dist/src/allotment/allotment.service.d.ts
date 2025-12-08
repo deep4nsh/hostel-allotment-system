@@ -90,4 +90,8 @@ export declare class AllotmentService {
         possessionDate: Date | null;
         createdAt: Date;
     })[]>;
+    expireUnpaidAllotments(): Promise<{
+        deleted: number;
+        details: string[];
+    }>;
 }

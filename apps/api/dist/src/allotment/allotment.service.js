@@ -25,13 +25,85 @@ let AllotmentService = class AllotmentService {
                 include: {
                     floors: {
                         include: {
-                            rooms: true,
+                            rooms: {
+                                include: {
+                                    allotments: {
+                                        where: { isPossessed: true },
+                                        include: { student: true },
+                                    }
+                                }
+                            },
                         },
                     },
                 },
             });
             if (!hostel)
                 throw new common_1.NotFoundException('Hostel not found');
+            const getCourseLevel = (program) => {
+                if (!program)
+                    return 'UNKNOWN';
+                const bachelors = ['BTECH', 'BSC', 'BDES', 'IMSC'];
+                const masters = ['MTECH', 'MSC', 'MCA', 'MBA', 'MDES'];
+                if (bachelors.includes(program))
+                    return 'BACHELOR';
+                if (masters.includes(program))
+                    return 'MASTER';
+                if (program === 'PHD')
+                    return 'PHD';
+                return 'OTHER';
+            };
+            const isRoomCompatible = (room, student) => {
+                if (room.occupancy === 0)
+                    return true;
+                const occupants = room.allotments.map((a) => a.student);
+                if (occupants.length === 0)
+                    return true;
+                const studentLevel = getCourseLevel(student.program);
+                const studentYear = student.year || 1;
+                for (const occupant of occupants) {
+                    const occupantLevel = getCourseLevel(occupant.program);
+                    const occupantYear = occupant.year || 1;
+                    if (studentLevel !== occupantLevel)
+                        return false;
+                    if (studentYear !== occupantYear)
+                        return false;
+                }
+                return true;
+            };
+            const isRoomTypeAllowed = (room, student) => {
+                const hostelIsAC = hostel.isAC;
+                const capacity = room.capacity;
+                const level = getCourseLevel(student.program);
+                const year = student.year || 1;
+                const hasACPreference = student.roomTypePreference === 'TRIPLE_AC';
+                if (hostelIsAC) {
+                    if (!hasACPreference)
+                        return false;
+                }
+                if (level === 'MASTER') {
+                    if (hostelIsAC)
+                        return false;
+                    return [1, 2].includes(capacity);
+                }
+                if (level === 'BACHELOR') {
+                    if (year === 2) {
+                        if (capacity === 1)
+                            return false;
+                        return true;
+                    }
+                    if (year === 3) {
+                        if (capacity === 3 && !hostelIsAC)
+                            return false;
+                        return true;
+                    }
+                    if (year === 4) {
+                        if (capacity === 3 && !hostelIsAC)
+                            return false;
+                        return true;
+                    }
+                }
+                return true;
+            };
             let eligibleStudents = await this.prisma.student.findMany({
                 where: {
                     payments: {
@@ -65,20 +137,15 @@ let AllotmentService = class AllotmentService {
             }
             const hostelName = hostel.name.toLowerCase();
             const studentGender = (s) => s.gender.toUpperCase();
-            if (hostelName.includes('kalpana')) {
-                eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'FEMALE');
+            eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'MALE');
+            if (hostelName.includes('aryabhatta') || hostelName.includes('type-ii')) {
+                eligibleStudents = eligibleStudents.filter(s => s.year === 1 && (s.country === 'India' || !s.country));
+            }
+            else if (hostelName.includes('ramanujan') || hostelName.includes('transit')) {
+                eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI' || (s.country && s.country !== 'India'));
             }
             else {
-                eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'MALE');
-                if (hostelName.includes('aryabhatta') || hostelName.includes('type-ii')) {
-                    eligibleStudents = eligibleStudents.filter(s => s.year === 1 && (s.country === 'India' || !s.country));
-                }
-                else if (hostelName.includes('ramanujan') || hostelName.includes('transit')) {
-                    eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI' || (s.country && s.country !== 'India'));
-                }
-                else {
-                    eligibleStudents = eligibleStudents.filter(s => (s.year || 1) >= 2 && (s.year || 1) <= 4 && (s.country === 'India' || !s.country));
-                }
+                eligibleStudents = eligibleStudents.filter(s => (s.year || 1) >= 2 && (s.year || 1) <= 4 && (s.country === 'India' || !s.country));
             }
             const categoryPriority = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
             eligibleStudents.sort((a, b) => {
@@ -183,7 +250,7 @@ let AllotmentService = class AllotmentService {
                 for (const pref of student.preferences) {
                     const floor = hostel.floors.find((f) => f.id === pref.floorId);
                     if (floor) {
-                        const availableRoom = floor.rooms.find((r) => r.occupancy < r.capacity);
+                        const availableRoom = floor.rooms.find((r) => r.occupancy < r.capacity && isRoomCompatible(r, student) && isRoomTypeAllowed(r, student));
                         if (availableRoom) {
                             allottedRoom = availableRoom;
                             break;
@@ -192,7 +259,7 @@ let AllotmentService = class AllotmentService {
                 }
                 if (!allottedRoom) {
                     for (const floor of hostel.floors) {
-                        const availableRoom = floor.rooms.find((r) => r.occupancy < r.capacity);
+                        const availableRoom = floor.rooms.find((r) => r.occupancy < r.capacity && isRoomCompatible(r, student) && isRoomTypeAllowed(r, student));
                         if (availableRoom) {
                             allottedRoom = availableRoom;
                             break;
@@ -200,11 +267,14 @@ let AllotmentService = class AllotmentService {
                     }
                 }
                 if (allottedRoom) {
+                    const validTill = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
                     const allotment = await this.prisma.allotment.create({
                         data: {
                             studentId: student.id,
                             roomId: allottedRoom.id,
                             type: 'REGULAR',
+                            validTill: validTill,
+                            isPossessed: false,
                         },
                     });
                     await this.prisma.room.update({
@@ -212,6 +282,9 @@ let AllotmentService = class AllotmentService {
                         data: { occupancy: { increment: 1 } },
                     });
                     allottedRoom.occupancy++;
+                    if (!allottedRoom.allotments)
+                        allottedRoom.allotments = [];
+                    allottedRoom.allotments.push({ student });
                     allotments.push(allotment);
                     if (student.program && currentCounts[student.program]) {
                         const g = student.gender === 'FEMALE' ? 'FEMALE' : 'MALE';
@@ -266,6 +339,33 @@ let AllotmentService = class AllotmentService {
                 },
             },
         });
+    }
+    async expireUnpaidAllotments() {
+        const now = new Date();
+        const expiredAllotments = await this.prisma.allotment.findMany({
+            where: {
+                validTill: { lt: now },
+                isPossessed: false,
+            },
+            include: { room: true },
+        });
+        const results = {
+            deleted: 0,
+            details: []
+        };
+        for (const allotment of expiredAllotments) {
+            await this.prisma.allotment.delete({ where: { id: allotment.id } });
+            await this.prisma.room.update({
+                where: { id: allotment.roomId },
+                data: { occupancy: { decrement: 1 } },
+            });
+            results.deleted++;
+            results.details.push(`Expired allotment for Student ${allotment.studentId} in Room ${allotment.room.number}`);
+        }
+        if (results.deleted > 0) {
+            console.log(`[Allotment Expiry] Cleaned up ${results.deleted} unpaid allotments.`);
+        }
+        return results;
     }
 };
 exports.AllotmentService = AllotmentService;

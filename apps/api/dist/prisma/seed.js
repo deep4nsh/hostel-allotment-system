@@ -84,7 +84,6 @@ async function main() {
         { name: 'Sir M. Visvesvaraya Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { single: 91, double: 37, triple: 4 } },
         { name: 'Ramanujan/Transit Hostel', isAC: true, gender: client_1.Gender.MALE, rooms: { fiveSeater: 15 } },
         { name: 'Type-II Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { fiveSeater: 46 } },
-        { name: 'Kalpana Chawla Hostel', isAC: false, gender: client_1.Gender.FEMALE, rooms: { triple: 13 } },
     ];
     for (const h of HOSTEL_MATRIX) {
         const existingHostel = await prisma.hostel.findFirst({ where: { name: h.name } });

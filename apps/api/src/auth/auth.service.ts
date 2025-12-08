@@ -63,6 +63,7 @@ export class AuthService {
                         userId: user.id,
                         name: registerDto.name || '', // Use provided name or empty string
                         gender: 'OTHER', // Default
+                        country: registerDto.country,
                     },
                 });
                 return user;

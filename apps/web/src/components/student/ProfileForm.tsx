@@ -37,6 +37,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+import { POSTAL_CODE_REGEX, DEFAULT_POSTAL_CODE_REGEX } from "@/lib/constants/postal-codes";
+
 const formSchema = z.object({
   uniqueId: z.string().min(1, "Roll Number / Application No. is required"),
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -45,7 +47,7 @@ const formSchema = z.object({
   addressLine2: z.string().optional(),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
-  pincode: z.string().min(6, "Valid Pincode is required"),
+  pincode: z.string().min(1, "Pincode is required"),
   country: z.string().default("India"),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   category: z.enum(["DELHI", "OUTSIDE_DELHI", "PH", "NRI"]),
@@ -54,6 +56,17 @@ const formSchema = z.object({
   cgpa: z.coerce.number().min(0).max(10).optional().default(0),
   distance: z.coerce.number().min(0).optional().default(0),
   roomTypePreference: z.string().optional(),
+}).superRefine((data, ctx) => {
+  const country = data.country || "India";
+  const regex = POSTAL_CODE_REGEX[country] || DEFAULT_POSTAL_CODE_REGEX;
+
+  if (!regex.test(data.pincode)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Invalid postal code format for ${country}`,
+      path: ["pincode"],
+    });
+  }
 });
 
 export function ProfileForm() {

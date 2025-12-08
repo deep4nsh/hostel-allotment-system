@@ -12,7 +12,7 @@ async function bootstrap() {
         crossOriginResourcePolicy: { policy: "cross-origin" },
     }));
     app.enableCors();
-    await app.listen(4000);
+    await app.listen(process.env.PORT || 4000);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

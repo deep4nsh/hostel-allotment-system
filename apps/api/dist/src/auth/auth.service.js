@@ -97,6 +97,7 @@ let AuthService = class AuthService {
                         userId: user.id,
                         name: registerDto.name || '',
                         gender: 'OTHER',
+                        country: registerDto.country,
                     },
                 });
                 return user;
