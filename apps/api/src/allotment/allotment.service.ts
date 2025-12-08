@@ -112,26 +112,21 @@ export class AllotmentService {
             const hostelName = hostel.name.toLowerCase();
             const studentGender = (s: any) => (s.gender as string).toUpperCase();
 
-            if (hostelName.includes('kalpana')) {
-                // Girls Hostel
-                eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'FEMALE');
-            } else {
-                // Boys Hostels (All others in the matrix provided)
-                eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'MALE');
+            // Boys Hostels (All others in the matrix provided)
+            eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'MALE');
 
-                if (hostelName.includes('aryabhatta') || hostelName.includes('type-ii')) {
-                    // Rule 1: 1st Year Indian Students
-                    eligibleStudents = eligibleStudents.filter(s => s.year === 1 && (s.country === 'India' || !s.country));
-                }
-                else if (hostelName.includes('ramanujan') || hostelName.includes('transit')) {
-                    // Rule 2: Non-Indian Students (Any Year)
-                    eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI' || (s.country && s.country !== 'India'));
-                }
-                else {
-                    // Rule 3: 2nd to 4th Year Students (Indian)
-                    // Hostels: CVR, JCB, VMH, HJB, BCH, VVS, APJ
-                    eligibleStudents = eligibleStudents.filter(s => (s.year || 1) >= 2 && (s.year || 1) <= 4 && (s.country === 'India' || !s.country));
-                }
+            if (hostelName.includes('aryabhatta') || hostelName.includes('type-ii')) {
+                // Rule 1: 1st Year Indian Students
+                eligibleStudents = eligibleStudents.filter(s => s.year === 1 && (s.country === 'India' || !s.country));
+            }
+            else if (hostelName.includes('ramanujan') || hostelName.includes('transit')) {
+                // Rule 2: Non-Indian Students (Any Year)
+                eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI' || (s.country && s.country !== 'India'));
+            }
+            else {
+                // Rule 3: 2nd to 4th Year Students (Indian)
+                // Hostels: CVR, JCB, VMH, HJB, BCH, VVS, APJ
+                eligibleStudents = eligibleStudents.filter(s => (s.year || 1) >= 2 && (s.year || 1) <= 4 && (s.country === 'India' || !s.country));
             }
 
             // 3. Sort Students
@@ -296,7 +291,7 @@ export class AllotmentService {
                     allottedRoom.occupancy++;
                     // Add this student to local allotments array so strictly sequential checks within this run also work
                     if (!allottedRoom.allotments) allottedRoom.allotments = [];
-                    allottedRoom.allotments.push({ student });
+                    allottedRoom.allotments.push({ student } as any);
 
                     allotments.push(allotment);
 

@@ -70,9 +70,6 @@ async function main() {
     { name: 'Sir M. Visvesvaraya Hostel', isAC: false, gender: Gender.MALE, rooms: { single: 91, double: 37, triple: 4 } },
     { name: 'Ramanujan/Transit Hostel', isAC: true, gender: Gender.MALE, rooms: { fiveSeater: 15 } }, // Using 5 seater for Transit
     { name: 'Type-II Hostel', isAC: false, gender: Gender.MALE, rooms: { fiveSeater: 46 } },
-
-    // Female Hostels (Simplified for now as per instructions to leave them, but ensuring they exist for completeness if needed later or just KCH)
-    { name: 'Kalpana Chawla Hostel', isAC: false, gender: Gender.FEMALE, rooms: { triple: 13 } },
   ];
 
   for (const h of HOSTEL_MATRIX) {
