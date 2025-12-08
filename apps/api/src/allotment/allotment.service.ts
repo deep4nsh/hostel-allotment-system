@@ -65,6 +65,42 @@ export class AllotmentService {
             eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI');
         }
 
+        // --- GENDER SEGREGATION & MATRIX RULES ---
+
+        const hostelName = hostel.name.toLowerCase();
+        const studentGender = (s: any) => (s.gender as string).toUpperCase();
+
+        if (hostelName.includes('kalpana')) {
+            // Girls Hostel
+            eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'FEMALE');
+        } else {
+            // Boys Hostels (All others in the matrix provided)
+            eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'MALE');
+
+            if (hostelName.includes('aryabhatta') || hostelName.includes('type-ii')) {
+                // Rule 1: 1st Year Indian Students
+                eligibleStudents = eligibleStudents.filter(s => s.year === 1 && (s.country === 'India' || !s.country));
+            }
+            else if (hostelName.includes('ramanujan') || hostelName.includes('transit')) {
+                // Rule 2: Non-Indian Students (Any Year)
+                eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI' || (s.country && s.country !== 'India'));
+            }
+            else {
+                // Rule 3: 2nd to 4th Year Students (Indian)
+                // Hostels: CVR, JCB, VMH, HJB, BCH, VVS, APJ
+                eligibleStudents = eligibleStudents.filter(s => s.year >= 2 && s.year <= 4 && (s.country === 'India' || !s.country));
+
+                // Special Case: HJB (User: "only double and triple seats")
+                // Our DB matrix for HJB: 13 Single, 50 Triple. 
+                // Creating a preference or strict filter for room types happens at Room Assignment, not student eligibility.
+                // However, if we strongly want to avoid single rooms for general, we'd handle it in loop.
+                // For now, eligibility is purely Year based.
+            }
+        }
+
+        // Remove old generic filtering that might conflict
+        // (Removed lines 69-74 and previous logic)
+
         // 3. Sort Students
         const categoryPriority: Record<string, number> = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
 

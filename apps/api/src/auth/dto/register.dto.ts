@@ -14,6 +14,10 @@ export class RegisterDto {
     name?: string;
 
     @IsOptional()
+    @IsString()
+    country?: string;
+
+    @IsOptional()
     @IsEnum(Role)
     role?: Role;
 }

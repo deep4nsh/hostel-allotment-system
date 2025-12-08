@@ -21,11 +21,32 @@ export default function StudentRequestsContent() {
     const [surrenderReason, setSurrenderReason] = useState('');
     const [editProfileReason, setEditProfileReason] = useState('');
 
+    // State for hostels
+    const [hostels, setHostels] = useState<any[]>([]);
+
     useEffect(() => {
         fetchRequests();
         fetchAllotment();
         fetchEditRequests();
+        fetchHostels();
     }, []);
+
+    const fetchHostels = async () => {
+        try {
+            // Need token for auth headers? Using public or protected endpoint?
+            // checking admin content, it used token.
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/hostels', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setHostels(data);
+            }
+        } catch (e) {
+            console.error("Failed to fetch hostels", e);
+        }
+    }
 
     const fetchRequests = async () => {
         try {
@@ -140,6 +161,14 @@ export default function StudentRequestsContent() {
         }
     };
 
+    // Need to import Select from Select component. It wasn't imported.
+    // I can't easily add imports here with replace_file_content effectively if I replace the whole body.
+    // Let's modify the imports first in a separate call? No, I'll do it in one go if I can replace the whole file? 
+    // No, standard Replace is safer. I'll split this.
+
+    // 1. ADD HOSTEL FETCHING LOGIC (Using text input for now, will swap UI next)
+    // Actually, I should just swap the UI part and the fetch part.
+
     return (
         <div className="p-6 space-y-6">
             <h1 className="text-2xl font-bold">Manage Allotment & Requests</h1>
@@ -189,11 +218,16 @@ export default function StudentRequestsContent() {
                             <form onSubmit={handleSubmitChange} className="space-y-4">
                                 <div>
                                     <Label>Preferred Hostel (Optional)</Label>
-                                    <Input
-                                        placeholder="e.g. Aryabhatta"
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         value={preferredHostel}
                                         onChange={(e) => setPreferredHostel(e.target.value)}
-                                    />
+                                    >
+                                        <option value="">Select Hostel</option>
+                                        {hostels.map((h: any) => (
+                                            <option key={h.id} value={h.id}>{h.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div>
                                     <Label>Reason for Change</Label>
