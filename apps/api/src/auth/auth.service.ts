@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -50,21 +50,25 @@ export class AuthService {
             throw new UnauthorizedException('User already exists');
         }
 
-        // Create user and associated student record
-        return this.usersService.create({
-            email: registerDto.email,
-            password: registerDto.password,
-            role: registerDto.role || 'STUDENT',
-        }).then(async (user) => {
-            // Create empty student record
-            await this.prisma.student.create({
-                data: {
-                    userId: user.id,
-                    name: registerDto.name || '', // Use provided name or empty string
-                    gender: 'OTHER', // Default
-                },
+        try {
+            // Create user and associated student record
+            return await this.usersService.create({
+                email: registerDto.email,
+                password: registerDto.password,
+                role: registerDto.role || 'STUDENT',
+            }).then(async (user) => {
+                // Create empty student record
+                await this.prisma.student.create({
+                    data: {
+                        userId: user.id,
+                        name: registerDto.name || '', // Use provided name or empty string
+                        gender: 'OTHER', // Default
+                    },
+                });
+                return user;
             });
-            return user;
-        });
+        } catch (error) {
+            throw new InternalServerErrorException(error.message || 'Registration failed');
+        }
     }
 }

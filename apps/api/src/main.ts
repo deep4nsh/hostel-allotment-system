@@ -8,8 +8,6 @@ async function bootstrap() {
     crossOriginResourcePolicy: { policy: "cross-origin" },
   }));
   app.enableCors();
-  // Changed default port to 3001 to match frontend configuration
-  // Force port 4000 to avoid conflicts and match frontend
-  await app.listen(4000);
+  await app.listen(process.env.PORT || 4000);
 }
 bootstrap();

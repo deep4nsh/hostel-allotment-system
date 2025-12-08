@@ -21,7 +21,7 @@ export default function RegistrationPaymentPage() {
             // --- MOCK PAYMENT FLOW ---
             // Instead of calling Razorpay, we directly tell the backend to record a successful payment.
 
-            const res = await fetch('http://localhost:4000/payments/mock-verify', {
+            const res = await fetch('/api/payments/mock-verify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -73,66 +73,55 @@ async function main() {
     else {
         console.log('Warden user already exists');
     }
-    const hostels = [
-        { name: 'Aryabhatta/Type 2', isAC: false, gender: client_1.Gender.MALE },
-        { name: 'Ramanujan/Transit', isAC: true, gender: client_1.Gender.MALE },
-        { name: 'Kalpana Chawla Hostel', isAC: false, gender: client_1.Gender.FEMALE },
+    const HOSTEL_MATRIX = [
+        { name: 'Aryabhatta Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { triple: 57 } },
+        { name: 'Bhaskaracharya Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { single: 91, double: 37, triple: 4 } },
+        { name: 'Dr. APJ Abdul Kalam Hostel', isAC: true, gender: client_1.Gender.MALE, rooms: { triple: 104 } },
+        { name: 'Homi Jahangir Bhabha Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { single: 13, triple: 50 } },
+        { name: 'Sir C.V. Raman Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { single: 91, double: 37, triple: 4 } },
+        { name: 'Sir J.C. Bose Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { single: 90, triple: 4, double: 37 } },
+        { name: 'Varahamihira Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { single: 90, double: 36, triple: 4 } },
+        { name: 'Sir M. Visvesvaraya Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { single: 91, double: 37, triple: 4 } },
+        { name: 'Ramanujan/Transit Hostel', isAC: true, gender: client_1.Gender.MALE, rooms: { fiveSeater: 15 } },
+        { name: 'Type-II Hostel', isAC: false, gender: client_1.Gender.MALE, rooms: { fiveSeater: 46 } },
+        { name: 'Kalpana Chawla Hostel', isAC: false, gender: client_1.Gender.FEMALE, rooms: { triple: 13 } },
     ];
-    for (const h of hostels) {
-        let existingHostel = await prisma.hostel.findFirst({ where: { name: h.name } });
-        if (!existingHostel) {
-            let oldName = null;
-            if (h.name === 'Aryabhatta/Type 2')
-                oldName = 'Aryabhatta Hostel';
-            else if (h.name === 'Ramanujan/Transit')
-                oldName = 'Ramanujan Hostel';
-            if (oldName) {
-                const oldHostel = await prisma.hostel.findFirst({ where: { name: oldName } });
-                if (oldHostel) {
-                    console.log(`Renaming ${oldName} to ${h.name}...`);
-                    existingHostel = await prisma.hostel.update({
-                        where: { id: oldHostel.id },
-                        data: { name: h.name, isAC: h.isAC }
-                    });
-                }
-            }
+    for (const h of HOSTEL_MATRIX) {
+        const existingHostel = await prisma.hostel.findFirst({ where: { name: h.name } });
+        if (existingHostel) {
+            console.log(`Hostel ${h.name} exists, skipping creation.`);
+            continue;
         }
-        if (!existingHostel) {
-            const hostel = await prisma.hostel.create({
-                data: {
-                    name: h.name,
-                    isAC: h.isAC,
-                },
-            });
-            console.log(`Hostel created: ${h.name}`);
-            for (let floorNum = 0; floorNum < 4; floorNum++) {
-                const floor = await prisma.floor.create({
+        const hostel = await prisma.hostel.create({
+            data: { name: h.name, isAC: h.isAC }
+        });
+        console.log(`Created Hostel: ${h.name}`);
+        const floor = await prisma.floor.create({
+            data: { hostelId: hostel.id, number: 0, gender: h.gender }
+        });
+        let roomCounter = 101;
+        const createRooms = async (count, capacity) => {
+            if (!count)
+                return;
+            for (let i = 0; i < count; i++) {
+                await prisma.room.create({
                     data: {
-                        hostelId: hostel.id,
-                        number: floorNum,
-                        gender: h.gender,
-                    },
+                        floorId: floor.id,
+                        number: String(roomCounter++),
+                        capacity: capacity,
+                        yearAllowed: [1, 2, 3, 4]
+                    }
                 });
-                for (let roomNum = 1; roomNum <= 10; roomNum++) {
-                    let capacity = 3;
-                    if (roomNum > 8)
-                        capacity = 1;
-                    else if (roomNum > 5)
-                        capacity = 2;
-                    await prisma.room.create({
-                        data: {
-                            floorId: floor.id,
-                            number: `${floorNum}${String(roomNum).padStart(2, '0')}`,
-                            capacity: capacity,
-                            yearAllowed: [1, 2, 3, 4],
-                        },
-                    });
-                }
             }
-        }
-        else {
-            console.log(`Hostel ${h.name} already exists (or was renamed)`);
-        }
+        };
+        if (h.rooms.single)
+            await createRooms(h.rooms.single, 1);
+        if (h.rooms.double)
+            await createRooms(h.rooms.double, 2);
+        if (h.rooms.triple)
+            await createRooms(h.rooms.triple, 3);
+        if (h.rooms.fiveSeater)
+            await createRooms(h.rooms.fiveSeater, 5);
     }
 }
 main()

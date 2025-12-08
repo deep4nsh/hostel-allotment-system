@@ -86,20 +86,25 @@ let AuthService = class AuthService {
         if (existingUser) {
             throw new common_1.UnauthorizedException('User already exists');
         }
-        return this.usersService.create({
-            email: registerDto.email,
-            password: registerDto.password,
-            role: registerDto.role || 'STUDENT',
-        }).then(async (user) => {
-            await this.prisma.student.create({
-                data: {
-                    userId: user.id,
-                    name: registerDto.name || '',
-                    gender: 'OTHER',
-                },
+        try {
+            return await this.usersService.create({
+                email: registerDto.email,
+                password: registerDto.password,
+                role: registerDto.role || 'STUDENT',
+            }).then(async (user) => {
+                await this.prisma.student.create({
+                    data: {
+                        userId: user.id,
+                        name: registerDto.name || '',
+                        gender: 'OTHER',
+                    },
+                });
+                return user;
             });
-            return user;
-        });
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Registration failed');
+        }
     }
 };
 exports.AuthService = AuthService;

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, UploadCloud } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -37,7 +37,7 @@ export default function OnboardingPage() {
 
             try {
                 // Fetch Profile
-                const res = await fetch('http://localhost:4000/students/me', {
+                const res = await fetch('/api/students/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -59,7 +59,7 @@ export default function OnboardingPage() {
                 }
 
                 // Fetch Documents
-                const docRes = await fetch('http://localhost:4000/documents/my', {
+                const docRes = await fetch('/api/documents/my', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (docRes.ok) {
@@ -85,7 +85,7 @@ export default function OnboardingPage() {
 
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch('http://localhost:4000/documents/upload', {
+            const res = await fetch('/api/documents/upload', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -109,7 +109,7 @@ export default function OnboardingPage() {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://localhost:4000/documents/${type}`, {
+            const res = await fetch(`/api/documents/${type}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -127,41 +127,14 @@ export default function OnboardingPage() {
         }
     };
 
-    const handleOCR = async () => {
-        setIsLoading(true);
-        const token = localStorage.getItem('token');
-        try {
-            const res = await fetch('http://localhost:4000/documents/ocr', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                alert('OCR Complete! Profile Updated.');
-                // Refresh profile
-                const pRes = await fetch('http://localhost:4000/students/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setProfile(await pRes.json());
-                setStep(2);
-            } else {
-                const errorData = await res.json();
-                alert(`OCR Failed: ${errorData.message}`);
-            }
-        } catch (error) {
-            console.error(error);
-            alert('An error occurred during OCR processing.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+
 
     // --- STEP 2: GUARDIAN & FOOD ---
     const submitGuardian = async () => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         try {
-            await fetch('http://localhost:4000/students/me', {
+            await fetch('/api/students/me', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -187,7 +160,7 @@ export default function OnboardingPage() {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         try {
-            await fetch('http://localhost:4000/students/me', {
+            await fetch('/api/students/me', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -267,11 +240,10 @@ export default function OnboardingPage() {
                         <CardFooter>
                             <Button
                                 className="w-full"
-                                onClick={handleOCR}
+                                onClick={() => setStep(2)}
                                 disabled={isLoading || !uploadedDocs.includes('ADMISSION_LETTER')}
                             >
-                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                                {uploadedDocs.includes('ADMISSION_LETTER') ? 'Process & Auto-Fill Profile' : 'Upload Admission Letter to Proceed'}
+                                Next: Additional Details
                             </Button>
                         </CardFooter>
                     </Card>
