@@ -182,7 +182,7 @@ export default function DocumentsPageContent() {
                     </div>
                     <div className="flex items-center gap-2">
                       <a
-                        href={`http://localhost:4000${doc.fileUrl}`}
+                        href={doc.fileUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-blue-600 hover:underline"

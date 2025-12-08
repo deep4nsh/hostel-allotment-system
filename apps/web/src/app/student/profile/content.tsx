@@ -23,7 +23,7 @@ export default function StudentProfileContent() {
             }
 
             try {
-                const res = await fetch('http://localhost:4000/students/me', {
+                const res = await fetch('/api/students/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
@@ -40,7 +40,7 @@ export default function StudentProfileContent() {
                     }
                 }
 
-                const wlRes = await fetch('http://localhost:4000/waitlist/me', {
+                const wlRes = await fetch('/api/waitlist/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (wlRes.ok) {
@@ -59,7 +59,7 @@ export default function StudentProfileContent() {
 
     const handleDownloadSlip = async () => {
         const token = localStorage.getItem('token')
-        const res = await fetch('http://localhost:4000/students/me/slip', {
+        const res = await fetch('/api/students/me/slip', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {
@@ -76,7 +76,7 @@ export default function StudentProfileContent() {
 
     const handleDownloadAllotmentLetter = async () => {
         const token = localStorage.getItem('token')
-        const res = await fetch('http://localhost:4000/letters/allotment', {
+        const res = await fetch('/api/letters/allotment', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {

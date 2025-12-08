@@ -20,7 +20,7 @@ export default function StudentPaymentsContent() {
             }
 
             try {
-                const res = await fetch('http://localhost:4000/students/me', {
+                const res = await fetch('/api/students/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
@@ -41,7 +41,7 @@ export default function StudentPaymentsContent() {
         const token = localStorage.getItem('token')
         try {
             // 1. Get Amount
-            const res = await fetch('http://localhost:4000/payments/create-order', {
+            const res = await fetch('/api/payments/create-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export default function StudentPaymentsContent() {
             const amountInRupees = order.amount / 100
 
             // 2. Mock Verify
-            const verifyRes = await fetch('http://localhost:4000/payments/mock-verify', {
+            const verifyRes = await fetch('/api/payments/mock-verify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export default function StudentPaymentsContent() {
 
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:4000/refunds', {
+            const res = await fetch('/api/refunds', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

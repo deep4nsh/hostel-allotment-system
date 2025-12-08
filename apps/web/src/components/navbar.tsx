@@ -58,7 +58,7 @@ export function Navbar() {
               const docs = await api.getMyDocuments();
               const photoDoc = docs.find((d: any) => d.kind === 'PHOTO');
               if (photoDoc) {
-                setUserPhoto(`http://localhost:4000${photoDoc.fileUrl}`);
+                setUserPhoto(photoDoc.fileUrl);
               }
             } catch (e) {
               console.error("Failed to fetch user details", e);

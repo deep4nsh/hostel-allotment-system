@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -115,9 +116,17 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Logging in..." : "Login"}
-        </Button>
+        <div className="flex flex-col space-y-4">
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? "Logging in..." : "Login"}
+          </Button>
+          <div className="text-center text-sm">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="text-blue-600 hover:underline">
+              Register
+            </Link>
+          </div>
+        </div>
       </form>
     </Form>
   );

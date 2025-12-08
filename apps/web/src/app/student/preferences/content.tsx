@@ -32,7 +32,7 @@ export default function PreferencesPageContent() {
 
             try {
                 // Fetch Profile to check Year
-                const profileRes = await fetch('http://localhost:4000/students/me', {
+                const profileRes = await fetch('/api/students/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (profileRes.ok) {
@@ -41,7 +41,7 @@ export default function PreferencesPageContent() {
                 }
 
                 // Fetch Hostels
-                const res = await fetch('http://localhost:4000/hostels', {
+                const res = await fetch('/api/hostels', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
@@ -66,7 +66,7 @@ export default function PreferencesPageContent() {
     const handleSubmit = async () => {
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch('http://localhost:4000/students/preferences', {
+            const res = await fetch('/api/students/preferences', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export default function PreferencesPageContent() {
         const token = localStorage.getItem('token')
         try {
             // 1. Get Amount
-            const res = await fetch('http://localhost:4000/payments/create-order', {
+            const res = await fetch('/api/payments/create-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export default function PreferencesPageContent() {
             const amountInRupees = order.amount / 100
 
             // 2. Mock Verify
-            const verifyRes = await fetch('http://localhost:4000/payments/mock-verify', {
+            const verifyRes = await fetch('/api/payments/mock-verify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

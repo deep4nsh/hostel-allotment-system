@@ -20,7 +20,7 @@ export default function AdminHostelDetailsPage() {
             }
 
             try {
-                const res = await fetch(`http://localhost:4000/hostels/${params.id}`, {
+                const res = await fetch(`/api/hostels/${params.id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
