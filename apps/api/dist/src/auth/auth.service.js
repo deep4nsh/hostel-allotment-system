@@ -61,6 +61,10 @@ let AuthService = class AuthService {
         const user = await this.usersService.findByEmail(email);
         if (user && (await bcrypt.compare(pass, user.password))) {
             const { password, ...result } = user;
+            if (user.role === 'ADMIN' && user.email !== 'admin@dtu.ac.in')
+                return null;
+            if (user.role === 'WARDEN' && user.email !== 'warden@dtu.ac.in')
+                return null;
             return result;
         }
         return null;
@@ -72,6 +76,12 @@ let AuthService = class AuthService {
         };
     }
     async register(registerDto) {
+        if (registerDto.role === 'ADMIN' && registerDto.email !== 'admin@dtu.ac.in') {
+            throw new common_1.UnauthorizedException('Invalid email for Admin role');
+        }
+        if (registerDto.role === 'WARDEN' && registerDto.email !== 'warden@dtu.ac.in') {
+            throw new common_1.UnauthorizedException('Invalid email for Warden role');
+        }
         const existingUser = await this.usersService.findByEmail(registerDto.email);
         if (existingUser) {
             throw new common_1.UnauthorizedException('User already exists');

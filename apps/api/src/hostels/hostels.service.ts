@@ -55,7 +55,21 @@ export class HostelsService {
             include: {
                 floors: {
                     include: {
-                        rooms: true,
+                        rooms: {
+                            include: {
+                                allotments: {
+                                    include: {
+                                        student: {
+                                            include: {
+                                                user: {
+                                                    select: { email: true }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
                     },
                 },
             },

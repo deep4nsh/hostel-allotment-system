@@ -227,4 +227,46 @@ export class StudentsService {
         const distance = this.distanceService.calculateDistanceFromDTU(coords.lat, coords.lng);
         return { distance, coords };
     }
+    async searchStudents(params: { search?: string, hostelId?: string, roomNumber?: string }) {
+        const { search, hostelId, roomNumber } = params;
+
+        return this.prisma.student.findMany({
+            where: {
+                AND: [
+                    search ? {
+                        OR: [
+                            { name: { contains: search, mode: 'insensitive' } },
+                            { uniqueId: { contains: search, mode: 'insensitive' } },
+                            { user: { email: { contains: search, mode: 'insensitive' } } }
+                        ]
+                    } : {},
+                    hostelId || roomNumber ? {
+                        allotment: {
+                            room: {
+                                ...(roomNumber ? { number: roomNumber } : {}),
+                                ...(hostelId ? { floor: { hostelId } } : {})
+                            }
+                        }
+                    } : {}
+                ]
+            },
+            include: {
+                user: { select: { email: true } },
+                allotment: {
+                    include: {
+                        room: {
+                            include: {
+                                floor: {
+                                    include: {
+                                        hostel: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            take: 50
+        });
+    }
 }

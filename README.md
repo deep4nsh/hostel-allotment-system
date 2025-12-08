@@ -98,8 +98,25 @@ A comprehensive, full-stack web application designed to automate and streamline 
     # Root directory
     npm run dev
     ```
-    *   Frontend: `http://localhost:3001`
-    *   Backend: `http://localhost:3000`
+    *   Frontend: `http://localhost:3000`
+    *   Backend: `http://localhost:4000`
+
+    ### Simultaneous Role Access
+    To log in as Admin, Warden, and Student simultaneously (avoiding session conflicts), run the frontend on separate ports:
+
+    ```bash
+    # Open new terminal tabs for each and navigate to apps/web:
+    cd apps/web
+
+    # Student Portal (Port 3000)
+    npm run dev:student
+
+    # Admin Portal (Port 3001)
+    npm run dev:admin
+
+    # Warden Portal (Port 3002)
+    npm run dev:warden
+    ```
 
 ## 🚀 Deployment
 

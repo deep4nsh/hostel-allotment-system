@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:admin": "next dev -p 3001",
+    "dev:warden": "next dev -p 3002",
+    "dev:student": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

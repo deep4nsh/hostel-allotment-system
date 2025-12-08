@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, UseGuards, Request, Res, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, UseGuards, Request, Res, NotFoundException, Param, Query } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { PdfService } from './pdf.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -101,5 +101,20 @@ export class StudentsController {
     @Post('admin/edit-requests/:id/reject')
     rejectEditRequest(@Param('id') id: string) {
         return this.studentsService.rejectEditRequest(id);
+    }
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.ADMIN, Role.WARDEN)
+    @Get('admin/search')
+    searchStudents(@Query('search') search?: string, @Query('hostelId') hostelId?: string, @Query('roomNumber') roomNumber?: string) {
+        return this.studentsService.searchStudents({ search, hostelId, roomNumber });
+    }
+
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.ADMIN, Role.WARDEN)
+    @Get('admin/:userId')
+    async getStudentByUserId(@Param('userId') userId: string) {
+        const student = await this.studentsService.findOne(userId);
+        if (!student) throw new NotFoundException('Student not found');
+        return student;
     }
 }

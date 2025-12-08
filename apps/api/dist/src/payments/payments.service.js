@@ -77,8 +77,6 @@ let PaymentsService = class PaymentsService {
             amount = 1000;
         else if (purpose === 'ALLOTMENT_REQUEST')
             amount = 1000;
-        else if (purpose === 'SEAT_BOOKING')
-            amount = 5000;
         else if (purpose === 'MESS_FEE')
             amount = 20000;
         else if (purpose === 'HOSTEL_FEE') {

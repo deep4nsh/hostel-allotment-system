@@ -125,19 +125,24 @@ export function Navbar() {
 
                 {(role === "ADMIN" || role === "WARDEN") && (
                   <>
-                    {role === "ADMIN" ? (
-                      <NavLink href="/admin/requests" active={isActive("/admin/requests")}>Requests</NavLink>
-                    ) : (
-                      <NavLink href="/warden/dashboard" active={isActive("/warden/dashboard")}>Requests</NavLink>
-                    )}
-                    <NavLink href="/warden/complaints" active={isActive("/warden/complaints")}>Complaints</NavLink>
                     {role === "ADMIN" && (
                       <>
+                        <NavLink href="/admin/requests" active={isActive("/admin/requests")}>Requests</NavLink>
+                        <NavLink href="/admin/complaints" active={isActive("/admin/complaints")}>Complaints</NavLink>
                         <NavLink href="/admin/hostels" active={isActive("/admin/hostels")}>Hostels</NavLink>
+                        <NavLink href="/admin/students" active={isActive("/admin/students")}>Students</NavLink>
                         <NavLink href="/admin/allotment" active={isActive("/admin/allotment")}>Allotment</NavLink>
                         <NavLink href="/admin/refunds" active={isActive("/admin/refunds")}>Refunds</NavLink>
                         <NavLink href="/admin/imports" active={isActive("/admin/imports")}>Imports</NavLink>
                         <NavLink href="/admin/analytics" active={isActive("/admin/analytics")}>Analytics</NavLink>
+                      </>
+                    )}
+
+                    {role === "WARDEN" && (
+                      <>
+                        <NavLink href="/warden/dashboard" active={isActive("/warden/dashboard")}>Requests</NavLink>
+                        <NavLink href="/warden/complaints" active={isActive("/warden/complaints")}>Complaints</NavLink>
+                        <NavLink href="/admin/students" active={isActive("/admin/students")}>Students</NavLink>
                       </>
                     )}
                   </>
@@ -190,7 +195,7 @@ export function Navbar() {
           )}
         </div>
       </div>
-    </nav>
+    </nav >
   );
 }
 

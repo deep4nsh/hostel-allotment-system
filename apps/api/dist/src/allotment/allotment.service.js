@@ -35,7 +35,7 @@ let AllotmentService = class AllotmentService {
             where: {
                 payments: {
                     some: {
-                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'] },
                         status: 'COMPLETED',
                     },
                 },
@@ -47,7 +47,7 @@ let AllotmentService = class AllotmentService {
                 },
                 payments: {
                     where: {
-                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING'] },
+                        purpose: { in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'] },
                         status: 'COMPLETED'
                     },
                 },
