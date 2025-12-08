@@ -90,9 +90,30 @@ export class WaitlistService {
     async getWaitlistPosition(userId: string) {
         const student = await this.prisma.student.findUnique({
             where: { userId },
-            include: { payments: true }
+            include: {
+                payments: true,
+                allotment: {
+                    include: {
+                        room: {
+                            include: {
+                                floor: {
+                                    include: { hostel: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         });
         if (!student) return { status: 'NOT_REGISTERED' };
+
+        // Check if allotted
+        if (student.allotment) {
+            return {
+                status: 'ALLOTTED',
+                allotment: student.allotment
+            };
+        }
 
         const entry = await this.prisma.waitlistEntry.findUnique({
             where: { studentId: student.id },

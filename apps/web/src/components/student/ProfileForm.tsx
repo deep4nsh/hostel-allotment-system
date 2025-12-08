@@ -94,6 +94,7 @@ export function ProfileForm() {
 
   // Watch the year to conditionally show fields
   const selectedYear = form.watch("year");
+  const selectedProgram = form.watch("program");
   const selectedState = form.watch("state");
 
   const states = State.getStatesOfCountry('IN');
@@ -463,10 +464,58 @@ export function ProfileForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="SINGLE">Single Seater</SelectItem>
-                        <SelectItem value="DOUBLE">Double Seater</SelectItem>
-                        <SelectItem value="TRIPLE">Triple Seater</SelectItem>
-                        <SelectItem value="TRIPLE_AC">Triple Seater (AC)</SelectItem>
+                        {(() => {
+                          const bachelors = ['BTECH', 'BSC', 'BDES', 'IMSC'];
+                          const masters = ['MTECH', 'MSC', 'MCA', 'MBA', 'MDES'];
+
+                          const isMaster = masters.includes(selectedProgram);
+                          const isBachelor = bachelors.includes(selectedProgram);
+                          const yr = Number(selectedYear);
+
+                          let options = [
+                            { value: "SINGLE", label: "Single Seater" },
+                            { value: "DOUBLE", label: "Double Seater" },
+                            { value: "TRIPLE", label: "Triple Seater" },
+                            { value: "TRIPLE_AC", label: "Triple Seater (AC)" },
+                          ];
+
+                          if (isMaster) {
+                            // Masters: Single, Double
+                            options = [
+                              { value: "SINGLE", label: "Single Seater" },
+                              { value: "DOUBLE", label: "Double Seater" }
+                            ];
+                          } else if (isBachelor) {
+                            if (yr === 2) {
+                              // "2nd year students- AC triple, triple and double"
+                              options = [
+                                { value: "TRIPLE_AC", label: "Triple Seater (AC)" },
+                                { value: "TRIPLE", label: "Triple Seater" },
+                                { value: "DOUBLE", label: "Double Seater" }
+                              ];
+                            } else if (yr === 3) {
+                              // "3rd year students- ac triple, double and single"
+                              options = [
+                                { value: "TRIPLE_AC", label: "Triple Seater (AC)" },
+                                { value: "DOUBLE", label: "Double Seater" },
+                                { value: "SINGLE", label: "Single Seater" }
+                              ];
+                            } else if (yr === 4 || yr === 5) {
+                              // "4th year students- double, single and ac triple"
+                              options = [
+                                { value: "DOUBLE", label: "Double Seater" },
+                                { value: "SINGLE", label: "Single Seater" },
+                                { value: "TRIPLE_AC", label: "Triple Seater (AC)" }
+                              ];
+                            }
+                          }
+
+                          return options.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ));
+                        })()}
                       </SelectContent>
                     </Select>
                     <FormMessage />

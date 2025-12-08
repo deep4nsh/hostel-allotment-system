@@ -67,6 +67,64 @@ export class AllotmentService {
                 return true;
             };
 
+            // Helper to check if room type is allowed for student level/year
+            const isRoomTypeAllowed = (room: any, student: any) => {
+                const hostelIsAC = hostel.isAC;
+                const capacity = room.capacity;
+                const level = getCourseLevel(student.program);
+                const year = student.year || 1;
+                // Assuming 'TRIPLE_AC' is the value sent from frontend for AC preference
+                const hasACPreference = student.roomTypePreference === 'TRIPLE_AC';
+
+
+                // 1. Strict AC Rule
+                // "Ac triple is only provided to students who have selected triple seater (AC) in preference"
+                // Assuming 'Tripe AC' implies an AC Hostel with Triple rooms.
+                // If the hostel is AC, allow ONLY if student specifically asked for it.
+                if (hostelIsAC) {
+                    if (!hasACPreference) return false;
+                }
+
+                // 2. Masters Rules
+                // "masters studnets in all years will only get single double and triple" (Implicitly NO AC, handled above if they don't ask for it)
+                // If they ask for AC, are they allowed? "masters... only get single double and triple". 
+                // Context suggests they don't get AC options usually.
+                // Let's assume if AC is available and they asked for it, strict AC rule applies. 
+                // But prompt says "masters ... ONLY get single double and triple". Usually implies non-AC.
+                // Let's stick to: If Master && AC Hostel -> False (unless overrides exist, but sticking to prompt).
+                if (level === 'MASTER') {
+                    if (hostelIsAC) return false; // Masters don't get AC usually (implied from options provided: single, double)
+                    return [1, 2].includes(capacity); // "for masters studnents- single and double"
+                }
+
+                if (level === 'BACHELOR') {
+                    // Year 2: Double, Triple, AC Triple
+                    if (year === 2) {
+                        // "2nd year students- AC triple, triple and double"
+                        // No Single allowed
+                        if (capacity === 1) return false;
+                        return true; // 2, 3 (AC or Non-AC checked by hostelIsAC + pref) logic covers the rest
+                    }
+
+                    // Year 3: Single, Double, AC Triple (NO Non-AC Triple)
+                    if (year === 3) {
+                        // "3rd year students- ac triple, double and single"
+                        if (capacity === 3 && !hostelIsAC) return false; // Non-AC Triple not allowed
+                        return true;
+                    }
+
+                    // Year 4: Single, Double, AC Triple (No Non-AC Triple)
+                    if (year === 4) {
+                        // "4th year students- double, single and ac triple"
+                        if (capacity === 3 && !hostelIsAC) return false; // Non-AC Triple not allowed
+                        return true;
+                    }
+                }
+
+                // Default fallback (e.g. Year 1 or PhD)
+                return true;
+            };
+
             // 2. Fetch Eligible Students
             // Changed to include REGISTRATION fee as well, so newly registered students are considered
             let eligibleStudents = await this.prisma.student.findMany({
@@ -248,8 +306,9 @@ export class AllotmentService {
                 for (const pref of student.preferences) {
                     const floor = hostel.floors.find((f: any) => f.id === pref.floorId);
                     if (floor) {
+                        // Find room that is NOT full AND is Compatible AND is Allowed Type
                         const availableRoom = floor.rooms.find(
-                            (r: any) => r.occupancy < r.capacity && isRoomCompatible(r, student)
+                            (r: any) => r.occupancy < r.capacity && isRoomCompatible(r, student) && isRoomTypeAllowed(r, student)
                         );
                         if (availableRoom) {
                             allottedRoom = availableRoom;
@@ -262,7 +321,7 @@ export class AllotmentService {
                 if (!allottedRoom) {
                     for (const floor of hostel.floors) {
                         const availableRoom = floor.rooms.find(
-                            (r: any) => r.occupancy < r.capacity && isRoomCompatible(r, student)
+                            (r: any) => r.occupancy < r.capacity && isRoomCompatible(r, student) && isRoomTypeAllowed(r, student)
                         );
                         if (availableRoom) {
                             allottedRoom = availableRoom;
@@ -272,12 +331,16 @@ export class AllotmentService {
                 }
 
                 if (allottedRoom) {
-                    // Create Allotment
+                    // Create Allotment with 7-day validity
+                    const validTill = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 Days from now
+
                     const allotment = await this.prisma.allotment.create({
                         data: {
                             studentId: student.id,
                             roomId: allottedRoom.id,
                             type: 'REGULAR',
+                            validTill: validTill,
+                            isPossessed: false,
                         },
                     });
 
@@ -351,5 +414,42 @@ export class AllotmentService {
                 },
             },
         });
+    }
+
+    async expireUnpaidAllotments() {
+        const now = new Date();
+        // Find allotments that are expired AND not possessed
+        const expiredAllotments = await this.prisma.allotment.findMany({
+            where: {
+                validTill: { lt: now },
+                isPossessed: false,
+            },
+            include: { room: true },
+        });
+
+        const results = {
+            deleted: 0,
+            details: [] as string[]
+        };
+
+        for (const allotment of expiredAllotments) {
+            // Delete the allotment
+            await this.prisma.allotment.delete({ where: { id: allotment.id } });
+
+            // Decrement Room Occupancy
+            await this.prisma.room.update({
+                where: { id: allotment.roomId },
+                data: { occupancy: { decrement: 1 } },
+            });
+
+            results.deleted++;
+            results.details.push(`Expired allotment for Student ${allotment.studentId} in Room ${allotment.room.number}`);
+        }
+
+        if (results.deleted > 0) {
+            console.log(`[Allotment Expiry] Cleaned up ${results.deleted} unpaid allotments.`);
+        }
+
+        return results;
     }
 }

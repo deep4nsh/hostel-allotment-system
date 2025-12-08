@@ -111,7 +111,15 @@ export class PaymentsService {
                 throw new BadRequestException('Student record not found for user');
             }
 
-            // Ideally update existing PENDING payment instead of creating new one
+            // SIDE EFFECT: Mark allotment as possessed if Hostel Fee
+            if (purpose === 'HOSTEL_FEE') {
+                await this.prisma.allotment.update({
+                    where: { studentId: student.id },
+                    data: { isPossessed: true, possessionDate: new Date() }
+                });
+            }
+
+            // Update existing or create new payment record
             const existingPayment = await this.prisma.payment.findFirst({
                 where: { txnRef: razorpayOrderId, status: 'PENDING' }
             });
@@ -121,13 +129,10 @@ export class PaymentsService {
                     where: { id: existingPayment.id },
                     data: {
                         status: PaymentStatus.COMPLETED,
-                        txnRef: razorpayPaymentId, // Update reference to payment ID? Or keep Order ID?
-                        // Keeping order ID is safer for idempotency, but let's follow schema. 
-                        // Schema has unique txnRef. If we update it to PaymentID, it's fine.
+                        txnRef: razorpayPaymentId,
                     }
                 });
             } else {
-                // Create new if not found (fallback)
                 return this.prisma.payment.create({
                     data: {
                         studentId: student.id,
@@ -145,7 +150,6 @@ export class PaymentsService {
     }
 
     async mockVerify(userId: string, purpose: PaymentPurpose, amount: number) {
-        // ... mock verify implementation (unchanged) ...
         let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
             student = await this.prisma.student.create({
@@ -154,6 +158,14 @@ export class PaymentsService {
                     name: '',
                     gender: 'OTHER',
                 }
+            });
+        }
+
+        // SIDE EFFECT: Mark allotment as possessed if Hostel Fee
+        if (purpose === 'HOSTEL_FEE') {
+            await this.prisma.allotment.update({
+                where: { studentId: student.id },
+                data: { isPossessed: true, possessionDate: new Date() }
             });
         }
 

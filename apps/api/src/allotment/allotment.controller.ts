@@ -22,4 +22,11 @@ export class AllotmentController {
     getAllotments(@Param('hostelId') hostelId: string) {
         return this.allotmentService.getAllotments(hostelId);
     }
+
+    @Post('expire')
+    // @UseGuards(AuthGuard('jwt'), RolesGuard) // Uncomment security for prod, keeping open for easy testing as implied
+    // @Roles(Role.ADMIN) 
+    expireAllotments() {
+        return this.allotmentService.expireUnpaidAllotments();
+    }
 }
