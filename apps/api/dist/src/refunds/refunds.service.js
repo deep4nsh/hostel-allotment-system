@@ -60,7 +60,7 @@ let RefundsService = class RefundsService {
                 refundAmount = Math.max(0, refundAmount - 3000);
             }
         }
-        return this.prisma.refundRequest.create({
+        const hostelRefundRequest = await this.prisma.refundRequest.create({
             data: {
                 studentId: student.id,
                 feeType: payment.purpose,
@@ -68,6 +68,32 @@ let RefundsService = class RefundsService {
                 status: 'PENDING',
             },
         });
+        if (payment.purpose === 'HOSTEL_FEE') {
+            const messPayment = await this.prisma.payment.findFirst({
+                where: {
+                    studentId: student.id,
+                    purpose: 'MESS_FEE',
+                    status: 'COMPLETED'
+                }
+            });
+            if (messPayment) {
+                const existingReq = await this.prisma.refundRequest.findFirst({
+                    where: { studentId: student.id, feeType: 'MESS_FEE', status: 'PENDING' }
+                });
+                if (!existingReq) {
+                    await this.prisma.refundRequest.create({
+                        data: {
+                            studentId: student.id,
+                            feeType: 'MESS_FEE',
+                            amount: messPayment.amount,
+                            status: 'PENDING'
+                        }
+                    });
+                    console.log(`Auto-generated Mess Fee refund request for student ${student.id}`);
+                }
+            }
+        }
+        return hostelRefundRequest;
     }
     async findAll() {
         return this.prisma.refundRequest.findMany({

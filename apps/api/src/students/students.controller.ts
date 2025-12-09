@@ -105,8 +105,18 @@ export class StudentsController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.ADMIN, Role.WARDEN)
     @Get('admin/search')
-    searchStudents(@Query('search') search?: string, @Query('hostelId') hostelId?: string, @Query('roomNumber') roomNumber?: string) {
-        return this.studentsService.searchStudents({ search, hostelId, roomNumber });
+    searchStudents(
+        @Query('search') search?: string,
+        @Query('hostelId') hostelId?: string,
+        @Query('roomNumber') roomNumber?: string,
+        @Query('year') year?: string
+    ) {
+        return this.studentsService.searchStudents({
+            search,
+            hostelId,
+            roomNumber,
+            year: year ? parseInt(year) : undefined
+        });
     }
 
     @UseGuards(AuthGuard('jwt'), RolesGuard)

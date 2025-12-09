@@ -169,7 +169,8 @@ export class PaymentsService {
             });
         }
 
-        return this.prisma.payment.create({
+        console.log(`Mock Verify for ${student.id} - ${purpose} - ${amount}`);
+        const payment = await this.prisma.payment.create({
             data: {
                 studentId: student.id,
                 purpose,
@@ -179,5 +180,7 @@ export class PaymentsService {
                 gateway: 'MOCK',
             },
         });
+        console.log('Payment created:', payment);
+        return payment;
     }
 }

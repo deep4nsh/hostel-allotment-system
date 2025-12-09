@@ -23,6 +23,10 @@ export class RefundsService {
         const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
         if (!payment || payment.studentId !== student.id) throw new Error('Invalid payment');
 
+        if (payment.purpose === 'ALLOTMENT_REQUEST') {
+            throw new Error('Allotment Request Fee is non-refundable.');
+        }
+
         // New Rule: Hostel Fee refunds only allowed till 14th August of current year
         if (payment.purpose === 'HOSTEL_FEE') {
             const now = new Date();

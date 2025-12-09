@@ -78,8 +78,13 @@ let StudentsController = class StudentsController {
     rejectEditRequest(id) {
         return this.studentsService.rejectEditRequest(id);
     }
-    searchStudents(search, hostelId, roomNumber) {
-        return this.studentsService.searchStudents({ search, hostelId, roomNumber });
+    searchStudents(search, hostelId, roomNumber, year) {
+        return this.studentsService.searchStudents({
+            search,
+            hostelId,
+            roomNumber,
+            year: year ? parseInt(year) : undefined
+        });
     }
     async getStudentByUserId(userId) {
         const student = await this.studentsService.findOne(userId);
@@ -190,8 +195,9 @@ __decorate([
     __param(0, (0, common_1.Query)('search')),
     __param(1, (0, common_1.Query)('hostelId')),
     __param(2, (0, common_1.Query)('roomNumber')),
+    __param(3, (0, common_1.Query)('year')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], StudentsController.prototype, "searchStudents", null);
 __decorate([

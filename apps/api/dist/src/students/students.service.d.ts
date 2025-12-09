@@ -235,6 +235,7 @@ export declare class StudentsService {
         search?: string;
         hostelId?: string;
         roomNumber?: string;
+        year?: number;
     }): Promise<({
         user: {
             email: string;
@@ -273,6 +274,16 @@ export declare class StudentsService {
             possessionDate: Date | null;
             createdAt: Date;
         }) | null;
+        payments: {
+            id: string;
+            studentId: string;
+            purpose: import(".prisma/client").$Enums.PaymentPurpose;
+            status: import(".prisma/client").$Enums.PaymentStatus;
+            amount: number;
+            txnRef: string | null;
+            gateway: string;
+            createdAt: Date;
+        }[];
     } & {
         id: string;
         userId: string;

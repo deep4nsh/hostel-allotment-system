@@ -24,11 +24,17 @@ export default function StudentPaymentsContent() {
             }
 
             try {
-                const res = await fetch('/api/students/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const res = await fetch(`/api/students/me?t=${Date.now()}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
                 })
                 if (res.ok) {
                     const data = await res.json()
+                    console.log('API Response:', data)
+                    console.log('Payments:', data.payments)
                     setPayments(data.payments || [])
                     setAllotment(data.allotment)
                 }
@@ -55,47 +61,34 @@ export default function StudentPaymentsContent() {
     }
 
     const hostelFee = getHostelFee()
-    const hostelFeePaid = payments.some(p => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED')
 
     const handlePayment = async (purpose: 'MESS_FEE' | 'HOSTEL_FEE') => {
-        // We still fetch order to ensure backend validation/creation if strict, 
-        // but for mock we primarily just need the amount. 
-        // We can trust the frontend calculated amount for display, but let's be safe and ask connection.
-        // Or simpler: just use the amount we know.
-
-        // Actually, let's fetch 'create-order' just to get the exact amount the backend expects.
-        const token = localStorage.getItem('token')
-        try {
-            const res = await fetch('/api/payments/create-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ purpose })
-            })
-            if (!res.ok) {
-                const err = await res.json()
-                throw new Error(err.message || 'Failed')
+        let amount = 0;
+        if (purpose === 'MESS_FEE') {
+            amount = 34800;
+        } else {
+            const calculatedFee = getHostelFee();
+            if (!calculatedFee) {
+                alert('Hostel fee not generated yet.');
+                return;
             }
-            const order = await res.json()
-            const amountInRupees = order.amount / 100 // Backend returns paise
-
-            setModalConfig({
-                isOpen: true,
-                amount: amountInRupees,
-                purpose: purpose
-            })
-
-        } catch (e: any) {
-            console.error(e)
-            alert(e.message || 'Payment initiation failed')
+            amount = calculatedFee;
         }
+
+        setModalConfig({
+            isOpen: true,
+            amount: amount,
+            purpose: purpose
+        })
     }
 
     const handleRequestRefund = async (paymentId: string) => {
-        const reason = prompt('Enter reason for refund:')
-        if (!reason) return
+        const confirmed = confirm(
+            "WARNING: Requesting a refund for Hostel Fee will CANCEL your admission and automatically process a refund for your Mess Fee as well.\n\nAre you sure you want to proceed?"
+        )
+        if (!confirmed) return
+
+        const reason = "Student requested cancellation via dashboard";
 
         const token = localStorage.getItem('token')
         try {
@@ -120,7 +113,12 @@ export default function StudentPaymentsContent() {
 
     if (isLoading) return <div className="p-8">Loading...</div>
 
-    const messFeePaid = payments.some(p => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED')
+    const hostelFeePaid = payments.some(p => p.purpose === 'HOSTEL_FEE' && p.status?.toUpperCase() === 'COMPLETED')
+    const messFeePaid = payments.some(p => p.purpose === 'MESS_FEE' && p.status?.toUpperCase() === 'COMPLETED')
+
+    console.log('Derived Status:', { hostelFeePaid, messFeePaid, payments })
+
+    console.log('Derived Status:', { hostelFeePaid, messFeePaid, payments })
 
     return (
         <div className="p-8 space-y-6">
@@ -201,9 +199,9 @@ export default function StudentPaymentsContent() {
                                     <td className="p-4">{payment.status}</td>
                                     <td className="p-4">{new Date(payment.createdAt).toLocaleDateString()}</td>
                                     <td className="p-4">
-                                        {payment.status === 'COMPLETED' && (
+                                        {payment.status === 'COMPLETED' && payment.purpose === 'HOSTEL_FEE' && (
                                             <Button variant="outline" size="sm" onClick={() => handleRequestRefund(payment.id)}>
-                                                Request Refund
+                                                Cancel & Refund
                                             </Button>
                                         )}
                                     </td>

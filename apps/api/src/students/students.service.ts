@@ -17,7 +17,7 @@ export class StudentsService {
                 user: {
                     select: { email: true, role: true }
                 },
-                // payments: true, // Temporarily disabled to avoid startup errors
+                payments: true,
                 allotment: {
                     include: {
                         room: {
@@ -231,8 +231,8 @@ export class StudentsService {
         const distance = this.distanceService.calculateDistanceFromDTU(coords.lat, coords.lng);
         return { distance, coords };
     }
-    async searchStudents(params: { search?: string, hostelId?: string, roomNumber?: string }) {
-        const { search, hostelId, roomNumber } = params;
+    async searchStudents(params: { search?: string, hostelId?: string, roomNumber?: string, year?: number }) {
+        const { search, hostelId, roomNumber, year } = params;
 
         return this.prisma.student.findMany({
             where: {
@@ -244,6 +244,7 @@ export class StudentsService {
                             { user: { email: { contains: search, mode: 'insensitive' } } }
                         ]
                     } : {},
+                    year ? { year: year } : {},
                     hostelId || roomNumber ? {
                         allotment: {
                             room: {
@@ -256,6 +257,7 @@ export class StudentsService {
             },
             include: {
                 user: { select: { email: true } },
+                payments: true,
                 allotment: {
                     include: {
                         room: {

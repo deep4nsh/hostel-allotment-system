@@ -27,6 +27,7 @@ let StudentsService = class StudentsService {
                 user: {
                     select: { email: true, role: true }
                 },
+                payments: true,
                 allotment: {
                     include: {
                         room: {
@@ -208,7 +209,7 @@ let StudentsService = class StudentsService {
         return { distance, coords };
     }
     async searchStudents(params) {
-        const { search, hostelId, roomNumber } = params;
+        const { search, hostelId, roomNumber, year } = params;
         return this.prisma.student.findMany({
             where: {
                 AND: [
@@ -219,6 +220,7 @@ let StudentsService = class StudentsService {
                             { user: { email: { contains: search, mode: 'insensitive' } } }
                         ]
                     } : {},
+                    year ? { year: year } : {},
                     hostelId || roomNumber ? {
                         allotment: {
                             room: {
@@ -231,6 +233,7 @@ let StudentsService = class StudentsService {
             },
             include: {
                 user: { select: { email: true } },
+                payments: true,
                 allotment: {
                     include: {
                         room: {

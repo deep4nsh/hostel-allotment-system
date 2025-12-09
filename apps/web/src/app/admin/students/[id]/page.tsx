@@ -127,6 +127,49 @@ export default function AdminStudentProfilePage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <Card className="md:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Payment History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {student.payments && student.payments.length > 0 ? (
+                            <div className="rounded-md border">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-50 border-b">
+                                        <tr>
+                                            <th className="p-4 font-medium">Purpose</th>
+                                            <th className="p-4 font-medium">Amount</th>
+                                            <th className="p-4 font-medium">Status</th>
+                                            <th className="p-4 font-medium">Ref ID</th>
+                                            <th className="p-4 font-medium">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {student.payments.map((payment: any) => (
+                                            <tr key={payment.id} className="border-b">
+                                                <td className="p-4">{payment.purpose}</td>
+                                                <td className="p-4">₹{payment.amount}</td>
+                                                <td className="p-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${payment.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                        }`}>
+                                                        {payment.status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-xs font-mono">{payment.txnRef}</td>
+                                                <td className="p-4">{new Date(payment.createdAt).toLocaleDateString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="p-4 text-center text-slate-500 bg-slate-50 rounded-lg">
+                                No payment history found.
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )
