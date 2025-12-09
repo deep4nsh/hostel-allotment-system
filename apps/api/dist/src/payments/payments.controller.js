@@ -16,10 +16,23 @@ exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
 const payments_service_1 = require("./payments.service");
 const passport_1 = require("@nestjs/passport");
+const pdf_service_1 = require("../students/pdf.service");
 let PaymentsController = class PaymentsController {
     paymentsService;
-    constructor(paymentsService) {
+    pdfService;
+    constructor(paymentsService, pdfService) {
         this.paymentsService = paymentsService;
+        this.pdfService = pdfService;
+    }
+    async getReceipt(req, id, res) {
+        const payment = await this.paymentsService.getPaymentForReceipt(id, req.user.userId);
+        const buffer = await this.pdfService.generatePaymentReceipt(payment, payment.student);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename=receipt-${id}.pdf`,
+            'Content-Length': buffer.length,
+        });
+        res.send(buffer);
     }
     async createOrder(req, body) {
         if (!body.purpose) {
@@ -35,6 +48,16 @@ let PaymentsController = class PaymentsController {
     }
 };
 exports.PaymentsController = PaymentsController;
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)(':id/receipt'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "getReceipt", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Post)('create-order'),
@@ -64,6 +87,7 @@ __decorate([
 ], PaymentsController.prototype, "mockVerify", null);
 exports.PaymentsController = PaymentsController = __decorate([
     (0, common_1.Controller)('payments'),
-    __metadata("design:paramtypes", [payments_service_1.PaymentsService])
+    __metadata("design:paramtypes", [payments_service_1.PaymentsService,
+        pdf_service_1.PdfService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

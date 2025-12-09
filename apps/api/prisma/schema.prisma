@@ -141,9 +141,16 @@ model Student {
   roomSurrenderRequests RoomSurrenderRequest[]
   hostelSwapRequests HostelSwapRequest[]
   editRequests    ProfileEditRequest[]
+
+  // Room Swap (P2P)
+  roomSwapListing RoomSwapRequest?
+  sentSwapInvites RoomSwapInvite[] @relation("SentSwaps")
+  receivedSwapInvites RoomSwapInvite[] @relation("ReceivedSwaps")
 }
 
+
 model Hostel {
+
   id        String   @id @default(uuid())
   name      String
   isAC      Boolean  @default(false)
@@ -328,4 +335,25 @@ model ProfileEditRequest {
   status    RequestStatus @default(PENDING)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RoomSwapRequest {
+  id        String   @id @default(uuid())
+  studentId String   @unique
+  student   Student  @relation(fields: [studentId], references: [id])
+  hostelId  String
+  status    String   @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoomSwapInvite {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     Student  @relation("SentSwaps", fields: [senderId], references: [id])
+  receiverId String
+  receiver   Student  @relation("ReceivedSwaps", fields: [receiverId], references: [id])
+  status     String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

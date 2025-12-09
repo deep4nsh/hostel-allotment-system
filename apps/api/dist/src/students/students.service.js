@@ -28,6 +28,8 @@ let StudentsService = class StudentsService {
                     select: { email: true, role: true }
                 },
                 payments: true,
+                refundRequests: true,
+                documents: true,
                 allotment: {
                     include: {
                         room: {
@@ -234,6 +236,7 @@ let StudentsService = class StudentsService {
             include: {
                 user: { select: { email: true } },
                 payments: true,
+                refundRequests: true,
                 allotment: {
                     include: {
                         room: {

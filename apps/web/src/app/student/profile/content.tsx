@@ -57,39 +57,7 @@ export default function StudentProfileContent() {
         fetchProfile()
     }, [router])
 
-    const handleDownloadSlip = async () => {
-        const token = localStorage.getItem('token')
-        const res = await fetch('/api/students/me/slip', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        if (res.ok) {
-            const blob = await res.blob()
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'registration-slip.pdf'
-            a.click()
-        } else {
-            alert('Failed to download slip')
-        }
-    }
 
-    const handleDownloadAllotmentLetter = async () => {
-        const token = localStorage.getItem('token')
-        const res = await fetch('/api/letters/allotment', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        if (res.ok) {
-            const blob = await res.blob()
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'allotment-letter.pdf'
-            a.click()
-        } else {
-            alert('Failed to download allotment letter')
-        }
-    }
 
     if (isLoading) return <div className="p-8">Loading...</div>
     if (!profile) return <div className="p-8">Failed to load profile</div>
@@ -109,6 +77,12 @@ export default function StudentProfileContent() {
                     <Card className="bg-green-50 border-green-200">
                         <CardHeader>
                             <CardTitle className="text-green-700">🎉 Hostel Allotted!</CardTitle>
+                            {!profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED') && (
+                                <div className="text-red-600 text-sm mt-1">Warning: Hostel Fee is pending.</div>
+                            )}
+                            {!profile?.payments?.some((p: any) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED') && (
+                                <div className="text-red-600 text-sm mt-1">Warning: Mess Fee is pending.</div>
+                            )}
                         </CardHeader>
                         <CardContent className="space-y-2">
                             <p className="text-lg">You have been allotted a room.</p>
@@ -120,9 +94,7 @@ export default function StudentProfileContent() {
                                     <span className="font-semibold">Floor:</span> {allotment.room?.floor?.number}
                                 </div>
                             </div>
-                            <Button className="mt-4 bg-green-600 hover:bg-green-700" onClick={handleDownloadAllotmentLetter}>
-                                Download Allotment Letter
-                            </Button>
+
                         </CardContent>
                     </Card>
                 ) : (
@@ -146,18 +118,6 @@ export default function StudentProfileContent() {
                     </CardHeader>
                     <CardContent>
                         <ProfileForm />
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Downloads</CardTitle>
-                        <CardDescription>Important documents</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button variant="outline" className="w-full md:w-auto" onClick={handleDownloadSlip}>
-                            Download Registration Slip
-                        </Button>
                     </CardContent>
                 </Card>
             </div>

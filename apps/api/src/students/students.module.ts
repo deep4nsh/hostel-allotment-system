@@ -10,6 +10,6 @@ import { DistanceService } from '../utils/distance.service';
     imports: [PrismaModule],
     controllers: [StudentsController],
     providers: [StudentsService, PdfService, DistanceService],
-    exports: [StudentsService],
+    exports: [StudentsService, PdfService],
 })
 export class StudentsModule { }

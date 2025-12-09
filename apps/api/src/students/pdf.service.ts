@@ -3,22 +3,27 @@ import puppeteer from 'puppeteer';
 
 @Injectable()
 export class PdfService {
-  async generateRegistrationSlip(student: any): Promise<Buffer> {
-    try {
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
-      const page = await browser.newPage();
+    async generateRegistrationSlip(student: any): Promise<Buffer> {
+        try {
+            const browser = await puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
 
-      const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO');
-      const signDoc = student.documents?.find((d: any) => d.kind === 'SIGNATURE');
-      // Fix: Use absolute path if possible or assume localhost for puppeteer
-      // In a real scenario, convert image to base64 to avoid networking issues in PDF generation
-      const photoUrl = photoDoc ? `http://localhost:4000${photoDoc.fileUrl}` : null;
-      const signUrl = signDoc ? `http://localhost:4000${signDoc.fileUrl}` : null;
+            const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO');
+            const signDoc = student.documents?.find((d: any) => d.kind === 'SIGNATURE');
+            // Fix: Use absolute path if possible or assume localhost for puppeteer
+            // In a real scenario, convert image to base64 to avoid networking issues in PDF generation
+            const photoUrl = photoDoc ? `http://localhost:4000${photoDoc.fileUrl}` : null;
+            const signUrl = signDoc ? `http://localhost:4000${signDoc.fileUrl}` : null;
 
-      const htmlContent = `
+            const hostelFeePaid = student.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED');
+            const messFeePaid = student.payments?.some((p: any) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED');
+            const isFeePaid = hostelFeePaid && messFeePaid;
+            const documentTitle = isFeePaid ? "Hostel Allotment Letter" : "Hostel Allotment Notice";
+
+            const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -44,7 +49,7 @@ export class PdfService {
 
         <!-- Header -->
         <div style="border: 1px solid black; border-bottom: none; text-align: center; font-weight: bold; padding: 5px; font-size: 14px;">
-            Hostel Registration Form
+            ${documentTitle}
         </div>
         <div style="border: 1px solid black; text-align: center; font-weight: bold; padding: 5px; font-size: 12px; border-top: none;">
             Academic Year 2025-2026
@@ -371,14 +376,107 @@ export class PdfService {
       </html>
       `;
 
-      await page.setContent(htmlContent);
-      const pdfBuffer = await page.pdf({ format: 'A4' });
+            await page.setContent(htmlContent);
+            const pdfBuffer = await page.pdf({ format: 'A4' });
 
-      await browser.close();
-      return Buffer.from(pdfBuffer);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      throw new Error('Failed to generate registration slip');
+            await browser.close();
+            return Buffer.from(pdfBuffer);
+
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            throw new Error('Failed to generate registration slip');
+        }
     }
-  }
+
+    async generatePaymentReceipt(payment: any, student: any): Promise<Buffer> {
+        try {
+            const browser = await puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+
+            const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica', 'Arial', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+          .logo { font-size: 24px; font-weight: bold; color: #2563eb; margin-bottom: 5px; }
+          .subtitle { color: #666; font-size: 14px; }
+          .receipt-title { font-size: 20px; font-weight: bold; margin: 30px 0 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+          .details-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
+          .row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 10px; }
+          .row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+          .label { font-weight: bold; color: #64748b; }
+          .value { font-weight: 500; }
+          .amount-row { font-size: 18px; color: #16a34a; font-weight: bold; border-top: 2px solid #e2e8f0; padding-top: 15px; margin-top: 10px; }
+          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #94a3b8; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">Delhi Technological University</div>
+          <div class="subtitle">Hostel Allotment System</div>
+        </div>
+
+        <div class="receipt-title">Payment Receipt</div>
+
+        <div class="details-box">
+          <div class="row">
+            <span class="label">Receipt No:</span>
+            <span class="value">RCPT-${payment.id.split('-')[0].toUpperCase()}</span>
+          </div>
+          <div class="row">
+            <span class="label">Date:</span>
+            <span class="value">${new Date(payment.createdAt).toLocaleString()}</span>
+          </div>
+          <div class="row">
+            <span class="label">Student Name:</span>
+            <span class="value">${student.name}</span>
+          </div>
+          <div class="row">
+            <span class="label">Roll Number:</span>
+            <span class="value">${student.uniqueId}</span>
+          </div>
+        </div>
+
+        <div class="details-box">
+          <div class="row">
+            <span class="label">Payment For:</span>
+            <span class="value">${payment.purpose.replace('_', ' ')}</span>
+          </div>
+          <div class="row">
+            <span class="label">Transaction ID:</span>
+            <span class="value">${payment.razorpayPaymentId || 'N/A'}</span>
+          </div>
+          <div class="row">
+            <span class="label">Payment Method:</span>
+            <span class="value">Online</span>
+          </div>
+           <div class="row amount-row">
+            <span class="label">Amount Paid:</span>
+            <span class="value">₹${payment.amount.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>This is a computer-generated receipt and does not require a signature.</p>
+          <p>Delhi Technological University, Shahbad Daulatpur, Main Bawana Road, Delhi-110042</p>
+        </div>
+      </body>
+      </html>
+      `;
+
+            await page.setContent(htmlContent);
+            const pdfBuffer = await page.pdf({ format: 'A4' });
+
+            await browser.close();
+            return Buffer.from(pdfBuffer);
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            throw new Error('Failed to generate payment receipt');
+        }
+    }
 }

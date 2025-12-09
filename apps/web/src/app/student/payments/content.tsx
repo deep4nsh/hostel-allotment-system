@@ -114,6 +114,33 @@ export default function StudentPaymentsContent() {
         }
     }
 
+    const handleDownloadReceipt = async (paymentId: string) => {
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch(`/api/payments/${paymentId}/receipt`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+
+            if (res.ok) {
+                const blob = await res.blob()
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `receipt-${paymentId}.pdf`
+                document.body.appendChild(a)
+                a.click()
+                window.URL.revokeObjectURL(url)
+                a.remove()
+            } else {
+                console.error('Download failed:', res.status, res.statusText)
+                alert('Failed to download receipt')
+            }
+        } catch (error) {
+            console.error('Error downloading receipt:', error)
+            alert('Error downloading receipt')
+        }
+    }
+
     if (isLoading) return <div className="p-8">Loading...</div>
 
     const hostelFeePaid = payments.some(p => p.purpose === 'HOSTEL_FEE' && p.status?.toUpperCase() === 'COMPLETED')
@@ -127,7 +154,17 @@ export default function StudentPaymentsContent() {
 
     return (
         <div className="p-8 space-y-6">
-            <h1 className="text-3xl font-bold">Payments & Refunds</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">Payments & Refunds</h1>
+                <div className="flex gap-4">
+                    <Button
+                        variant={hostelFeePaid && messFeePaid ? "default" : "outline"}
+                        onClick={() => window.open('/api/students/me/slip', '_blank')}
+                    >
+                        {hostelFeePaid && messFeePaid ? "Download Allotment Letter" : "Download Allotment Notice"}
+                    </Button>
+                </div>
+            </div>
 
             <MockPaymentModal
                 isOpen={modalConfig.isOpen}
@@ -215,7 +252,7 @@ export default function StudentPaymentsContent() {
                                     <td className="p-4">₹{payment.amount}</td>
                                     <td className="p-4">{payment.status}</td>
                                     <td className="p-4">{new Date(payment.createdAt).toLocaleDateString()}</td>
-                                    <td className="p-4">
+                                    <td className="p-4 space-x-2">
                                         {payment.status === 'COMPLETED' && payment.purpose === 'HOSTEL_FEE' && !hostelRefundStatus && (
                                             <Button variant="outline" size="sm" onClick={() => handleRequestRefund(payment.id)}>
                                                 Cancel & Refund
@@ -223,6 +260,11 @@ export default function StudentPaymentsContent() {
                                         )}
                                         {payment.status === 'COMPLETED' && payment.purpose === 'HOSTEL_FEE' && hostelRefundStatus && (
                                             <span className="text-yellow-600 font-medium text-xs">Refresh for updates</span>
+                                        )}
+                                        {payment.status === 'COMPLETED' && ['HOSTEL_FEE', 'MESS_FEE', 'ALLOTMENT_REQUEST'].includes(payment.purpose) && (
+                                            <Button variant="outline" size="sm" onClick={() => handleDownloadReceipt(payment.id)}>
+                                                Download Receipt
+                                            </Button>
                                         )}
                                     </td>
                                 </tr>

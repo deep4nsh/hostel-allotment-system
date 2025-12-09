@@ -36,6 +36,9 @@ let RefundsService = class RefundsService {
         const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
         if (!payment || payment.studentId !== student.id)
             throw new Error('Invalid payment');
+        if (payment.purpose === 'ALLOTMENT_REQUEST') {
+            throw new Error('Allotment Request Fee is non-refundable.');
+        }
         if (payment.purpose === 'HOSTEL_FEE') {
             const now = new Date();
             const currentYear = now.getFullYear();

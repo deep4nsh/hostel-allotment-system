@@ -212,6 +212,29 @@ let PaymentsService = class PaymentsService {
         console.log('Payment created:', payment);
         return payment;
     }
+    async getPaymentForReceipt(paymentId, userId) {
+        const payment = await this.prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: {
+                student: {
+                    select: {
+                        name: true,
+                        uniqueId: true,
+                    }
+                }
+            }
+        });
+        if (!payment) {
+            throw new common_1.BadRequestException('Payment not found');
+        }
+        const student = await this.prisma.student.findUnique({
+            where: { id: payment.studentId }
+        });
+        if (!student || student.userId !== userId) {
+            throw new common_1.BadRequestException('Unauthorized access to payment receipt');
+        }
+        return payment;
+    }
 };
 exports.PaymentsService = PaymentsService;
 exports.PaymentsService = PaymentsService = __decorate([

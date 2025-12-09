@@ -183,4 +183,32 @@ export class PaymentsService {
         console.log('Payment created:', payment);
         return payment;
     }
+    async getPaymentForReceipt(paymentId: string, userId: string) {
+        const payment = await this.prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: {
+                student: {
+                    select: {
+                        name: true,
+                        uniqueId: true,
+                    }
+                }
+            }
+        });
+
+        if (!payment) {
+            throw new BadRequestException('Payment not found');
+        }
+
+        // Verify ownership (indirectly via student userId)
+        const student = await this.prisma.student.findUnique({
+            where: { id: payment.studentId }
+        });
+
+        if (!student || student.userId !== userId) {
+            throw new BadRequestException('Unauthorized access to payment receipt');
+        }
+
+        return payment;
+    }
 }

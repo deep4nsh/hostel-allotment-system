@@ -23,6 +23,7 @@ import { OpsModule } from './ops/ops.module';
 import { RebatesModule } from './rebates/rebates.module';
 import { ComplaintsModule } from './complaints/complaints.module';
 import { RequestsModule } from './requests/requests.module';
+import { RoomSwapModule } from './room-swap/room-swap.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { RequestsModule } from './requests/requests.module';
     RebatesModule,
     ComplaintsModule,
     RequestsModule,
+    RoomSwapModule,
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,

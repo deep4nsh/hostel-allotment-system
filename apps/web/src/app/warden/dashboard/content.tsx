@@ -86,7 +86,7 @@ export default function WardenDashboardContent() {
             className={`px-4 py-2 ${activeTab === 'change' ? 'border-b-2 border-black font-bold' : ''}`}
             onClick={() => setActiveTab('change')}
           >
-            Room Change
+            Hostel Change
           </button>
           <button
             className={`px-4 py-2 ${activeTab === 'surrender' ? 'border-b-2 border-black font-bold' : ''}`}
@@ -179,7 +179,7 @@ export default function WardenDashboardContent() {
                 </CardContent>
               </Card>
             ))}
-            {changeRequests.length === 0 && <p className="text-gray-500">No pending room change requests.</p>}
+            {changeRequests.length === 0 && <p className="text-gray-500">No pending hostel change requests.</p>}
           </div>
         )}
 

@@ -25,4 +25,19 @@ export declare class PaymentsService {
         gateway: string;
         createdAt: Date;
     }>;
+    getPaymentForReceipt(paymentId: string, userId: string): Promise<{
+        student: {
+            name: string;
+            uniqueId: string | null;
+        };
+    } & {
+        id: string;
+        studentId: string;
+        purpose: import("@prisma/client").$Enums.PaymentPurpose;
+        status: import("@prisma/client").$Enums.PaymentStatus;
+        amount: number;
+        txnRef: string | null;
+        gateway: string;
+        createdAt: Date;
+    }>;
 }

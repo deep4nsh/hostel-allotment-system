@@ -284,6 +284,14 @@ export declare class StudentsService {
             gateway: string;
             createdAt: Date;
         }[];
+        refundRequests: {
+            id: string;
+            studentId: string;
+            feeType: string;
+            amount: number;
+            status: string;
+            createdAt: Date;
+        }[];
     } & {
         id: string;
         userId: string;

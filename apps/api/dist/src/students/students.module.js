@@ -21,7 +21,7 @@ exports.StudentsModule = StudentsModule = __decorate([
         imports: [prisma_module_1.PrismaModule],
         controllers: [students_controller_1.StudentsController],
         providers: [students_service_1.StudentsService, pdf_service_1.PdfService, distance_service_1.DistanceService],
-        exports: [students_service_1.StudentsService],
+        exports: [students_service_1.StudentsService, pdf_service_1.PdfService],
     })
 ], StudentsModule);
 //# sourceMappingURL=students.module.js.map
