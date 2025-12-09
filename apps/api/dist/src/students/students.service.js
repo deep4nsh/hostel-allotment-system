@@ -31,7 +31,11 @@ let StudentsService = class StudentsService {
                     include: {
                         room: {
                             include: {
-                                floor: true
+                                floor: {
+                                    include: {
+                                        hostel: true
+                                    }
+                                }
                             }
                         }
                     }

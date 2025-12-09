@@ -32,7 +32,7 @@ export class PaymentsService {
         if (purpose === 'REGISTRATION') amount = 1000;
         else if (purpose === 'ALLOTMENT_REQUEST') amount = 1000;
 
-        else if (purpose === 'MESS_FEE') amount = 20000;
+        else if (purpose === 'MESS_FEE') amount = 34800;
         else if (purpose === 'HOSTEL_FEE') {
             const allotment = await this.prisma.allotment.findUnique({
                 where: { studentId: student.id },

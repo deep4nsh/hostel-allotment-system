@@ -2,7 +2,9 @@ import { AllotmentService } from './allotment.service';
 export declare class AllotmentController {
     private readonly allotmentService;
     constructor(allotmentService: AllotmentService);
-    triggerAllotment(hostelId: string): Promise<{
+    triggerAllotment(body: {
+        year: number;
+    }): Promise<{
         totalEligible: number;
         allotted: number;
         waitlisted: number;

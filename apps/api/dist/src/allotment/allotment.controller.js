@@ -24,8 +24,8 @@ let AllotmentController = class AllotmentController {
     constructor(allotmentService) {
         this.allotmentService = allotmentService;
     }
-    triggerAllotment(hostelId) {
-        return this.allotmentService.runAllotment(hostelId);
+    triggerAllotment(body) {
+        return this.allotmentService.runAllotment(body.year);
     }
     getAllotments(hostelId) {
         return this.allotmentService.getAllotments(hostelId);
@@ -36,12 +36,12 @@ let AllotmentController = class AllotmentController {
 };
 exports.AllotmentController = AllotmentController;
 __decorate([
-    (0, common_1.Post)('trigger/:hostelId'),
+    (0, common_1.Post)('trigger'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
-    __param(0, (0, common_1.Param)('hostelId')),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AllotmentController.prototype, "triggerAllotment", null);
 __decorate([

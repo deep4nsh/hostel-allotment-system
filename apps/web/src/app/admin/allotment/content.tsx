@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 
 export default function AdminAllotmentContent() {
     const [hostels, setHostels] = useState<any[]>([])
+    const [selectedYear, setSelectedYear] = useState<string>('1')
     const [selectedHostel, setSelectedHostel] = useState<string>('')
     const [allotments, setAllotments] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -55,17 +56,21 @@ export default function AdminAllotmentContent() {
     }
 
     const handleTriggerAllotment = async () => {
-        if (!selectedHostel) return
         const token = localStorage.getItem('token')
         try {
-            const res = await fetch(`/api/allotment/trigger/${selectedHostel}`, {
+            const res = await fetch(`/api/allotment/trigger`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ year: parseInt(selectedYear) })
             })
             if (res.ok) {
                 const result = await res.json()
-                alert(`Allotment Complete!\nEligible Students: ${result.totalEligible}\nAllotted Seats: ${result.allotted}\nWaitlisted: ${result.waitlisted}`)
-                fetchAllotments(selectedHostel)
+                alert(`Allotment Complete for Year ${selectedYear}!\nEligible Students: ${result.totalEligible}\nAllotted Seats: ${result.allotted}\nWaitlisted: ${result.waitlisted}`)
+                // Refresh list if a hostel is selected
+                if (selectedHostel) fetchAllotments(selectedHostel)
             } else {
                 const err = await res.json()
                 alert(`Failed to trigger allotment: ${err.message}`)
@@ -88,21 +93,42 @@ export default function AdminAllotmentContent() {
         <div className="p-8 space-y-6">
             <h1 className="text-3xl font-bold">Allotment Dashboard</h1>
 
-            <div className="flex items-center gap-4">
-                <Select onValueChange={setSelectedHostel} value={selectedHostel}>
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select Hostel" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {hostels.map(h => (
-                            <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            <div className="flex items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
+                <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">Target Year:</span>
+                    <Select onValueChange={setSelectedYear} value={selectedYear}>
+                        <SelectTrigger className="w-[150px]">
+                            <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="1">1st Year</SelectItem>
+                            <SelectItem value="2">2nd Year</SelectItem>
+                            <SelectItem value="3">3rd Year</SelectItem>
+                            <SelectItem value="4">4th Year</SelectItem>
+                            <SelectItem value="5">5th Year</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
 
-                <Button onClick={handleTriggerAllotment} disabled={!selectedHostel}>
-                    Run Allotment Algorithm
+                <Button onClick={handleTriggerAllotment}>
+                    Run Allotment
                 </Button>
+            </div>
+
+            <div className="pt-8">
+                <h2 className="text-xl font-semibold mb-4">View Allotments by Hostel</h2>
+                <div className="flex items-center gap-4">
+                    <Select onValueChange={setSelectedHostel} value={selectedHostel}>
+                        <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Select Hostel" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {hostels.map(h => (
+                                <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             {selectedHostel && (

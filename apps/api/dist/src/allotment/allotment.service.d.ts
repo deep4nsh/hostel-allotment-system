@@ -2,7 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class AllotmentService {
     private prisma;
     constructor(prisma: PrismaService);
-    runAllotment(hostelId: string, targetProgramGroup?: string): Promise<{
+    runAllotment(targetYear: number): Promise<{
         totalEligible: number;
         allotted: number;
         waitlisted: number;

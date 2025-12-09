@@ -36,6 +36,14 @@ let RefundsService = class RefundsService {
         const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
         if (!payment || payment.studentId !== student.id)
             throw new Error('Invalid payment');
+        if (payment.purpose === 'HOSTEL_FEE') {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const deadline = new Date(`${currentYear}-08-14`);
+            if (now > deadline) {
+                throw new Error('Refund applications for Hostel Fees are closed for this session (Deadline: 14th August).');
+            }
+        }
         let refundAmount = payment.amount;
         if (student.allotment) {
             const issueDate = new Date(student.allotment.issueDate);

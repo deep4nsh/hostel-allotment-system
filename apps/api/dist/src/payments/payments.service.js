@@ -78,7 +78,7 @@ let PaymentsService = class PaymentsService {
         else if (purpose === 'ALLOTMENT_REQUEST')
             amount = 1000;
         else if (purpose === 'MESS_FEE')
-            amount = 20000;
+            amount = 34800;
         else if (purpose === 'HOSTEL_FEE') {
             const allotment = await this.prisma.allotment.findUnique({
                 where: { studentId: student.id },

@@ -4,15 +4,19 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Script from "next/script"
+import { MockPaymentModal } from "@/components/payment/MockPaymentModal"
 
 export default function StudentPaymentsContent() {
     const [payments, setPayments] = useState<any[]>([])
+    const [allotment, setAllotment] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, amount: number, purpose: string }>({
+        isOpen: false, amount: 0, purpose: ''
+    })
     const router = useRouter()
 
     useEffect(() => {
-        const fetchPayments = async () => {
+        const fetchData = async () => {
             const token = localStorage.getItem('token')
             if (!token) {
                 router.push('/login')
@@ -26,6 +30,7 @@ export default function StudentPaymentsContent() {
                 if (res.ok) {
                     const data = await res.json()
                     setPayments(data.payments || [])
+                    setAllotment(data.allotment)
                 }
             } catch (error) {
                 console.error(error)
@@ -34,13 +39,33 @@ export default function StudentPaymentsContent() {
             }
         }
 
-        fetchPayments()
+        fetchData()
     }, [router])
 
+    const getHostelFee = () => {
+        if (!allotment) return null
+        const { room } = allotment
+        const capacity = room.capacity
+        const isAC = room.floor?.hostel?.isAC
+
+        if (isAC && capacity === 3) return 72000
+        if (capacity === 1) return 60000
+        if (capacity === 2) return 56000
+        return 52000 // Triple Non-AC (or fallback)
+    }
+
+    const hostelFee = getHostelFee()
+    const hostelFeePaid = payments.some(p => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED')
+
     const handlePayment = async (purpose: 'MESS_FEE' | 'HOSTEL_FEE') => {
+        // We still fetch order to ensure backend validation/creation if strict, 
+        // but for mock we primarily just need the amount. 
+        // We can trust the frontend calculated amount for display, but let's be safe and ask connection.
+        // Or simpler: just use the amount we know.
+
+        // Actually, let's fetch 'create-order' just to get the exact amount the backend expects.
         const token = localStorage.getItem('token')
         try {
-            // 1. Get Amount
             const res = await fetch('/api/payments/create-order', {
                 method: 'POST',
                 headers: {
@@ -49,29 +74,22 @@ export default function StudentPaymentsContent() {
                 },
                 body: JSON.stringify({ purpose })
             })
-            if (!res.ok) throw new Error('Failed')
-            const order = await res.json()
-            const amountInRupees = order.amount / 100
-
-            // 2. Mock Verify
-            const verifyRes = await fetch('/api/payments/mock-verify', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    purpose,
-                    amount: amountInRupees
-                })
-            })
-            if (verifyRes.ok) {
-                alert('Payment Successful (Mock)')
-                window.location.reload()
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.message || 'Failed')
             }
-        } catch (e) {
+            const order = await res.json()
+            const amountInRupees = order.amount / 100 // Backend returns paise
+
+            setModalConfig({
+                isOpen: true,
+                amount: amountInRupees,
+                purpose: purpose
+            })
+
+        } catch (e: any) {
             console.error(e)
-            alert('Payment initiation failed')
+            alert(e.message || 'Payment initiation failed')
         }
     }
 
@@ -92,7 +110,8 @@ export default function StudentPaymentsContent() {
             if (res.ok) {
                 alert('Refund requested successfully')
             } else {
-                alert('Failed to request refund')
+                const err = await res.json()
+                alert(`Failed: ${err.message}`)
             }
         } catch (error) {
             console.error(error)
@@ -106,18 +125,39 @@ export default function StudentPaymentsContent() {
     return (
         <div className="p-8 space-y-6">
             <h1 className="text-3xl font-bold">Payments & Refunds</h1>
-            <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+
+            <MockPaymentModal
+                isOpen={modalConfig.isOpen}
+                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                amount={modalConfig.amount}
+                purpose={modalConfig.purpose}
+                onSuccess={() => window.location.reload()}
+            />
 
             <Card>
                 <CardHeader>
                     <CardTitle>Hostel Fee</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-2">
-                        <div className="text-3xl font-bold mb-4">Dynamic</div>
-                        <p className="text-slate-500 mb-4">Based on Room Capacity (Single/Double/Triple)</p>
-                        <Button onClick={() => handlePayment('HOSTEL_FEE')} className="w-full">Pay Hostel Fee</Button>
-                    </div>
+                    {hostelFeePaid ? (
+                        <div className="text-green-600 font-bold text-lg">Paid</div>
+                    ) : (
+                        <div className="space-y-2">
+                            {hostelFee ? (
+                                <>
+                                    <div className="text-3xl font-bold mb-4">₹{hostelFee.toLocaleString()}</div>
+                                    <p className="text-slate-500 mb-4">
+                                        For Room {allotment.room.number} ({allotment.room.floor?.hostel?.isAC ? 'AC' : 'Non-AC'} {allotment.room.capacity === 1 ? 'Single' : allotment.room.capacity === 2 ? 'Double' : 'Triple'})
+                                    </p>
+                                    <Button onClick={() => handlePayment('HOSTEL_FEE')} className="w-full">Pay Hostel Fee</Button>
+                                </>
+                            ) : (
+                                <div className="text-slate-500 italic">
+                                    Fee will be generated after room allotment.
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -130,7 +170,7 @@ export default function StudentPaymentsContent() {
                         <div className="text-green-600 font-bold text-lg">Paid</div>
                     ) : (
                         <div className="space-y-2">
-                            <div className="text-3xl font-bold mb-4">₹20,000</div>
+                            <div className="text-3xl font-bold mb-4">₹34,800</div>
                             <p className="text-slate-500 mb-4">Advance Mess Fee for the semester.</p>
                             <Button onClick={() => handlePayment('MESS_FEE')} className="w-full">Pay Mess Fee</Button>
                         </div>

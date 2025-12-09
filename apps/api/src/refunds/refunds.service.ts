@@ -23,6 +23,18 @@ export class RefundsService {
         const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
         if (!payment || payment.studentId !== student.id) throw new Error('Invalid payment');
 
+        // New Rule: Hostel Fee refunds only allowed till 14th August of current year
+        if (payment.purpose === 'HOSTEL_FEE') {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const deadline = new Date(`${currentYear}-08-14`); // August 14th
+
+            // If strictly after Aug 14, reject
+            if (now > deadline) {
+                throw new Error('Refund applications for Hostel Fees are closed for this session (Deadline: 14th August).');
+            }
+        }
+
         let refundAmount = payment.amount;
 
         // Check for Allotment and apply deductions
@@ -42,7 +54,7 @@ export class RefundsService {
             }
         }
 
-        return this.prisma.refundRequest.create({
+        const hostelRefundRequest = await this.prisma.refundRequest.create({
             data: {
                 studentId: student.id,
                 feeType: payment.purpose,
@@ -50,6 +62,38 @@ export class RefundsService {
                 status: 'PENDING',
             },
         });
+
+        // Auto-Trigger Mess Refund if Hostel Fee is being refunded/cancelled
+        if (payment.purpose === 'HOSTEL_FEE') {
+            const messPayment = await this.prisma.payment.findFirst({
+                where: {
+                    studentId: student.id,
+                    purpose: 'MESS_FEE',
+                    status: 'COMPLETED'
+                }
+            });
+
+            if (messPayment) {
+                // Check if already requested
+                const existingReq = await this.prisma.refundRequest.findFirst({
+                    where: { studentId: student.id, feeType: 'MESS_FEE', status: 'PENDING' }
+                });
+
+                if (!existingReq) {
+                    await this.prisma.refundRequest.create({
+                        data: {
+                            studentId: student.id,
+                            feeType: 'MESS_FEE',
+                            amount: messPayment.amount, // Full Refund for Mess
+                            status: 'PENDING'
+                        }
+                    });
+                    console.log(`Auto-generated Mess Fee refund request for student ${student.id}`);
+                }
+            }
+        }
+
+        return hostelRefundRequest;
     }
 
     async findAll() {

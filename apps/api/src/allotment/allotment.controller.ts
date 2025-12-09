@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, UseGuards, Body } from '@nestjs/common';
 import { AllotmentService } from './allotment.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -9,11 +9,11 @@ import { Role } from '@prisma/client';
 export class AllotmentController {
     constructor(private readonly allotmentService: AllotmentService) { }
 
-    @Post('trigger/:hostelId')
+    @Post('trigger')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.ADMIN)
-    triggerAllotment(@Param('hostelId') hostelId: string) {
-        return this.allotmentService.runAllotment(hostelId);
+    triggerAllotment(@Body() body: { year: number }) {
+        return this.allotmentService.runAllotment(body.year);
     }
 
     @Get('list/:hostelId')

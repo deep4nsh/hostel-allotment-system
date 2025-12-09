@@ -18,10 +18,10 @@ let AllotmentService = class AllotmentService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async runAllotment(hostelId, targetProgramGroup) {
+    async runAllotment(targetYear) {
         try {
-            const hostel = await this.prisma.hostel.findUnique({
-                where: { id: hostelId },
+            console.log(`Running Year-wise Allotment for Year ${targetYear}`);
+            const allHostels = await this.prisma.hostel.findMany({
                 include: {
                     floors: {
                         include: {
@@ -37,66 +37,48 @@ let AllotmentService = class AllotmentService {
                     },
                 },
             });
-            if (!hostel)
-                throw new common_1.NotFoundException('Hostel not found');
-            const getCourseLevel = (program) => {
-                if (!program)
-                    return 'UNKNOWN';
-                const bachelors = ['BTECH', 'BSC', 'BDES', 'IMSC'];
-                const masters = ['MTECH', 'MSC', 'MCA', 'MBA', 'MDES'];
-                if (bachelors.includes(program))
-                    return 'BACHELOR';
-                if (masters.includes(program))
-                    return 'MASTER';
-                if (program === 'PHD')
-                    return 'PHD';
-                return 'OTHER';
+            const isHostelEligibleForYear = (hostelName, category) => {
+                const name = hostelName.toLowerCase();
+                if (name.includes('ramanujan') || name.includes('transit')) {
+                    if (category === 'NRI')
+                        return true;
+                    return false;
+                }
+                if (category === 'NRI') {
+                    return false;
+                }
+                if (targetYear === 1) {
+                    return name.includes('aryabhatta') || name.includes('type-ii');
+                }
+                else {
+                    return !name.includes('aryabhatta') && !name.includes('type-ii');
+                }
             };
             const isRoomCompatible = (room, student) => {
-                if (room.occupancy === 0)
-                    return true;
-                const occupants = room.allotments.map((a) => a.student);
-                if (occupants.length === 0)
-                    return true;
-                const studentLevel = getCourseLevel(student.program);
-                const studentYear = student.year || 1;
-                for (const occupant of occupants) {
-                    const occupantLevel = getCourseLevel(occupant.program);
-                    const occupantYear = occupant.year || 1;
-                    if (studentLevel !== occupantLevel)
-                        return false;
-                    if (studentYear !== occupantYear)
-                        return false;
-                }
                 return true;
             };
-            const isRoomTypeAllowed = (room, student) => {
-                const hostelIsAC = hostel.isAC;
-                const capacity = room.capacity;
-                const level = getCourseLevel(student.program);
+            const isRoomTypeAllowed = (room, student, hostelIsAC) => {
+                const level = (0, program_utils_1.getProgramGroup)(student.program) === 'POSTGRAD' ? 'MASTER' : 'BACHELOR';
+                const bachelors = ['BTECH', 'BSC', 'BDES', 'IMSC'];
+                const masters = ['MTECH', 'MSC', 'MCA', 'MBA', 'MDES'];
+                const studentLevel = masters.includes(student.program) ? 'MASTER' : 'BACHELOR';
                 const year = student.year || 1;
-                const hasACPreference = student.roomTypePreference === 'TRIPLE_AC';
-                if (hostelIsAC) {
-                    if (!hasACPreference)
-                        return false;
-                }
-                if (level === 'MASTER') {
-                    if (hostelIsAC)
-                        return false;
+                const capacity = room.capacity;
+                const reqType = student.roomTypePreference;
+                if (hostelIsAC && reqType !== 'TRIPLE_AC')
+                    return false;
+                if (!hostelIsAC && reqType === 'TRIPLE_AC')
+                    return false;
+                if (studentLevel === 'MASTER') {
                     return [1, 2].includes(capacity);
                 }
-                if (level === 'BACHELOR') {
+                if (studentLevel === 'BACHELOR') {
                     if (year === 2) {
                         if (capacity === 1)
                             return false;
                         return true;
                     }
-                    if (year === 3) {
-                        if (capacity === 3 && !hostelIsAC)
-                            return false;
-                        return true;
-                    }
-                    if (year === 4) {
+                    if (year >= 3) {
                         if (capacity === 3 && !hostelIsAC)
                             return false;
                         return true;
@@ -106,6 +88,7 @@ let AllotmentService = class AllotmentService {
             };
             let eligibleStudents = await this.prisma.student.findMany({
                 where: {
+                    year: targetYear,
                     payments: {
                         some: {
                             purpose: { in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'] },
@@ -115,42 +98,11 @@ let AllotmentService = class AllotmentService {
                     allotment: null,
                 },
                 include: {
-                    preferences: {
-                        orderBy: { rank: 'asc' },
-                    },
-                    payments: {
-                        where: {
-                            purpose: { in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'] },
-                            status: 'COMPLETED'
-                        },
-                    },
+                    payments: true,
                 },
             });
-            if (targetProgramGroup) {
-                eligibleStudents = eligibleStudents.filter(s => (0, program_utils_1.getProgramGroup)(s.program) === targetProgramGroup);
-            }
-            if (hostel.name.includes('Aryabhatta') || hostel.name.includes('Type 2')) {
-                eligibleStudents = eligibleStudents.filter(s => s.category !== 'NRI');
-            }
-            else if (hostel.name.includes('Ramanujan') || hostel.name.includes('Transit')) {
-                eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI');
-            }
-            const hostelName = hostel.name.toLowerCase();
-            const studentGender = (s) => s.gender.toUpperCase();
-            eligibleStudents = eligibleStudents.filter(s => studentGender(s) === 'MALE');
-            if (hostelName.includes('aryabhatta') || hostelName.includes('type-ii')) {
-                eligibleStudents = eligibleStudents.filter(s => s.year === 1 && (s.country === 'India' || !s.country));
-            }
-            else if (hostelName.includes('ramanujan') || hostelName.includes('transit')) {
-                eligibleStudents = eligibleStudents.filter(s => s.category === 'NRI' || (s.country && s.country !== 'India'));
-            }
-            else {
-                eligibleStudents = eligibleStudents.filter(s => (s.year || 1) >= 2 && (s.year || 1) <= 4 && (s.country === 'India' || !s.country));
-            }
             const categoryPriority = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
             eligibleStudents.sort((a, b) => {
-                const isSeniorA = (a.year || 1) > 1;
-                const isSeniorB = (b.year || 1) > 1;
                 if (a.category === 'PH' && b.category !== 'PH')
                     return -1;
                 if (b.category === 'PH' && a.category !== 'PH')
@@ -161,109 +113,81 @@ let AllotmentService = class AllotmentService {
                     return catA - catB;
                 const metaA = a.profileMeta || {};
                 const metaB = b.profileMeta || {};
-                if (!isSeniorA && !isSeniorB) {
-                    if (a.category === 'DELHI') {
-                        if (metaA.medicalIssue && !metaB.medicalIssue)
-                            return -1;
-                        if (metaB.medicalIssue && !metaA.medicalIssue)
-                            return 1;
-                        const distA = Number(metaA.distance) || 0;
-                        const distB = Number(metaB.distance) || 0;
-                        if (distA !== distB)
-                            return distB - distA;
-                    }
-                }
-                else {
+                if (targetYear > 1) {
                     if (metaA.backlog && !metaB.backlog)
                         return 1;
                     if (metaB.backlog && !metaA.backlog)
                         return -1;
-                    if (a.category === 'OUTSIDE_DELHI') {
-                        const cgpaA = Number(metaA.cgpa) || 0;
-                        const cgpaB = Number(metaB.cgpa) || 0;
-                        if (cgpaA !== cgpaB)
-                            return cgpaB - cgpaA;
-                    }
-                    else if (a.category === 'DELHI') {
+                    const cgpaA = Number(a.cgpa) || 0;
+                    const cgpaB = Number(b.cgpa) || 0;
+                    if (cgpaA !== cgpaB)
+                        return cgpaB - cgpaA;
+                }
+                else {
+                    if (a.category === 'DELHI') {
                         const distA = Number(metaA.distance) || 0;
                         const distB = Number(metaB.distance) || 0;
                         if (distA !== distB)
                             return distB - distA;
                     }
                 }
-                const paymentA = new Date(a.payments[0]?.createdAt).getTime() || 0;
-                const paymentB = new Date(b.payments[0]?.createdAt).getTime() || 0;
-                return paymentA - paymentB;
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             });
-            const SEAT_MATRIX = {
-                BTECH: { MALE: 1674, FEMALE: 649 },
-                BDES: { MALE: 32, FEMALE: 32 },
-                MTECH: { MALE: 82, FEMALE: 36 },
-                MBA: { MALE: 16, FEMALE: 22 },
-                MSC: { MALE: 16, FEMALE: 28 },
-                IMSC: { MALE: 10, FEMALE: 8 },
-                MDES: { MALE: 4, FEMALE: 4 },
-                PHD: { MALE: 0, FEMALE: 14 },
-                BSC: { MALE: 0, FEMALE: 0 },
-                MCA: { MALE: 0, FEMALE: 0 },
-            };
             const allotments = [];
             let waitlistCounter = 1;
-            const currentCounts = {
-                BTECH: { MALE: 0, FEMALE: 0 },
-                BDES: { MALE: 0, FEMALE: 0 },
-                MTECH: { MALE: 0, FEMALE: 0 },
-                MBA: { MALE: 0, FEMALE: 0 },
-                MSC: { MALE: 0, FEMALE: 0 },
-                IMSC: { MALE: 0, FEMALE: 0 },
-                MDES: { MALE: 0, FEMALE: 0 },
-                PHD: { MALE: 0, FEMALE: 0 },
-                BSC: { MALE: 0, FEMALE: 0 },
-                MCA: { MALE: 0, FEMALE: 0 },
-            };
             for (const student of eligibleStudents) {
-                if (student.program === 'IMSC' && (student.year || 1) > 3) {
-                    console.log(`Skipping IMSc student ${student.id} (Year ${student.year} > 3)`);
-                    continue;
-                }
-                const prog = student.program;
-                if (!prog)
-                    continue;
-                const gender = student.gender === 'FEMALE' ? 'FEMALE' : 'MALE';
-                if (SEAT_MATRIX[prog] && currentCounts[prog]) {
-                    const limit = SEAT_MATRIX[prog][gender] || 0;
-                    if (currentCounts[prog][gender] >= limit) {
-                        await this.prisma.waitlistEntry.upsert({
-                            where: { studentId: student.id },
-                            update: { position: waitlistCounter, status: 'ACTIVE' },
-                            create: {
-                                studentId: student.id,
-                                position: waitlistCounter,
-                                status: 'ACTIVE',
-                            }
-                        });
-                        waitlistCounter++;
-                        continue;
-                    }
-                }
+                const sCategory = student.category;
+                const isInternational = student.country && student.country !== 'India';
+                const effectiveCategory = (sCategory === 'NRI' || isInternational) ? 'NRI' : sCategory;
                 let allottedRoom = null;
-                for (const pref of student.preferences) {
-                    const floor = hostel.floors.find((f) => f.id === pref.floorId);
-                    if (floor) {
-                        const availableRoom = floor.rooms.find((r) => r.occupancy < r.capacity && isRoomCompatible(r, student) && isRoomTypeAllowed(r, student));
-                        if (availableRoom) {
-                            allottedRoom = availableRoom;
-                            break;
+                const studentHostels = allHostels.filter(h => isHostelEligibleForYear(h.name, effectiveCategory));
+                const prefType = student.roomTypePreference;
+                if (prefType) {
+                    for (const hostel of studentHostels) {
+                        for (const floor of hostel.floors) {
+                            if (floor.gender !== student.gender)
+                                continue;
+                            const availableRoom = floor.rooms.find((r) => {
+                                if (r.occupancy >= r.capacity)
+                                    return false;
+                                if (r.occupancy > 0) {
+                                    const occupants = r.allotments.map((a) => a.student);
+                                    if (occupants.some((o) => o.year !== targetYear))
+                                        return false;
+                                }
+                                return isRoomTypeAllowed(r, student, hostel.isAC);
+                            });
+                            if (availableRoom) {
+                                allottedRoom = availableRoom;
+                                break;
+                            }
                         }
+                        if (allottedRoom)
+                            break;
                     }
                 }
                 if (!allottedRoom) {
-                    for (const floor of hostel.floors) {
-                        const availableRoom = floor.rooms.find((r) => r.occupancy < r.capacity && isRoomCompatible(r, student) && isRoomTypeAllowed(r, student));
-                        if (availableRoom) {
-                            allottedRoom = availableRoom;
-                            break;
+                    for (const hostel of studentHostels) {
+                        for (const floor of hostel.floors) {
+                            if (floor.gender !== student.gender)
+                                continue;
+                            const availableRoom = floor.rooms.find((r) => {
+                                if (r.occupancy >= r.capacity)
+                                    return false;
+                                if (r.occupancy > 0) {
+                                    const occupants = r.allotments.map((a) => a.student);
+                                    if (occupants.some((o) => o.year !== targetYear))
+                                        return false;
+                                }
+                                return isRoomTypeAllowed(r, student, hostel.isAC);
+                            });
+                            if (availableRoom) {
+                                allottedRoom = availableRoom;
+                                break;
+                            }
                         }
+                        if (allottedRoom)
+                            break;
                     }
                 }
                 if (allottedRoom) {
@@ -286,10 +210,6 @@ let AllotmentService = class AllotmentService {
                         allottedRoom.allotments = [];
                     allottedRoom.allotments.push({ student });
                     allotments.push(allotment);
-                    if (student.program && currentCounts[student.program]) {
-                        const g = student.gender === 'FEMALE' ? 'FEMALE' : 'MALE';
-                        currentCounts[student.program][g]++;
-                    }
                     try {
                         await this.prisma.waitlistEntry.delete({ where: { studentId: student.id } });
                     }
@@ -316,8 +236,7 @@ let AllotmentService = class AllotmentService {
             };
         }
         catch (error) {
-            if (error instanceof common_1.NotFoundException)
-                throw error;
+            console.error(error);
             throw new common_1.InternalServerErrorException(error.message);
         }
     }
@@ -342,17 +261,11 @@ let AllotmentService = class AllotmentService {
     }
     async expireUnpaidAllotments() {
         const now = new Date();
+        const results = { deleted: 0, details: [] };
         const expiredAllotments = await this.prisma.allotment.findMany({
-            where: {
-                validTill: { lt: now },
-                isPossessed: false,
-            },
+            where: { validTill: { lt: now }, isPossessed: false },
             include: { room: true },
         });
-        const results = {
-            deleted: 0,
-            details: []
-        };
         for (const allotment of expiredAllotments) {
             await this.prisma.allotment.delete({ where: { id: allotment.id } });
             await this.prisma.room.update({
@@ -360,10 +273,7 @@ let AllotmentService = class AllotmentService {
                 data: { occupancy: { decrement: 1 } },
             });
             results.deleted++;
-            results.details.push(`Expired allotment for Student ${allotment.studentId} in Room ${allotment.room.number}`);
-        }
-        if (results.deleted > 0) {
-            console.log(`[Allotment Expiry] Cleaned up ${results.deleted} unpaid allotments.`);
+            results.details.push(`Expired: Student ${allotment.studentId}`);
         }
         return results;
     }
