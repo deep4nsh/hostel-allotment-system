@@ -31,6 +31,7 @@ const ops_module_1 = require("./ops/ops.module");
 const rebates_module_1 = require("./rebates/rebates.module");
 const complaints_module_1 = require("./complaints/complaints.module");
 const requests_module_1 = require("./requests/requests.module");
+const room_swap_module_1 = require("./room-swap/room-swap.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -54,6 +55,7 @@ exports.AppModule = AppModule = __decorate([
             rebates_module_1.RebatesModule,
             complaints_module_1.ComplaintsModule,
             requests_module_1.RequestsModule,
+            room_swap_module_1.RoomSwapModule,
             throttler_1.ThrottlerModule.forRoot([{
                     ttl: 60000,
                     limit: 100,
