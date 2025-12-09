@@ -43,7 +43,7 @@ export default function WardenDashboardContent() {
     if (!fineSearch) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/students/admin/search?q=${fineSearch}`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/students/admin/search?search=${fineSearch}`, { headers: getAuthHeaders() });
       if (res.ok) {
         const students = await res.json();
         if (students.length > 0) setSelectedStudent(students[0]);
