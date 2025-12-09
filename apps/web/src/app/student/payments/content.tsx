@@ -9,6 +9,7 @@ import { MockPaymentModal } from "@/components/payment/MockPaymentModal"
 export default function StudentPaymentsContent() {
     const [payments, setPayments] = useState<any[]>([])
     const [allotment, setAllotment] = useState<any>(null)
+    const [refundRequests, setRefundRequests] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, amount: number, purpose: string }>({
         isOpen: false, amount: 0, purpose: ''
@@ -36,6 +37,7 @@ export default function StudentPaymentsContent() {
                     console.log('API Response:', data)
                     console.log('Payments:', data.payments)
                     setPayments(data.payments || [])
+                    setRefundRequests(data.refundRequests || [])
                     setAllotment(data.allotment)
                 }
             } catch (error) {
@@ -102,6 +104,7 @@ export default function StudentPaymentsContent() {
             })
             if (res.ok) {
                 alert('Refund requested successfully')
+                window.location.reload()
             } else {
                 const err = await res.json()
                 alert(`Failed: ${err.message}`)
@@ -116,7 +119,9 @@ export default function StudentPaymentsContent() {
     const hostelFeePaid = payments.some(p => p.purpose === 'HOSTEL_FEE' && p.status?.toUpperCase() === 'COMPLETED')
     const messFeePaid = payments.some(p => p.purpose === 'MESS_FEE' && p.status?.toUpperCase() === 'COMPLETED')
 
-    console.log('Derived Status:', { hostelFeePaid, messFeePaid, payments })
+    // Check for active refunds
+    const pendingHostelRefund = refundRequests.find(r => r.feeType === 'HOSTEL_FEE' && ['PENDING', 'APPROVED', 'PROCESSED'].includes(r.status))
+    const hostelRefundStatus = pendingHostelRefund?.status
 
     console.log('Derived Status:', { hostelFeePaid, messFeePaid, payments })
 
@@ -137,24 +142,30 @@ export default function StudentPaymentsContent() {
                     <CardTitle>Hostel Fee</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {hostelFeePaid ? (
-                        <div className="text-green-600 font-bold text-lg">Paid</div>
-                    ) : (
-                        <div className="space-y-2">
-                            {hostelFee ? (
-                                <>
-                                    <div className="text-3xl font-bold mb-4">₹{hostelFee.toLocaleString()}</div>
-                                    <p className="text-slate-500 mb-4">
-                                        For Room {allotment.room.number} ({allotment.room.floor?.hostel?.isAC ? 'AC' : 'Non-AC'} {allotment.room.capacity === 1 ? 'Single' : allotment.room.capacity === 2 ? 'Double' : 'Triple'})
-                                    </p>
-                                    <Button onClick={() => handlePayment('HOSTEL_FEE')} className="w-full">Pay Hostel Fee</Button>
-                                </>
-                            ) : (
-                                <div className="text-slate-500 italic">
-                                    Fee will be generated after room allotment.
-                                </div>
-                            )}
+                    {hostelRefundStatus ? (
+                        <div className={`font-bold text-lg ${hostelRefundStatus === 'PENDING' ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {hostelRefundStatus === 'PENDING' ? 'Refund Request Pending' : 'Refund Processed (Admission Cancelled)'}
                         </div>
+                    ) : (
+                        hostelFeePaid ? (
+                            <div className="text-green-600 font-bold text-lg">Paid</div>
+                        ) : (
+                            <div className="space-y-2">
+                                {hostelFee ? (
+                                    <>
+                                        <div className="text-3xl font-bold mb-4">₹{hostelFee.toLocaleString()}</div>
+                                        <p className="text-slate-500 mb-4">
+                                            For Room {allotment?.room?.number} ({allotment?.room?.floor?.hostel?.isAC ? 'AC' : 'Non-AC'} {allotment?.room?.capacity === 1 ? 'Single' : allotment?.room?.capacity === 2 ? 'Double' : 'Triple'})
+                                        </p>
+                                        <Button onClick={() => handlePayment('HOSTEL_FEE')} className="w-full">Pay Hostel Fee</Button>
+                                    </>
+                                ) : (
+                                    <div className="text-slate-500 italic">
+                                        Fee will be generated after room allotment.
+                                    </div>
+                                )}
+                            </div>
+                        )
                     )}
                 </CardContent>
             </Card>
@@ -164,14 +175,20 @@ export default function StudentPaymentsContent() {
                     <CardTitle>Mess Fee</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {messFeePaid ? (
-                        <div className="text-green-600 font-bold text-lg">Paid</div>
-                    ) : (
-                        <div className="space-y-2">
-                            <div className="text-3xl font-bold mb-4">₹34,800</div>
-                            <p className="text-slate-500 mb-4">Advance Mess Fee for the semester.</p>
-                            <Button onClick={() => handlePayment('MESS_FEE')} className="w-full">Pay Mess Fee</Button>
+                    {hostelRefundStatus ? (
+                        <div className={`font-bold text-lg ${hostelRefundStatus === 'PENDING' ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {hostelRefundStatus === 'PENDING' ? 'Refund Request Pending' : 'Refund Processed'}
                         </div>
+                    ) : (
+                        messFeePaid ? (
+                            <div className="text-green-600 font-bold text-lg">Paid</div>
+                        ) : (
+                            <div className="space-y-2">
+                                <div className="text-3xl font-bold mb-4">₹34,800</div>
+                                <p className="text-slate-500 mb-4">Advance Mess Fee for the semester.</p>
+                                <Button onClick={() => handlePayment('MESS_FEE')} className="w-full">Pay Mess Fee</Button>
+                            </div>
+                        )
                     )}
                 </CardContent>
             </Card>
@@ -199,10 +216,13 @@ export default function StudentPaymentsContent() {
                                     <td className="p-4">{payment.status}</td>
                                     <td className="p-4">{new Date(payment.createdAt).toLocaleDateString()}</td>
                                     <td className="p-4">
-                                        {payment.status === 'COMPLETED' && payment.purpose === 'HOSTEL_FEE' && (
+                                        {payment.status === 'COMPLETED' && payment.purpose === 'HOSTEL_FEE' && !hostelRefundStatus && (
                                             <Button variant="outline" size="sm" onClick={() => handleRequestRefund(payment.id)}>
                                                 Cancel & Refund
                                             </Button>
+                                        )}
+                                        {payment.status === 'COMPLETED' && payment.purpose === 'HOSTEL_FEE' && hostelRefundStatus && (
+                                            <span className="text-yellow-600 font-medium text-xs">Refresh for updates</span>
                                         )}
                                     </td>
                                 </tr>

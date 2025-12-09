@@ -168,6 +168,41 @@ export default function AdminStudentProfilePage() {
                                 No payment history found.
                             </div>
                         )}
+
+                        {student.refundRequests && student.refundRequests.length > 0 && (
+                            <div className="mt-6">
+                                <h3 className="text-lg font-bold mb-3">Refund Requests</h3>
+                                <div className="rounded-md border">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-slate-50 border-b">
+                                            <tr>
+                                                <th className="p-4 font-medium">Purpose</th>
+                                                <th className="p-4 font-medium">Amount</th>
+                                                <th className="p-4 font-medium">Status</th>
+                                                <th className="p-4 font-medium">Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {student.refundRequests.map((req: any) => (
+                                                <tr key={req.id} className="border-b">
+                                                    <td className="p-4">{req.feeType}</td>
+                                                    <td className="p-4">₹{req.amount}</td>
+                                                    <td className="p-4">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${req.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                                                req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                                                    req.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                            }`}>
+                                                            {req.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4">{new Date(req.createdAt).toLocaleDateString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
