@@ -10,8 +10,9 @@ export default function StudentPaymentsContent() {
     const [payments, setPayments] = useState<any[]>([])
     const [allotment, setAllotment] = useState<any>(null)
     const [refundRequests, setRefundRequests] = useState<any[]>([])
+    const [fines, setFines] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, amount: number, purpose: string }>({
+    const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, amount: number, purpose: string, fineId?: string }>({
         isOpen: false, amount: 0, purpose: ''
     })
     const router = useRouter()
@@ -35,9 +36,9 @@ export default function StudentPaymentsContent() {
                 if (res.ok) {
                     const data = await res.json()
                     console.log('API Response:', data)
-                    console.log('Payments:', data.payments)
                     setPayments(data.payments || [])
                     setRefundRequests(data.refundRequests || [])
+                    setFines(data.fines || [])
                     setAllotment(data.allotment)
                 }
             } catch (error) {
@@ -64,23 +65,27 @@ export default function StudentPaymentsContent() {
 
     const hostelFee = getHostelFee()
 
-    const handlePayment = async (purpose: 'MESS_FEE' | 'HOSTEL_FEE') => {
+    const handlePayment = async (purpose: 'MESS_FEE' | 'HOSTEL_FEE' | 'FINE', fineId?: string, fineAmount?: number) => {
         let amount = 0;
         if (purpose === 'MESS_FEE') {
             amount = 34800;
-        } else {
+        } else if (purpose === 'HOSTEL_FEE') {
             const calculatedFee = getHostelFee();
             if (!calculatedFee) {
                 alert('Hostel fee not generated yet.');
                 return;
             }
             amount = calculatedFee;
+        } else if (purpose === 'FINE') {
+            if (!fineAmount) return;
+            amount = fineAmount;
         }
 
         setModalConfig({
             isOpen: true,
             amount: amount,
-            purpose: purpose
+            purpose: purpose,
+            fineId: fineId
         })
     }
 
@@ -150,7 +155,7 @@ export default function StudentPaymentsContent() {
     const pendingHostelRefund = refundRequests.find(r => r.feeType === 'HOSTEL_FEE' && ['PENDING', 'APPROVED', 'PROCESSED'].includes(r.status))
     const hostelRefundStatus = pendingHostelRefund?.status
 
-    console.log('Derived Status:', { hostelFeePaid, messFeePaid, payments })
+    const pendingFines = fines.filter(f => f.status === 'PENDING')
 
     return (
         <div className="p-8 space-y-6">
@@ -171,8 +176,40 @@ export default function StudentPaymentsContent() {
                 onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
                 amount={modalConfig.amount}
                 purpose={modalConfig.purpose}
+                fineId={modalConfig.fineId}
                 onSuccess={() => window.location.reload()}
             />
+
+            {pendingFines.length > 0 && (
+                <Card className="border-red-500 border">
+                    <CardHeader className="bg-red-50">
+                        <CardTitle className="text-red-700">Pending Fines & Penalties</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <div className="space-y-4">
+                            {pendingFines.map(fine => (
+                                <div key={fine.id} className="flex items-center justify-between p-4 border rounded bg-white">
+                                    <div>
+                                        <p className="font-semibold text-red-600">{fine.category}</p>
+                                        <p className="text-sm text-gray-600">{fine.reason}</p>
+                                        <p className="text-xs text-gray-400 mt-1">Issued: {new Date(fine.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-lg mb-2">₹{fine.amount}</p>
+                                        <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => handlePayment('FINE', fine.id, fine.amount)}
+                                        >
+                                            Pay Now
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <Card>
                 <CardHeader>
@@ -248,7 +285,10 @@ export default function StudentPaymentsContent() {
                         <tbody>
                             {payments.map(payment => (
                                 <tr key={payment.id} className="border-b">
-                                    <td className="p-4">{payment.purpose}</td>
+                                    <td className="p-4">
+                                        {payment.purpose}
+                                        {payment.purpose === 'FINE' && <span className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded">Penalty</span>}
+                                    </td>
                                     <td className="p-4">₹{payment.amount}</td>
                                     <td className="p-4">{payment.status}</td>
                                     <td className="p-4">{new Date(payment.createdAt).toLocaleDateString()}</td>
@@ -261,7 +301,7 @@ export default function StudentPaymentsContent() {
                                         {payment.status === 'COMPLETED' && payment.purpose === 'HOSTEL_FEE' && hostelRefundStatus && (
                                             <span className="text-yellow-600 font-medium text-xs">Refresh for updates</span>
                                         )}
-                                        {payment.status === 'COMPLETED' && ['HOSTEL_FEE', 'MESS_FEE', 'ALLOTMENT_REQUEST'].includes(payment.purpose) && (
+                                        {payment.status === 'COMPLETED' && ['HOSTEL_FEE', 'MESS_FEE', 'ALLOTMENT_REQUEST', 'FINE'].includes(payment.purpose) && (
                                             <Button variant="outline" size="sm" onClick={() => handleDownloadReceipt(payment.id)}>
                                                 Download Receipt
                                             </Button>

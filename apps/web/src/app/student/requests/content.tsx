@@ -37,7 +37,20 @@ export default function StudentRequestsContent() {
         // New P2P Fetches
         fetchSwapListings();
         fetchSwapInvites();
+        fetchMyListing();
     }, []);
+
+    const fetchMyListing = async () => {
+        try {
+            const res = await fetch(`${API_URL}/room-swap/my`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const text = await res.text();
+                const data = text ? JSON.parse(text) : null;
+                setMyListing(!!data);
+            }
+        } catch (error) { console.error(error); }
+    };
+
 
     const fetchHostels = async () => {
         try {
@@ -118,8 +131,8 @@ export default function StudentRequestsContent() {
             });
             if (res.ok) {
                 alert('Room listed successfully!');
-                fetchSwapListings(); // To refresh UI state logic if we tracked "myListing" better, but simple re-fetch works
-                setMyListing(true);
+                fetchSwapListings();
+                fetchMyListing(); // Refresh self status
             } else {
                 const err = await res.json();
                 alert(err.message || 'Failed to list room');
@@ -137,7 +150,7 @@ export default function StudentRequestsContent() {
             if (res.ok) {
                 alert('Listing removed.');
                 fetchSwapListings();
-                setMyListing(false);
+                fetchMyListing(); // Refresh self status
             }
         } catch (e) { alert('Error removing listing'); }
     };
@@ -315,18 +328,26 @@ export default function StudentRequestsContent() {
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Available Rooms for Swap (Same Hostel)</CardTitle>
                             <div className="space-x-2">
-                                <Button variant="outline" onClick={handleListMyRoom}>List My Room</Button>
-                                <Button variant="destructive" onClick={handleRemoveListing}>Remove Listing</Button>
+                                {!myListing ? (
+                                    <Button variant="outline" onClick={handleListMyRoom}>List My Room</Button>
+                                ) : (
+                                    <Button variant="destructive" onClick={handleRemoveListing}>Remove Listing</Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
+                            {myListing && (
+                                <div className="bg-green-50 text-green-800 p-3 rounded mb-4 border border-green-200">
+                                    <strong>Your room is currently listed!</strong> Other students can see it and send you invites.
+                                </div>
+                            )}
                             <p className="text-sm text-gray-500 mb-4">
                                 List your room here to find other students in your hostel who want to swap.
                                 If you see a room you like, send an invite!
                             </p>
 
                             {swapListings.length === 0 ? (
-                                <p className="text-gray-500 italic">No rooms listed for swap in your hostel yet.</p>
+                                <p className="text-gray-500 italic">No other rooms listed for swap in your hostel yet.</p>
                             ) : (
                                 <div className="space-y-3">
                                     {swapListings.map((listing: any) => (

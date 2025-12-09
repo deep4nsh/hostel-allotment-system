@@ -7,7 +7,8 @@ export declare class PaymentsController {
     constructor(paymentsService: PaymentsService, pdfService: PdfService);
     getReceipt(req: any, id: string, res: any): Promise<void>;
     createOrder(req: any, body: {
-        purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST';
+        purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST' | 'FINE';
+        fineId?: string;
     }): Promise<import("razorpay/dist/types/orders").Orders.RazorpayOrder>;
     verifyPayment(req: any, body: {
         razorpayOrderId: string;

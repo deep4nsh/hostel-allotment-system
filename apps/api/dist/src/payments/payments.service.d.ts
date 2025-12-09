@@ -4,7 +4,7 @@ export declare class PaymentsService {
     private prisma;
     private razorpay;
     constructor(prisma: PrismaService);
-    createOrder(userId: string, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST'): Promise<import("razorpay/dist/types/orders").Orders.RazorpayOrder>;
+    createOrder(userId: string, purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST' | 'FINE', fineId?: string): Promise<import("razorpay/dist/types/orders").Orders.RazorpayOrder>;
     verifyPayment(razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string, userId: string, purpose: PaymentPurpose, amount: number): Promise<{
         id: string;
         studentId: string;

@@ -38,7 +38,7 @@ let PaymentsController = class PaymentsController {
         if (!body.purpose) {
             throw new common_1.BadRequestException('Purpose is required');
         }
-        return this.paymentsService.createOrder(req.user.userId, body.purpose);
+        return this.paymentsService.createOrder(req.user.userId, body.purpose, body.fineId);
     }
     async verifyPayment(req, body) {
         return this.paymentsService.verifyPayment(body.razorpayOrderId, body.razorpayPaymentId, body.razorpaySignature, req.user.userId, body.purpose, body.amount);
@@ -60,6 +60,7 @@ __decorate([
 ], PaymentsController.prototype, "getReceipt", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('create-order'),
     (0, common_1.Post)('create-order'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),

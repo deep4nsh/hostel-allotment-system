@@ -41,6 +41,16 @@ export class RoomSwapService {
         });
     }
 
+    async getMyListing(userId: string) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student) throw new NotFoundException('Student not found');
+
+        return this.prisma.roomSwapRequest.findUnique({
+            where: { studentId: student.id }
+        });
+    }
+
+
     async getListings(userId: string) {
         const student = await this.prisma.student.findUnique({
             where: { userId },

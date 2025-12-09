@@ -17,6 +17,11 @@ export class RoomSwapController {
         return this.roomSwapService.removeListing(req.user.userId);
     }
 
+    @Get('my')
+    getMyListing(@Request() req: any) {
+        return this.roomSwapService.getMyListing(req.user.userId);
+    }
+
     @Get('list')
     getListings(@Request() req: any) {
         return this.roomSwapService.getListings(req.user.userId);

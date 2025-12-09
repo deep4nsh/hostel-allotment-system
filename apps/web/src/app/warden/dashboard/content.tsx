@@ -5,7 +5,18 @@ import { getPendingRebates, updateRebateStatus, API_URL, getAuthHeaders } from "
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X } from "lucide-react";
+import { Check, X, Gavel, ArrowLeftRight, Loader2 } from "lucide-react"; // Added icons
+import { FINE_TYPES } from "@/lib/constants/fines";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Removed unused import
+// Actually Tabs were not imported in original file, let me check.
+// Original file uses `activeTab` state and buttons, not Radix Tabs.
+// So I should stick to that pattern or import Radix Tabs.
+// The file seems to use manual buttons for tabs. "activeTab === 'rebates' && ..."
+// So I don't need Tabs components. I need Input, Label, Textarea, Select.
 
 export default function WardenDashboardContent() {
   const [activeTab, setActiveTab] = useState('rebates');
@@ -13,11 +24,73 @@ export default function WardenDashboardContent() {
   const [changeRequests, setChangeRequests] = useState<any[]>([]);
   const [surrenderRequests, setSurrenderRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Fine Management State
+  const [fineSearch, setFineSearch] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedFineType, setSelectedFineType] = useState<any>(null);
+  const [fineAmount, setFineAmount] = useState('');
+  const [fineReason, setFineReason] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
     loadAllRequests();
   }, []);
+
+  async function handleSearchStudent() {
+    if (!fineSearch) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/students/admin/search?q=${fineSearch}`, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const students = await res.json();
+        if (students.length > 0) setSelectedStudent(students[0]);
+        else alert('Student not found');
+      } else {
+        alert('Error searching student');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleImposeFine() {
+    if (!selectedStudent || !fineAmount || !fineReason) {
+      alert('Please fill all fields');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/fines`, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: selectedStudent.id,
+          amount: parseFloat(fineAmount),
+          reason: fineReason,
+          category: selectedFineType?.label || 'Custom'
+        })
+      });
+      if (res.ok) {
+        alert('Fine imposed successfully');
+        setSelectedStudent(null);
+        setFineAmount('');
+        setFineReason('');
+        setFineSearch('');
+        setSelectedFineType(null);
+      } else {
+        alert('Failed to impose fine');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function loadAllRequests() {
     setIsLoading(true);
@@ -48,14 +121,14 @@ export default function WardenDashboardContent() {
 
   const handleRequestDecision = async (type: 'change' | 'surrender', id: string, status: string) => {
     try {
-      const res = await fetch(`${API_URL}/requests/${type}/${id}/status`, {
+      const res = await fetch(`${API_URL}/requests/warden/${type}/${id}/status`, { // Fixed URL path (added /warden/)
         method: 'PATCH',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
         alert('Status updated');
-        loadAllRequests(); // Reload to refresh lists
+        loadAllRequests();
       } else {
         alert('Failed to update status');
       }
@@ -93,6 +166,12 @@ export default function WardenDashboardContent() {
             onClick={() => setActiveTab('surrender')}
           >
             Surrender
+          </button>
+          <button
+            className={`px-4 py-2 ${activeTab === 'fines' ? 'border-b-2 border-black font-bold' : ''}`}
+            onClick={() => setActiveTab('fines')}
+          >
+            Manage Fines
           </button>
         </div>
 
@@ -213,6 +292,97 @@ export default function WardenDashboardContent() {
             {surrenderRequests.length === 0 && <p className="text-gray-500">No pending surrender requests.</p>}
           </div>
         )}
+
+        {activeTab === 'fines' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Impose Fine</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-4 items-end">
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="student-search">Student Email / Roll No</Label>
+                  <Input
+                    id="student-search"
+                    placeholder="Enter student email or roll no"
+                    value={fineSearch}
+                    onChange={(e) => setFineSearch(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleSearchStudent} disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Search'}
+                </Button>
+              </div>
+
+              {selectedStudent && (
+                <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
+                  <div className="flex justify-between items-center bg-white p-3 rounded border">
+                    <div>
+                      <h3 className="font-semibold">{selectedStudent.name}</h3>
+                      <p className="text-sm text-gray-500">{selectedStudent.email} ({selectedStudent.uniqueId})</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(null)}>Change</Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Violation Type</Label>
+                    <Select onValueChange={(val) => {
+                      const ft = FINE_TYPES.find(f => f.id.toString() === val);
+                      setSelectedFineType(ft);
+                      setFineAmount(ft?.defaultAmount?.toString() || '');
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Violation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FINE_TYPES.map(ft => (
+                          <SelectItem key={ft.id} value={ft.id.toString()}>
+                            {ft.id}. {ft.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedFineType && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Fine Amount (₹)</Label>
+                        <Input
+                          type="number"
+                          placeholder={`Min: ₹${selectedFineType.minAmount}`}
+                          value={fineAmount}
+                          onChange={(e) => setFineAmount(e.target.value)}
+                          // Disable if fixed amount (min == max) AND strictly defined
+                          disabled={selectedFineType.minAmount === selectedFineType.maxAmount && selectedFineType.maxAmount > 0 && !selectedFineType.dynamic}
+                        />
+                        {selectedFineType.minAmount !== selectedFineType.maxAmount && (
+                          <p className="text-xs text-muted-foreground">
+                            Range: ₹{selectedFineType.minAmount} - {selectedFineType.maxAmount > 90000 ? 'Any' : '₹' + selectedFineType.maxAmount}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Remarks / Details</Label>
+                        <Textarea
+                          placeholder="Add specific details about the incident..."
+                          value={fineReason}
+                          onChange={(e) => setFineReason(e.target.value)}
+                        />
+                      </div>
+
+                      <Button onClick={handleImposeFine} disabled={loading} className="w-full">
+                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Gavel className="mr-2 h-4 w-4" />}
+                        Impose Fine
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
   );

@@ -35,11 +35,12 @@ export class PaymentsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Post('create-order')
-    async createOrder(@Request() req: any, @Body() body: { purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST' }) {
+    @Post('create-order')
+    async createOrder(@Request() req: any, @Body() body: { purpose: 'REGISTRATION' | 'SEAT_BOOKING' | 'MESS_FEE' | 'HOSTEL_FEE' | 'ALLOTMENT_REQUEST' | 'FINE'; fineId?: string }) {
         if (!body.purpose) {
             throw new BadRequestException('Purpose is required');
         }
-        return this.paymentsService.createOrder(req.user.userId, body.purpose);
+        return this.paymentsService.createOrder(req.user.userId, body.purpose, body.fineId);
     }
 
     @UseGuards(AuthGuard('jwt'))

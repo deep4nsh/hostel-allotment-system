@@ -29,6 +29,7 @@ let StudentsService = class StudentsService {
                 },
                 payments: true,
                 refundRequests: true,
+                fines: true,
                 documents: true,
                 allotment: {
                     include: {

@@ -7,15 +7,17 @@ import { getPendingEditRequests, approveEditRequest, rejectEditRequest } from '@
 import { Check, X } from 'lucide-react';
 
 export default function AdminRequestsPageContent() {
+    const [activeTab, setActiveTab] = useState('profile');
     const [requests, setRequests] = useState<any[]>([]);
+    const [waitlist, setWaitlist] = useState<any[]>([]);
+    const [changeRequests, setChangeRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState('profile');
-    const [waitlist, setWaitlist] = useState<any[]>([]);
 
     useEffect(() => {
         fetchRequests();
         fetchWaitlist();
+        fetchChangeRequests();
     }, []);
 
     const fetchRequests = async () => {
@@ -29,6 +31,20 @@ export default function AdminRequestsPageContent() {
         }
     };
 
+    const fetchChangeRequests = async () => {
+        try {
+            // Re-using existing endpoint for now as it returns all change requests
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/requests/warden/change', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setChangeRequests(data);
+            }
+        } catch (error) { console.error(error); }
+    }
+
     const fetchWaitlist = async () => {
         try {
             const data = await import("@/lib/api").then(m => m.getPriorityWaitlist());
@@ -38,13 +54,22 @@ export default function AdminRequestsPageContent() {
         }
     }
 
-    const handleApprove = async (id: string) => {
-        if (!confirm('Approve this request? The student profile will be unfrozen.')) return;
+    const handleApprove = async (id: string, type: 'edit' | 'change' = 'edit') => {
+        if (!confirm('Approve this request?')) return;
         setProcessingId(id);
         try {
-            await approveEditRequest(id);
+            if (type === 'edit') {
+                await approveEditRequest(id);
+            } else {
+                const token = localStorage.getItem('token');
+                await fetch(`/api/requests/change/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'APPROVED' })
+                });
+            }
             alert('Request approved');
-            fetchRequests();
+            type === 'edit' ? fetchRequests() : fetchChangeRequests();
         } catch (error) {
             alert('Failed to approve request');
         } finally {
@@ -52,13 +77,22 @@ export default function AdminRequestsPageContent() {
         }
     };
 
-    const handleReject = async (id: string) => {
+    const handleReject = async (id: string, type: 'edit' | 'change' = 'edit') => {
         if (!confirm('Reject this request?')) return;
         setProcessingId(id);
         try {
-            await rejectEditRequest(id);
+            if (type === 'edit') {
+                await rejectEditRequest(id);
+            } else {
+                const token = localStorage.getItem('token');
+                await fetch(`/api/requests/change/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'REJECTED' })
+                });
+            }
             alert('Request rejected');
-            fetchRequests();
+            type === 'edit' ? fetchRequests() : fetchChangeRequests();
         } catch (error) {
             alert('Failed to reject request');
         } finally {
@@ -78,6 +112,12 @@ export default function AdminRequestsPageContent() {
                     onClick={() => setActiveTab('profile')}
                 >
                     Profile Edits
+                </button>
+                <button
+                    className={`px-4 py-2 ${activeTab === 'change' ? 'border-b-2 border-black font-bold' : ''}`}
+                    onClick={() => setActiveTab('change')}
+                >
+                    Hostel Change
                 </button>
                 <button
                     className={`px-4 py-2 ${activeTab === 'waitlist' ? 'border-b-2 border-black font-bold' : ''}`}
@@ -112,7 +152,7 @@ export default function AdminRequestsPageContent() {
                                             <Button
                                                 variant="outline"
                                                 className="text-green-600 border-green-200 hover:bg-green-50"
-                                                onClick={() => handleApprove(req.id)}
+                                                onClick={() => handleApprove(req.id, 'edit')}
                                                 disabled={processingId === req.id}
                                             >
                                                 <Check className="w-4 h-4 mr-1" />
@@ -121,7 +161,7 @@ export default function AdminRequestsPageContent() {
                                             <Button
                                                 variant="outline"
                                                 className="text-red-600 border-red-200 hover:bg-red-50"
-                                                onClick={() => handleReject(req.id)}
+                                                onClick={() => handleReject(req.id, 'edit')}
                                                 disabled={processingId === req.id}
                                             >
                                                 <X className="w-4 h-4 mr-1" />
@@ -134,6 +174,55 @@ export default function AdminRequestsPageContent() {
                         </div>
                     )}
                 </>
+            )}
+
+            {activeTab === 'change' && (
+                <div className="space-y-4">
+                    {changeRequests.length === 0 ? (
+                        <p className="text-gray-500">No pending hostel change requests.</p>
+                    ) : (
+                        changeRequests.map((req) => (
+                            <Card key={req.id}>
+                                <CardContent className="p-4 flex flex-col md:flex-row justify-between items-start gap-4">
+                                    <div className="space-y-1">
+                                        <h3 className="font-semibold text-lg">{req.student?.name} ({req.student?.uniqueId})</h3>
+                                        <p className="text-sm text-gray-600">
+                                            <strong>Current:</strong> {req.student?.allotment?.room?.floor?.hostel?.name || 'Unknown'} (Room {req.student?.allotment?.room?.number})
+                                        </p>
+                                        <p className="text-sm text-blue-600">
+                                            <strong>Requested:</strong> {req.preferredHostel?.name || 'Any Available'}
+                                        </p>
+                                        <p className="text-sm italic text-gray-700 bg-gray-50 p-2 rounded">
+                                            "{req.reason}"
+                                        </p>
+                                        <p className="text-xs text-gray-400">
+                                            {new Date(req.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-col items-end gap-2 min-w-[150px]">
+                                        <span className={`px-2 py-1 rounded text-xs font-bold ${req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                            req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {req.status}
+                                        </span>
+                                        {req.status === 'PENDING' && (
+                                            <div className="flex gap-2 mt-2">
+                                                <Button size="sm" onClick={() => handleApprove(req.id, 'change')} disabled={processingId === req.id}>
+                                                    Approve
+                                                </Button>
+                                                <Button size="sm" variant="destructive" onClick={() => handleReject(req.id, 'change')} disabled={processingId === req.id}>
+                                                    Reject
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))
+                    )}
+                </div>
             )}
 
             {activeTab === 'waitlist' && (

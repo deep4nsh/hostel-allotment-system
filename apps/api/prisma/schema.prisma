@@ -42,6 +42,7 @@ enum PaymentPurpose {
   MESS_FEE
   HOSTEL_FEE
   ALLOTMENT_REQUEST
+  FINE
 }
 
 enum RequestStatus {
@@ -146,6 +147,7 @@ model Student {
   roomSwapListing RoomSwapRequest?
   sentSwapInvites RoomSwapInvite[] @relation("SentSwaps")
   receivedSwapInvites RoomSwapInvite[] @relation("ReceivedSwaps")
+  fines           Fine[]
 }
 
 
@@ -157,6 +159,7 @@ model Hostel {
   floors    Floor[]
   wardens   User[]   @relation("HostelWarden") // Warden management
   complaints MaintenanceRequest[]
+  roomChangeRequests RoomChangeRequest[]
 }
 
 model Floor {
@@ -228,6 +231,7 @@ model Payment {
   txnRef    String?        @unique // Razorpay Order ID or Payment ID
   gateway   String         @default("RAZORPAY")
   createdAt DateTime       @default(now())
+  fine      Fine?
 }
 
 model RefundRequest {
@@ -294,6 +298,7 @@ model RoomChangeRequest {
   student         Student  @relation(fields: [studentId], references: [id])
   currentRoomId   String
   preferredHostelId String?
+  preferredHostel Hostel?  @relation(fields: [preferredHostelId], references: [id])
   reason          String
   status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
   adminComment    String?
@@ -356,4 +361,19 @@ model RoomSwapInvite {
   status     String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model Fine {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  amount    Float
+  reason    String
+  category  String   // 'DISCIPLINARY', 'DAMAGE', 'LATE', 'OTHER'
+  status    String   @default("PENDING") // PENDING, PAID
+  paymentId String?  @unique
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  issuedBy  String?  // Warden User ID (optional reference)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

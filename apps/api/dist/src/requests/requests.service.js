@@ -18,6 +18,12 @@ let RequestsService = class RequestsService {
         this.prisma = prisma;
     }
     async createChangeRequest(studentId, data) {
+        const student = await this.prisma.student.findUnique({ where: { id: studentId } });
+        if (!student)
+            throw new Error('Student not found');
+        if (student.year === 1) {
+            throw new Error('First year students are not allowed to request hostel changes.');
+        }
         const allotment = await this.prisma.allotment.findUnique({ where: { studentId } });
         if (!allotment)
             throw new Error('No active allotment found');
@@ -63,7 +69,10 @@ let RequestsService = class RequestsService {
     }
     async getAllChangeRequests() {
         return this.prisma.roomChangeRequest.findMany({
-            include: { student: { include: { user: true } } },
+            include: {
+                student: { include: { user: true, allotment: { include: { room: { include: { floor: { include: { hostel: true } } } } } } } },
+                preferredHostel: true
+            },
             orderBy: { createdAt: 'desc' },
         });
     }

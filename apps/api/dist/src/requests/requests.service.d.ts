@@ -87,6 +87,40 @@ export declare class RequestsService {
                 createdAt: Date;
                 updatedAt: Date;
             };
+            allotment: ({
+                room: {
+                    floor: {
+                        hostel: {
+                            id: string;
+                            name: string;
+                            isAC: boolean;
+                        };
+                    } & {
+                        id: string;
+                        hostelId: string;
+                        number: number;
+                        gender: import(".prisma/client").$Enums.Gender;
+                    };
+                } & {
+                    id: string;
+                    floorId: string;
+                    number: string;
+                    capacity: number;
+                    occupancy: number;
+                    yearAllowed: number[];
+                };
+            } & {
+                id: string;
+                studentId: string;
+                roomId: string;
+                type: string;
+                issueDate: Date;
+                validTill: Date | null;
+                letterUrl: string | null;
+                isPossessed: boolean;
+                possessionDate: Date | null;
+                createdAt: Date;
+            }) | null;
         } & {
             id: string;
             userId: string;
@@ -121,6 +155,11 @@ export declare class RequestsService {
             createdAt: Date;
             updatedAt: Date;
         };
+        preferredHostel: {
+            id: string;
+            name: string;
+            isAC: boolean;
+        } | null;
     } & {
         id: string;
         studentId: string;

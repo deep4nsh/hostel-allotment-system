@@ -24,6 +24,7 @@ import { RebatesModule } from './rebates/rebates.module';
 import { ComplaintsModule } from './complaints/complaints.module';
 import { RequestsModule } from './requests/requests.module';
 import { RoomSwapModule } from './room-swap/room-swap.module';
+import { FinesModule } from './fines/fines.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { RoomSwapModule } from './room-swap/room-swap.module';
     ComplaintsModule,
     RequestsModule,
     RoomSwapModule,
+    FinesModule,
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,

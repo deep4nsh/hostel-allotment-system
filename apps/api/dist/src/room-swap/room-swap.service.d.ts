@@ -18,6 +18,14 @@ export declare class RoomSwapService {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    getMyListing(userId: string): Promise<{
+        id: string;
+        studentId: string;
+        hostelId: string;
+        status: string;
+        createdAt: Date;
+        updatedAt: Date;
+    } | null>;
     getListings(userId: string): Promise<({
         student: {
             name: string;

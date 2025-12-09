@@ -47,6 +47,14 @@ let RoomSwapService = class RoomSwapService {
             where: { studentId: student.id }
         });
     }
+    async getMyListing(userId) {
+        const student = await this.prisma.student.findUnique({ where: { userId } });
+        if (!student)
+            throw new common_1.NotFoundException('Student not found');
+        return this.prisma.roomSwapRequest.findUnique({
+            where: { studentId: student.id }
+        });
+    }
     async getListings(userId) {
         const student = await this.prisma.student.findUnique({
             where: { userId },

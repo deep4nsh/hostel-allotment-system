@@ -61,7 +61,7 @@ let PaymentsService = class PaymentsService {
             key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE',
         });
     }
-    async createOrder(userId, purpose) {
+    async createOrder(userId, purpose, fineId) {
         let student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student) {
             student = await this.prisma.student.create({
@@ -109,6 +109,9 @@ let PaymentsService = class PaymentsService {
             else
                 amount = 52000;
         }
+        else if (purpose === 'FINE') {
+            throw new common_1.BadRequestException('Fine payment requires specific fine ID');
+        }
         const options = {
             amount: amount * 100,
             currency: 'INR',
@@ -117,16 +120,24 @@ let PaymentsService = class PaymentsService {
         try {
             const order = await this.razorpay.orders.create(options);
             if (student) {
-                await this.prisma.payment.create({
+                const payment = await this.prisma.payment.create({
                     data: {
                         studentId: student.id,
                         amount: amount,
                         purpose: purpose,
                         status: 'PENDING',
                         txnRef: order.id,
-                        gateway: 'RAZORPAY'
+                        gateway: 'RAZORPAY',
                     }
                 });
+                if (purpose === 'FINE' && fineId) {
+                    await this.prisma.fine.update({
+                        where: { id: fineId },
+                        data: {
+                            paymentId: payment.id
+                        }
+                    });
+                }
             }
             return order;
         }
@@ -165,7 +176,7 @@ let PaymentsService = class PaymentsService {
                 });
             }
             else {
-                return this.prisma.payment.create({
+                const payment = await this.prisma.payment.create({
                     data: {
                         studentId: student.id,
                         purpose,
@@ -175,6 +186,14 @@ let PaymentsService = class PaymentsService {
                         gateway: 'RAZORPAY',
                     },
                 });
+                if (purpose === 'FINE') {
+                    const p = existingPayment || payment;
+                    await this.prisma.fine.updateMany({
+                        where: { paymentId: p.id },
+                        data: { status: 'PAID' }
+                    });
+                }
+                return payment;
             }
         }
         else {
@@ -209,6 +228,17 @@ let PaymentsService = class PaymentsService {
                 gateway: 'MOCK',
             },
         });
+        if (purpose === 'FINE') {
+            const fine = await this.prisma.fine.findFirst({
+                where: { studentId: student.id, status: 'PENDING', amount: amount }
+            });
+            if (fine) {
+                await this.prisma.fine.update({
+                    where: { id: fine.id },
+                    data: { status: 'PAID', paymentId: payment.id }
+                });
+            }
+        }
         console.log('Payment created:', payment);
         return payment;
     }

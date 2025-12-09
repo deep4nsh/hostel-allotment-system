@@ -1,0 +1,20 @@
+export const FINE_TYPES = [
+    { id: 1, label: "Violation of hostel prescribed timings", minAmount: 500, maxAmount: 500, defaultAmount: 500 },
+    { id: 2, label: "Ragging & Bullying (Zero Tolerance)", minAmount: 0, maxAmount: 0, disciplinary: true },
+    { id: 3, label: "Consumption, possession or distribution of Alcohol/smoking", minAmount: 2000, maxAmount: 5000 },
+    { id: 4, label: "Damage to hostel property", minAmount: 0, maxAmount: 99999, dynamic: true },
+    { id: 5, label: "Illegal stay in hostel", minAmount: 1000, maxAmount: 99999 },
+    { id: 6, label: "Unauthorized parking", minAmount: 1000, maxAmount: 99999 },
+    { id: 7, label: "Creating nuisance, dirtiness, littering", minAmount: 1000, maxAmount: 99999 },
+    { id: 8, label: "Misbehaving with hostel authorities", minAmount: 1000, maxAmount: 99999 },
+    { id: 9, label: "Illegal use of electric appliances", minAmount: 1000, maxAmount: 99999 },
+    { id: 10, label: "Violation of Gender Rules", minAmount: 5000, maxAmount: 99999 },
+    { id: 11, label: "Absent from hostel without permission (>1 week)", minAmount: 2000, maxAmount: 99999 },
+    { id: 12, label: "Theft within hostel premises", minAmount: 5000, maxAmount: 99999, police: true },
+    { id: 13, label: "Spreading rumors / misinformation", minAmount: 5000, maxAmount: 99999 },
+    { id: 14, label: "Changing allotted hostel room without permission", minAmount: 1000, maxAmount: 99999 },
+    { id: 15, label: "Drugs (Possession/Distribution)", disciplinary: true, strict: true },
+    { id: 16, label: "Weapons/Hazardous Substances", disciplinary: true, strict: true },
+    { id: 17, label: "Littering / Spreading Dirt", minAmount: 1000, maxAmount: 99999 },
+    { id: 99, label: "Custom / Other", minAmount: 0, maxAmount: 99999, custom: true }
+];

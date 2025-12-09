@@ -27,6 +27,9 @@ let RoomSwapController = class RoomSwapController {
     removeListing(req) {
         return this.roomSwapService.removeListing(req.user.userId);
     }
+    getMyListing(req) {
+        return this.roomSwapService.getMyListing(req.user.userId);
+    }
     getListings(req) {
         return this.roomSwapService.getListings(req.user.userId);
     }
@@ -55,6 +58,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], RoomSwapController.prototype, "removeListing", null);
+__decorate([
+    (0, common_1.Get)('my'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], RoomSwapController.prototype, "getMyListing", null);
 __decorate([
     (0, common_1.Get)('list'),
     __param(0, (0, common_1.Request)()),
