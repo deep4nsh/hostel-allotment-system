@@ -160,8 +160,8 @@ export declare class StudentsController {
     }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     getAllPendingEditRequests(): Promise<({
         student: {
-            name: string;
             uniqueId: string | null;
+            name: string;
             program: import("@prisma/client").$Enums.Program | null;
             year: number | null;
         };

@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getMyDocuments, uploadDocument, deleteDocument } from "@/lib/api";
+import { getMyDocuments, uploadDocument, deleteDocument, getProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { Upload, FileText, Trash2, Eye, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileText, Trash2, Eye, CheckCircle, AlertCircle, Lock } from "lucide-react";
 
 export default function DocumentsPageContent() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
+  const [isFeePaid, setIsFeePaid] = useState(false);
   const router = useRouter();
 
   // State for file inputs
@@ -21,7 +22,23 @@ export default function DocumentsPageContent() {
 
   useEffect(() => {
     loadDocuments();
+    checkFeeStatus();
   }, []);
+
+  async function checkFeeStatus() {
+    try {
+      const profile = await getProfile();
+      if (profile && profile.payments) {
+        // Check for HOSTEL_FEE with status COMPLETED
+        const paid = profile.payments.some((p: any) =>
+          p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')
+        );
+        setIsFeePaid(paid);
+      }
+    } catch (error) {
+      console.error("Failed to fetch profile for fee status", error);
+    }
+  }
 
   async function loadDocuments() {
     try {
@@ -128,6 +145,10 @@ export default function DocumentsPageContent() {
             const uploadedDoc = getUploadedDoc(doc.value);
             const isLoading = uploadingType === doc.value;
 
+            // Logic for Undertaking: Disabled if Fee NOT Paid
+            const isUndertaking = doc.value === 'UNDERTAKING';
+            const isDisabled = isUndertaking && !isFeePaid && !uploaded;
+
             return (
               <Card key={doc.value} className={`flex flex-col ${uploaded ? 'border-green-200 bg-green-50/30' : ''}`}>
                 <CardHeader className="pb-4">
@@ -136,6 +157,10 @@ export default function DocumentsPageContent() {
                     {uploaded ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         <CheckCircle className="w-3 h-3 mr-1" /> Uploaded
+                      </span>
+                    ) : isDisabled ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                        <Lock className="w-3 h-3 mr-1" /> Locked
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
@@ -177,37 +202,45 @@ export default function DocumentsPageContent() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {doc.value === 'AADHAR' ? (
-                        <>
-                          <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Front Side</label>
-                            <Input
-                              type="file"
-                              accept=".jpg,.jpeg,.png,.pdf"
-                              onChange={(e) => setAadharFront(e.target.files?.[0] || null)}
-                              className="bg-white"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Back Side</label>
-                            <Input
-                              type="file"
-                              accept=".jpg,.jpeg,.png,.pdf"
-                              onChange={(e) => setAadharBack(e.target.files?.[0] || null)}
-                              className="bg-white"
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Select File</label>
-                          <Input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            onChange={(e) => setFiles(prev => ({ ...prev, [doc.value]: e.target.files?.[0] || null }))}
-                            className="bg-white"
-                          />
+                      {isDisabled ? (
+                        <div className="text-sm text-gray-500 italic p-2 bg-gray-50 rounded border border-dashed text-center">
+                          Hostel fees must be paid to unlock this upload.
                         </div>
+                      ) : (
+                        <>
+                          {doc.value === 'AADHAR' ? (
+                            <>
+                              <div>
+                                <label className="text-xs font-medium text-gray-500 mb-1 block">Front Side</label>
+                                <Input
+                                  type="file"
+                                  accept=".jpg,.jpeg,.png,.pdf"
+                                  onChange={(e) => setAadharFront(e.target.files?.[0] || null)}
+                                  className="bg-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium text-gray-500 mb-1 block">Back Side</label>
+                                <Input
+                                  type="file"
+                                  accept=".jpg,.jpeg,.png,.pdf"
+                                  onChange={(e) => setAadharBack(e.target.files?.[0] || null)}
+                                  className="bg-white"
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <div>
+                              <label className="text-xs font-medium text-gray-500 mb-1 block">Select File</label>
+                              <Input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => setFiles(prev => ({ ...prev, [doc.value]: e.target.files?.[0] || null }))}
+                                className="bg-white"
+                              />
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -221,11 +254,11 @@ export default function DocumentsPageContent() {
                     <Button
                       className="w-full"
                       onClick={() => doc.value === 'AADHAR' ? handleAadharUpload() : handleSingleUpload(doc.value)}
-                      disabled={isLoading || (doc.value === 'AADHAR' ? (!aadharFront || !aadharBack) : !files[doc.value])}
+                      disabled={isDisabled || isLoading || (doc.value === 'AADHAR' ? (!aadharFront || !aadharBack) : !files[doc.value])}
                     >
                       {isLoading ? (
                         "Uploading..."
-                      ) : (
+                      ) : isDisabled ? "Locked" : (
                         <>
                           <Upload className="w-4 h-4 mr-2" /> Upload
                         </>

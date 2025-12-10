@@ -75,49 +75,49 @@ export class PdfService {
             </tr>
             <tr>
                 <td rowspan="5" class="photo-cell">
-                    \${photoUrl ? \`<img src="\${photoUrl}" class="photo-img" />\` : 'PHOTO'}
+                    ${photoUrl ? `<img src="${photoUrl}" class="photo-img" />` : 'PHOTO'}
                 </td>
                 <td style="width: 15%;">Roll No.</td>
-                <td style="width: 25%;">\${student.uniqueId}</td>
+                <td style="width: 25%;">${student.uniqueId}</td>
                 <td style="width: 15%;">Course</td>
-                <td>\${student.program}</td>
+                <td>${student.program}</td>
             </tr>
             <tr>
                 <td>First Name</td>
-                <td>\${student.name?.split(' ')[0] || ''}</td>
+                <td>${student.name?.split(' ')[0] || ''}</td>
                 <td>Middle Name</td>
-                <td>\${student.name?.split(' ').slice(1, -1).join(' ') || ''}</td>
+                <td>${student.name?.split(' ').slice(1, -1).join(' ') || ''}</td>
             </tr>
             <tr>
                 <td>Last Name</td>
-                <td>\${student.name?.split(' ').slice(-1)[0] || ''}</td>
+                <td>${student.name?.split(' ').slice(-1)[0] || ''}</td>
                 <td>Branch</td>
                 <td>N/A</td> 
             </tr>
             <tr>
                 <td>Email</td>
-                <td>\${student.user?.email}</td>
-                <td></td>
-                <td></td>
+                <td>${student.user?.email}</td>
+                <td>Allotted Hostel</td>
+                <td><strong>${student.allotment?.room?.floor?.hostel?.name || 'Pending'}</strong></td>
             </tr>
              <tr>
                 <td>Food Choice</td>
                 <td>Veg</td>
-                <td></td>
-                <td></td>
+                <td>Allotted Room</td>
+                <td><strong>${student.allotment?.room?.number || 'Pending'}</strong></td>
             </tr>
              <tr>
                 <td>Gender</td>
-                <td>\${student.gender}</td>
+                <td>${student.gender}</td>
                 <td>Apply for Hostel Year</td>
-                <td>\${student.year}</td>
+                <td>${student.year}</td>
             </tr>
              <tr>
                  <td></td>
                 <td>Phone No.</td>
-                <td>\${student.phone}</td>
+                <td>${student.phone}</td>
                 <td>No. of Back Paper</td>
-                <td>\${student.backlogs ? 'Yes' : '0'}</td>
+                <td>${student.backlogs ? 'Yes' : '0'}</td>
             </tr>
              <tr>
                  <td></td>
