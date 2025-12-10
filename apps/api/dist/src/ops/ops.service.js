@@ -81,7 +81,13 @@ let OpsService = class OpsService {
             by: ['status'],
             _sum: { amount: true },
         });
-        const totalRevenue = payments.find((p) => p.status === 'COMPLETED')?._sum.amount || 0;
+        const completedRevenue = payments.find((p) => p.status === 'COMPLETED')?._sum.amount || 0;
+        const pendingRefunds = await this.prisma.refundRequest.aggregate({
+            where: { status: 'PENDING' },
+            _sum: { amount: true }
+        });
+        const pendingRefundAmount = pendingRefunds._sum.amount || 0;
+        const totalRevenue = Math.max(0, completedRevenue - pendingRefundAmount);
         const hostels = await this.prisma.hostel.findMany({
             include: {
                 floors: {

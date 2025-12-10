@@ -6,7 +6,7 @@ import { exec } from 'child_process';
 
 @Injectable()
 export class OpsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async getHealth() {
     try {
@@ -43,12 +43,22 @@ export class OpsService {
     });
 
     // 2. Financials
+    // 2. Financials
     const payments = await this.prisma.payment.groupBy({
       by: ['status'],
       _sum: { amount: true },
     });
-    const totalRevenue =
+    const completedRevenue =
       payments.find((p) => p.status === 'COMPLETED')?._sum.amount || 0;
+
+    // Subtract Pending Refund Requests to show Net Projected Revenue
+    const pendingRefunds = await this.prisma.refundRequest.aggregate({
+      where: { status: 'PENDING' },
+      _sum: { amount: true }
+    });
+    const pendingRefundAmount = pendingRefunds._sum.amount || 0;
+
+    const totalRevenue = Math.max(0, completedRevenue - pendingRefundAmount);
 
     // 3. Hostel Occupancy
     const hostels = await this.prisma.hostel.findMany({
