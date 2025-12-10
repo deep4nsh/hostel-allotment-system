@@ -23,6 +23,8 @@ export default function StudentProfileContent() {
     const [allotment, setAllotment] = useState<any>(null)
     const [waitlist, setWaitlist] = useState<any>(null)
     const [isPossessionDialogOpen, setIsPossessionDialogOpen] = useState(false)
+    const [isAcknowledged, setIsAcknowledged] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -35,7 +37,7 @@ export default function StudentProfileContent() {
             try {
                 // Fetch Profile (includes documents via findOne)
                 const res = await fetch('/api/students/me', {
-                    headers: { 'Authorization': `Bearer ${token} ` }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (res.ok) {
                     const data = await res.json()
@@ -50,7 +52,7 @@ export default function StudentProfileContent() {
                 }
 
                 const wlRes = await fetch('/api/waitlist/me', {
-                    headers: { 'Authorization': `Bearer ${token} ` }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (wlRes.ok) {
                     const wlData = await wlRes.json()
@@ -65,8 +67,6 @@ export default function StudentProfileContent() {
 
         fetchProfile()
     }, [router])
-
-
 
     if (isLoading) return <div className="p-8">Loading...</div>
     if (!profile) return <div className="p-8">Failed to load profile</div>
@@ -86,10 +86,10 @@ export default function StudentProfileContent() {
                     <Card className="bg-green-50 border-green-200">
                         <CardHeader>
                             <CardTitle className="text-green-700">🎉 Hostel Allotted!</CardTitle>
-                            {!profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED') && (
+                            {!profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
                                 <div className="text-red-600 text-sm mt-1">Warning: Hostel Fee is pending.</div>
                             )}
-                            {!profile?.payments?.some((p: any) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED') && (
+                            {!profile?.payments?.some((p: any) => p.purpose === 'MESS_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
                                 <div className="text-red-600 text-sm mt-1">Warning: Mess Fee is pending.</div>
                             )}
                         </CardHeader>
@@ -111,7 +111,7 @@ export default function StudentProfileContent() {
                                     Possession confirmed on {new Date(allotment.possessionDate).toLocaleDateString()}
                                 </div>
                             ) : (
-                                profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED') && (
+                                profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
                                     <>
                                         <div className="mt-6 p-4 bg-blue-50/50 rounded-lg border border-blue-100 space-y-3">
                                             <div className="flex items-center justify-between">
@@ -140,10 +140,8 @@ export default function StudentProfileContent() {
                                                             type="checkbox"
                                                             id="possessionCheckPopup"
                                                             className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                            onChange={(e) => {
-                                                                const btn = document.getElementById('confirmPossessionBtnPopup') as HTMLButtonElement;
-                                                                if (btn) btn.disabled = !e.target.checked;
-                                                            }}
+                                                            checked={isAcknowledged}
+                                                            onChange={(e) => setIsAcknowledged(e.target.checked)}
                                                         />
                                                         <label htmlFor="possessionCheckPopup" className="text-sm text-gray-700 leading-snug">
                                                             I hereby confirm that I have possessed the hostel room allotted to me. This is the final acknowledgment that the hostel is taken by me.
@@ -154,14 +152,14 @@ export default function StudentProfileContent() {
                                                 <DialogFooter>
                                                     <Button variant="outline" onClick={() => setIsPossessionDialogOpen(false)}>Cancel</Button>
                                                     <Button
-                                                        id="confirmPossessionBtnPopup"
-                                                        disabled={true}
+                                                        disabled={!isAcknowledged || isSubmitting}
                                                         onClick={async () => {
+                                                            setIsSubmitting(true)
                                                             try {
                                                                 const token = localStorage.getItem('token');
                                                                 const res = await fetch('/api/students/me/ack-possession', {
                                                                     method: 'POST',
-                                                                    headers: { 'Authorization': `Bearer ${token} ` }
+                                                                    headers: { 'Authorization': `Bearer ${token}` }
                                                                 });
                                                                 if (res.ok) {
                                                                     window.location.reload();
@@ -171,10 +169,13 @@ export default function StudentProfileContent() {
                                                                 }
                                                             } catch (e) {
                                                                 console.error(e);
+                                                                alert('An error occurred. Please try again.');
+                                                            } finally {
+                                                                setIsSubmitting(false)
                                                             }
                                                         }}
                                                     >
-                                                        Confirm Possession
+                                                        {isSubmitting ? 'Confirming...' : 'Confirm Possession'}
                                                     </Button>
                                                 </DialogFooter>
                                             </DialogContent>

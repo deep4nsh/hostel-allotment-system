@@ -144,14 +144,6 @@ export class PaymentsService {
         throw new BadRequestException('Student record not found for user');
       }
 
-      // SIDE EFFECT: Mark allotment as possessed if Hostel Fee
-      if (purpose === 'HOSTEL_FEE') {
-        await this.prisma.allotment.update({
-          where: { studentId: student.id },
-          data: { isPossessed: true, possessionDate: new Date() },
-        });
-      }
-
       // Update existing or create new payment record
       const existingPayment = await this.prisma.payment.findFirst({
         where: { txnRef: razorpayOrderId, status: 'PENDING' },
@@ -206,14 +198,6 @@ export class PaymentsService {
           name: '',
           gender: 'OTHER',
         },
-      });
-    }
-
-    // SIDE EFFECT: Mark allotment as possessed if Hostel Fee
-    if (purpose === 'HOSTEL_FEE') {
-      await this.prisma.allotment.update({
-        where: { studentId: student.id },
-        data: { isPossessed: true, possessionDate: new Date() },
       });
     }
 
