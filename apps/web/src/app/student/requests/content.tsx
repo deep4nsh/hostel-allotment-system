@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { API_URL, getAuthHeaders, getProfileEditRequests, requestEditAccess } from '@/lib/api';
+import { API_URL, getAuthHeaders, getProfileEditRequests, requestEditAccess, getProfile } from '@/lib/api';
+import { AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function StudentRequestsContent() {
     const [activeTab, setActiveTab] = useState('room-swap'); // room-swap, hostel-change, surrender, edit-profile
@@ -28,8 +30,11 @@ export default function StudentRequestsContent() {
 
     // State for hostels
     const [hostels, setHostels] = useState<any[]>([]);
+    const [isTerminated, setIsTerminated] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
+        checkTermination();
         fetchAllotment();
         fetchRequests();
         fetchEditRequests();
@@ -39,6 +44,36 @@ export default function StudentRequestsContent() {
         fetchSwapInvites();
         fetchMyListing();
     }, []);
+
+    async function checkTermination() {
+        try {
+            const profile = await getProfile();
+            const terminated = profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED') ||
+                profile?.refundRequests?.some((r: any) => r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED');
+            if (terminated) setIsTerminated(true);
+        } catch (e) {
+            console.error("Failed to check termination status", e);
+        }
+    }
+
+    if (isTerminated) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+                <Card className="max-w-md w-full border-red-200 bg-red-50">
+                    <CardContent className="pt-6 text-center space-y-4">
+                        <AlertCircle className="w-12 h-12 text-red-600 mx-auto" />
+                        <h2 className="text-xl font-bold text-red-900">Service Unavailable</h2>
+                        <p className="text-red-700">
+                            You cannot access requests because your hostel allotment has been terminated.
+                        </p>
+                        <Button variant="outline" className="border-red-200 text-red-900 hover:bg-red-100" onClick={() => router.push('/student/profile')}>
+                            Back to Dashboard
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
 
     const fetchMyListing = async () => {
         try {
