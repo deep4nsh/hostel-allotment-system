@@ -33,6 +33,10 @@ export function AllotmentJourney({ profile, waitlist }: AllotmentJourneyProps) {
     // 6. Possession Taken
     const isPossessed = profile.allotment?.isPossessed
 
+    // 7. Termination Status
+    const isTerminated = profile.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED') ||
+        profile.refundRequests?.some((r: any) => r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED')
+
     const steps = [
         {
             id: 1,
@@ -94,14 +98,20 @@ export function AllotmentJourney({ profile, waitlist }: AllotmentJourneyProps) {
     const currentStepIndex = steps.findIndex(s => s.isCurrent)
 
     return (
-        <Card className="mb-8 border-blue-200 shadow-sm">
-            <CardHeader className="bg-blue-50/40 pb-4">
-                <CardTitle className="text-xl text-blue-900 flex items-center gap-2">
+        <Card className={`mb-8 shadow-sm ${isTerminated ? 'border-red-200 bg-red-50/10' : 'border-blue-200'}`}>
+            <CardHeader className={`${isTerminated ? 'bg-red-100/50' : 'bg-blue-50/40'} pb-4`}>
+                <CardTitle className={`text-xl flex items-center gap-2 ${isTerminated ? 'text-red-900' : 'text-blue-900'}`}>
                     <Clock className="w-5 h-5" />
-                    Your Allotment Journey
+                    {isTerminated ? 'Allotment Process Terminated' : 'Your Allotment Journey'}
                 </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
+                {isTerminated && (
+                    <div className="mb-6 p-4 bg-red-100 text-red-800 rounded-md border border-red-200">
+                        <strong>Process Terminated:</strong> You have refunded your hostel fee. Re-application is not allowed this year.
+                    </div>
+                )}
+
                 <div className="relative">
                     {/* Vertical Line */}
                     <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-200" />
@@ -113,9 +123,8 @@ export function AllotmentJourney({ profile, waitlist }: AllotmentJourneyProps) {
                             if (step.isCompleted) state = 'completed'
                             else if (step.isCurrent) state = 'current'
 
-                            // For "Wait for Allotment", if we are past it (allotted), it's completed.
-                            // If we are at it, it's current. 
-                            // My logic above handles this.
+                            // If terminated, override current state visual
+                            const isStepTerminated = isTerminated && state === 'current'
 
                             return (
                                 <div key={step.id} className="relative flex gap-4">
@@ -124,12 +133,14 @@ export function AllotmentJourney({ profile, waitlist }: AllotmentJourneyProps) {
                                         <div className={`
                             w-12 h-12 rounded-full flex items-center justify-center border-4 
                             ${state === 'completed' ? 'bg-green-100 border-green-50 text-green-600' :
-                                                state === 'current' ? 'bg-blue-600 border-blue-100 text-white shadow-md' :
-                                                    'bg-white border-slate-100 text-slate-300'}
+                                                isStepTerminated ? 'bg-red-100 border-red-200 text-red-600' :
+                                                    state === 'current' ? 'bg-blue-600 border-blue-100 text-white shadow-md' :
+                                                        'bg-white border-slate-100 text-slate-300'}
                         `}>
                                             {state === 'completed' ? <CheckCircle2 className="w-6 h-6" /> :
-                                                state === 'current' ? <span className="font-bold">{step.id}</span> :
-                                                    <Circle className="w-6 h-6" />}
+                                                isStepTerminated ? <span className="font-bold text-lg">X</span> :
+                                                    state === 'current' ? <span className="font-bold">{step.id}</span> :
+                                                        <Circle className="w-6 h-6" />}
                                         </div>
                                     </div>
 
@@ -137,7 +148,7 @@ export function AllotmentJourney({ profile, waitlist }: AllotmentJourneyProps) {
                                     <div className={`flex-1 pt-1 ${state === 'pending' ? 'opacity-50' : 'opacity-100'}`}>
                                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                             <div>
-                                                <h3 className={`font-semibold text-lg ${state === 'current' ? 'text-blue-700' : 'text-slate-900'}`}>
+                                                <h3 className={`font-semibold text-lg ${isStepTerminated ? 'text-red-700' : state === 'current' ? 'text-blue-700' : 'text-slate-900'}`}>
                                                     {step.title}
                                                 </h3>
                                                 <p className="text-slate-500 text-sm mt-1 max-w-md">
@@ -146,15 +157,16 @@ export function AllotmentJourney({ profile, waitlist }: AllotmentJourneyProps) {
                                             </div>
 
                                             {/* Action Button */}
-                                            {state !== 'completed' && state !== 'pending' && (
+                                            {state !== 'completed' && state !== 'pending' && !isTerminated && (
                                                 <Link href={step.link}>
                                                     <Button size="sm" className={state === 'current' ? 'animate-pulse' : ''}>
                                                         {step.actionText} <ArrowRight className="w-4 h-4 ml-1" />
                                                     </Button>
                                                 </Link>
                                             )}
+
                                             {/* Show View Button for completed steps too if accessible */}
-                                            {state === 'completed' && step.id !== 6 && (
+                                            {state === 'completed' && step.id !== 6 && !isTerminated && (
                                                 <Link href={step.link}>
                                                     <Button variant="ghost" size="sm" className="text-slate-400">
                                                         View

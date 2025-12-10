@@ -190,17 +190,39 @@ export default function StudentProfileContent() {
                         </CardContent>
                     </Card>
                 ) : (
-                    waitlist && waitlist.position && (
-                        <Card className="bg-blue-50 border-blue-200">
-                            <CardHeader>
-                                <CardTitle className="text-blue-700">Waitlist Status</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-lg">Your current waitlist position: <span className="font-bold text-2xl">{waitlist.position}</span></p>
-                                <p className="text-sm text-blue-600">Status: {waitlist.status}</p>
-                            </CardContent>
-                        </Card>
-                    )
+                    (() => {
+                        const isTerminated = profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED') ||
+                            profile?.refundRequests?.some((r: any) => r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED')
+
+                        if (isTerminated) {
+                            return (
+                                <Card className="bg-red-50 border-red-200">
+                                    <CardHeader>
+                                        <CardTitle className="text-red-700">Allotment Terminated</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-lg text-red-800">Your allotment process has been terminated due to Fee Refund.</p>
+                                        <p className="text-sm text-red-600 mt-2">You cannot re-apply for a hostel seat this year.</p>
+                                    </CardContent>
+                                </Card>
+                            )
+                        }
+
+                        if (waitlist && waitlist.position) {
+                            return (
+                                <Card className="bg-blue-50 border-blue-200">
+                                    <CardHeader>
+                                        <CardTitle className="text-blue-700">Waitlist Status</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-lg">Your current waitlist position: <span className="font-bold text-2xl">{waitlist.position}</span></p>
+                                        <p className="text-sm text-blue-600">Status: {waitlist.status}</p>
+                                    </CardContent>
+                                </Card>
+                            )
+                        }
+                        return null
+                    })()
                 )}
 
                 <Card>
