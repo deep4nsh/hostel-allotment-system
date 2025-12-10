@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ComplaintsService } from './complaints.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -7,12 +16,15 @@ import { Role } from '@prisma/client';
 
 @Controller('complaints')
 export class ComplaintsController {
-  constructor(private readonly complaintsService: ComplaintsService) { }
+  constructor(private readonly complaintsService: ComplaintsService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.STUDENT)
-  create(@Request() req: any, @Body() body: { category: string; description: string }) {
+  create(
+    @Request() req: any,
+    @Body() body: { category: string; description: string },
+  ) {
     return this.complaintsService.create(req.user.userId, body);
   }
 

@@ -7,26 +7,26 @@ import { Role } from '@prisma/client';
 
 @Controller('allotment')
 export class AllotmentController {
-    constructor(private readonly allotmentService: AllotmentService) { }
+  constructor(private readonly allotmentService: AllotmentService) {}
 
-    @Post('trigger')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.ADMIN)
-    triggerAllotment(@Body() body: { year: number }) {
-        return this.allotmentService.runAllotment(body.year);
-    }
+  @Post('trigger')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  triggerAllotment(@Body() body: { year: number }) {
+    return this.allotmentService.runAllotment(body.year);
+  }
 
-    @Get('list/:hostelId')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.ADMIN)
-    getAllotments(@Param('hostelId') hostelId: string) {
-        return this.allotmentService.getAllotments(hostelId);
-    }
+  @Get('list/:hostelId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  getAllotments(@Param('hostelId') hostelId: string) {
+    return this.allotmentService.getAllotments(hostelId);
+  }
 
-    @Post('expire')
-    // @UseGuards(AuthGuard('jwt'), RolesGuard) // Uncomment security for prod, keeping open for easy testing as implied
-    // @Roles(Role.ADMIN) 
-    expireAllotments() {
-        return this.allotmentService.expireUnpaidAllotments();
-    }
+  @Post('expire')
+  // @UseGuards(AuthGuard('jwt'), RolesGuard) // Uncomment security for prod, keeping open for easy testing as implied
+  // @Roles(Role.ADMIN)
+  expireAllotments() {
+    return this.allotmentService.expireUnpaidAllotments();
+  }
 }

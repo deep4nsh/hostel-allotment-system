@@ -4,8 +4,8 @@ import { AllotmentController } from './allotment.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [AllotmentController],
-    providers: [AllotmentService],
+  imports: [PrismaModule],
+  controllers: [AllotmentController],
+  providers: [AllotmentService],
 })
-export class AllotmentModule { }
+export class AllotmentModule {}

@@ -4,133 +4,148 @@ import Razorpay from 'razorpay';
 
 @Injectable()
 export class RefundsService {
-    private razorpay: any;
+  private razorpay: any;
 
-    constructor(private prisma: PrismaService) {
-        this.razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag', // Test Key
-            key_secret: process.env.RAZORPAY_KEY_SECRET || 's42BN13v3y7S0Y4aoY4aoY4a', // Mock Secret
-        });
+  constructor(private prisma: PrismaService) {
+    this.razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag', // Test Key
+      key_secret: process.env.RAZORPAY_KEY_SECRET || 's42BN13v3y7S0Y4aoY4aoY4a', // Mock Secret
+    });
+  }
+
+  async createRequest(userId: string, paymentId: string, reason: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      include: { allotment: true },
+    });
+    if (!student) throw new Error('Student not found');
+
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+    });
+    if (!payment || payment.studentId !== student.id)
+      throw new Error('Invalid payment');
+
+    if (payment.purpose === 'ALLOTMENT_REQUEST') {
+      throw new Error('Allotment Request Fee is non-refundable.');
     }
 
-    async createRequest(userId: string, paymentId: string, reason: string) {
-        const student = await this.prisma.student.findUnique({
-            where: { userId },
-            include: { allotment: true }
+    // New Rule: Hostel Fee refunds only allowed till 14th August of current year
+    if (payment.purpose === 'HOSTEL_FEE') {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const deadline = new Date(`${currentYear}-08-14`); // August 14th
+
+      // If strictly after Aug 14, reject
+      if (now > deadline) {
+        throw new Error(
+          'Refund applications for Hostel Fees are closed for this session (Deadline: 14th August).',
+        );
+      }
+    }
+
+    let refundAmount = payment.amount;
+
+    // Check for Allotment and apply deductions
+    // Rules: <10 days: -3000, 10-30 days: -6000, >30 days: No refund
+    if (student.allotment) {
+      const issueDate = new Date(student.allotment.issueDate);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - issueDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 30) {
+        refundAmount = 0;
+      } else if (diffDays > 10) {
+        refundAmount = Math.max(0, refundAmount - 6000);
+      } else {
+        refundAmount = Math.max(0, refundAmount - 3000);
+      }
+    }
+
+    const hostelRefundRequest = await this.prisma.refundRequest.create({
+      data: {
+        studentId: student.id,
+        feeType: payment.purpose,
+        amount: refundAmount,
+        status: 'PENDING',
+      },
+    });
+
+    // Auto-Trigger Mess Refund if Hostel Fee is being refunded/cancelled
+    if (payment.purpose === 'HOSTEL_FEE') {
+      const messPayment = await this.prisma.payment.findFirst({
+        where: {
+          studentId: student.id,
+          purpose: 'MESS_FEE',
+          status: 'COMPLETED',
+        },
+      });
+
+      if (messPayment) {
+        // Check if already requested
+        const existingReq = await this.prisma.refundRequest.findFirst({
+          where: {
+            studentId: student.id,
+            feeType: 'MESS_FEE',
+            status: 'PENDING',
+          },
         });
-        if (!student) throw new Error('Student not found');
 
-        const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
-        if (!payment || payment.studentId !== student.id) throw new Error('Invalid payment');
-
-        if (payment.purpose === 'ALLOTMENT_REQUEST') {
-            throw new Error('Allotment Request Fee is non-refundable.');
-        }
-
-        // New Rule: Hostel Fee refunds only allowed till 14th August of current year
-        if (payment.purpose === 'HOSTEL_FEE') {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const deadline = new Date(`${currentYear}-08-14`); // August 14th
-
-            // If strictly after Aug 14, reject
-            if (now > deadline) {
-                throw new Error('Refund applications for Hostel Fees are closed for this session (Deadline: 14th August).');
-            }
-        }
-
-        let refundAmount = payment.amount;
-
-        // Check for Allotment and apply deductions
-        // Rules: <10 days: -3000, 10-30 days: -6000, >30 days: No refund
-        if (student.allotment) {
-            const issueDate = new Date(student.allotment.issueDate);
-            const now = new Date();
-            const diffTime = Math.abs(now.getTime() - issueDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 30) {
-                refundAmount = 0;
-            } else if (diffDays > 10) {
-                refundAmount = Math.max(0, refundAmount - 6000);
-            } else {
-                refundAmount = Math.max(0, refundAmount - 3000);
-            }
-        }
-
-        const hostelRefundRequest = await this.prisma.refundRequest.create({
+        if (!existingReq) {
+          await this.prisma.refundRequest.create({
             data: {
-                studentId: student.id,
-                feeType: payment.purpose,
-                amount: refundAmount,
-                status: 'PENDING',
+              studentId: student.id,
+              feeType: 'MESS_FEE',
+              amount: messPayment.amount, // Full Refund for Mess
+              status: 'PENDING',
             },
-        });
-
-        // Auto-Trigger Mess Refund if Hostel Fee is being refunded/cancelled
-        if (payment.purpose === 'HOSTEL_FEE') {
-            const messPayment = await this.prisma.payment.findFirst({
-                where: {
-                    studentId: student.id,
-                    purpose: 'MESS_FEE',
-                    status: 'COMPLETED'
-                }
-            });
-
-            if (messPayment) {
-                // Check if already requested
-                const existingReq = await this.prisma.refundRequest.findFirst({
-                    where: { studentId: student.id, feeType: 'MESS_FEE', status: 'PENDING' }
-                });
-
-                if (!existingReq) {
-                    await this.prisma.refundRequest.create({
-                        data: {
-                            studentId: student.id,
-                            feeType: 'MESS_FEE',
-                            amount: messPayment.amount, // Full Refund for Mess
-                            status: 'PENDING'
-                        }
-                    });
-                    console.log(`Auto-generated Mess Fee refund request for student ${student.id}`);
-                }
-            }
+          });
+          console.log(
+            `Auto-generated Mess Fee refund request for student ${student.id}`,
+          );
         }
-
-        return hostelRefundRequest;
+      }
     }
 
-    async findAll() {
-        return this.prisma.refundRequest.findMany({
-            include: { student: { include: { user: true } } },
-            orderBy: { createdAt: 'desc' },
-        });
+    return hostelRefundRequest;
+  }
+
+  async findAll() {
+    return this.prisma.refundRequest.findMany({
+      include: { student: { include: { user: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async processRefund(requestId: string, decision: 'APPROVED' | 'REJECTED') {
+    const request = await this.prisma.refundRequest.findUnique({
+      where: { id: requestId },
+    });
+    if (!request) throw new Error('Request not found');
+
+    if (decision === 'REJECTED') {
+      return this.prisma.refundRequest.update({
+        where: { id: requestId },
+        data: { status: 'REJECTED' },
+      });
     }
 
-    async processRefund(requestId: string, decision: 'APPROVED' | 'REJECTED') {
-        const request = await this.prisma.refundRequest.findUnique({ where: { id: requestId } });
-        if (!request) throw new Error('Request not found');
+    // If APPROVED, trigger Razorpay Refund
+    try {
+      // In a real scenario, we would need the Razorpay Payment ID (pay_xxx) stored in the Payment record
+      // For now, we mock the success
+      console.log(
+        `[MOCK] Processing refund for ${request.amount} via Razorpay`,
+      );
 
-        if (decision === 'REJECTED') {
-            return this.prisma.refundRequest.update({
-                where: { id: requestId },
-                data: { status: 'REJECTED' },
-            });
-        }
-
-        // If APPROVED, trigger Razorpay Refund
-        try {
-            // In a real scenario, we would need the Razorpay Payment ID (pay_xxx) stored in the Payment record
-            // For now, we mock the success
-            console.log(`[MOCK] Processing refund for ${request.amount} via Razorpay`);
-
-            return this.prisma.refundRequest.update({
-                where: { id: requestId },
-                data: { status: 'APPROVED' },
-            });
-        } catch (error) {
-            console.error('Refund failed', error);
-            throw new Error('Refund processing failed');
-        }
+      return this.prisma.refundRequest.update({
+        where: { id: requestId },
+        data: { status: 'APPROVED' },
+      });
+    } catch (error) {
+      console.error('Refund failed', error);
+      throw new Error('Refund processing failed');
     }
+  }
 }

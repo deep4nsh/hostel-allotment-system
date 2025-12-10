@@ -3,132 +3,145 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WaitlistService {
-    constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-    async joinWaitlist(userId: string) {
-        const student = await this.prisma.student.findUnique({
-            where: { userId },
-            include: { payments: true, documents: true },
-        });
+  async joinWaitlist(userId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      include: { payments: true, documents: true },
+    });
 
-        if (!student) throw new Error('Student not found');
+    if (!student) throw new Error('Student not found');
 
-        // Check for mandatory documents
-        const requiredDocs = ['ADMISSION_LETTER', 'AADHAR_FRONT', 'AADHAR_BACK', 'PHOTO', 'SIGNATURE'];
-        const uploadedDocs = student.documents.map(d => d.kind);
-        const missingDocs = requiredDocs.filter(d => !uploadedDocs.includes(d));
+    // Check for mandatory documents
+    const requiredDocs = [
+      'ADMISSION_LETTER',
+      'AADHAR_FRONT',
+      'AADHAR_BACK',
+      'PHOTO',
+      'SIGNATURE',
+    ];
+    const uploadedDocs = student.documents.map((d) => d.kind);
+    const missingDocs = requiredDocs.filter((d) => !uploadedDocs.includes(d));
 
-        if (missingDocs.length > 0) {
-            throw new Error(`Missing mandatory documents: ${missingDocs.join(', ')}`);
-        }
+    if (missingDocs.length > 0) {
+      throw new Error(`Missing mandatory documents: ${missingDocs.join(', ')}`);
+    }
 
-        // Check if already in waitlist
-        const existingEntry = await this.prisma.waitlistEntry.findUnique({
-            where: { studentId: student.id },
-        });
+    // Check if already in waitlist
+    const existingEntry = await this.prisma.waitlistEntry.findUnique({
+      where: { studentId: student.id },
+    });
 
-        if (existingEntry) return { message: 'Already in waitlist', entry: existingEntry };
+    if (existingEntry)
+      return { message: 'Already in waitlist', entry: existingEntry };
 
-        // Verify Payment
-        const payment = student.payments.find(
-            (p: any) => p.purpose === 'ALLOTMENT_REQUEST' && p.status === 'COMPLETED',
-        );
+    // Verify Payment
+    const payment = student.payments.find(
+      (p) => p.purpose === 'ALLOTMENT_REQUEST' && p.status === 'COMPLETED',
+    );
 
-        if (!payment) throw new Error('Payment of ₹1000 not found');
+    if (!payment) throw new Error('Payment of ₹1000 not found');
 
-        // Create Waitlist Entry
-        // Position is initially count + 1, but will be dynamic based on distance
-        const count = await this.prisma.waitlistEntry.count({ where: { status: 'ACTIVE' } });
+    // Create Waitlist Entry
+    // Position is initially count + 1, but will be dynamic based on distance
+    const count = await this.prisma.waitlistEntry.count({
+      where: { status: 'ACTIVE' },
+    });
 
-        return this.prisma.waitlistEntry.create({
-            data: {
-                studentId: student.id,
-                position: count + 1,
-                status: 'ACTIVE',
+    return this.prisma.waitlistEntry.create({
+      data: {
+        studentId: student.id,
+        position: count + 1,
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  async getPriorityWaitlist() {
+    // Fetch all active waitlist entries with student details
+    const entries = await this.prisma.waitlistEntry.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            uniqueId: true,
+            program: true,
+            year: true,
+            profileMeta: true, // Contains distance
+            payments: {
+              where: { purpose: 'ALLOTMENT_REQUEST', status: 'COMPLETED' },
+              select: { createdAt: true }, // Payment time for tie-breaking
             },
-        });
+          },
+        },
+      },
+    });
+
+    // Sort by Distance (Desc) then Payment Time (Asc)
+    return entries.sort((a, b) => {
+      const distA =
+        (a.student.profileMeta as Record<string, any>)?.distance || 0;
+      const distB =
+        (b.student.profileMeta as Record<string, any>)?.distance || 0;
+
+      if (distB !== distA) {
+        return distB - distA; // Higher distance first
+      }
+
+      // Tie-breaker: Earlier payment first
+      const timeA = a.student.payments[0]?.createdAt.getTime() || 0;
+      const timeB = b.student.payments[0]?.createdAt.getTime() || 0;
+      return timeA - timeB;
+    });
+  }
+
+  async getWaitlistPosition(userId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      include: {
+        payments: true,
+        allotment: {
+          include: {
+            room: {
+              include: {
+                floor: {
+                  include: { hostel: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!student) return { status: 'NOT_REGISTERED' };
+
+    // Check if allotted
+    if (student.allotment) {
+      return {
+        status: 'ALLOTTED',
+        allotment: student.allotment,
+      };
     }
 
-    async getPriorityWaitlist() {
-        // Fetch all active waitlist entries with student details
-        const entries = await this.prisma.waitlistEntry.findMany({
-            where: { status: 'ACTIVE' },
-            include: {
-                student: {
-                    select: {
-                        id: true,
-                        name: true,
-                        uniqueId: true,
-                        program: true,
-                        year: true,
-                        profileMeta: true, // Contains distance
-                        payments: {
-                            where: { purpose: 'ALLOTMENT_REQUEST', status: 'COMPLETED' },
-                            select: { createdAt: true } // Payment time for tie-breaking
-                        }
-                    }
-                }
-            }
-        });
+    const entry = await this.prisma.waitlistEntry.findUnique({
+      where: { studentId: student.id },
+    });
 
-        // Sort by Distance (Desc) then Payment Time (Asc)
-        return entries.sort((a, b) => {
-            const distA = (a.student.profileMeta as any)?.distance || 0;
-            const distB = (b.student.profileMeta as any)?.distance || 0;
-
-            if (distB !== distA) {
-                return distB - distA; // Higher distance first
-            }
-
-            // Tie-breaker: Earlier payment first
-            const timeA = a.student.payments[0]?.createdAt.getTime() || 0;
-            const timeB = b.student.payments[0]?.createdAt.getTime() || 0;
-            return timeA - timeB;
-        });
+    if (entry) {
+      const list = await this.getPriorityWaitlist();
+      const position = list.findIndex((e) => e.studentId === student.id) + 1;
+      return { position, status: entry.status };
     }
 
-    async getWaitlistPosition(userId: string) {
-        const student = await this.prisma.student.findUnique({
-            where: { userId },
-            include: {
-                payments: true,
-                allotment: {
-                    include: {
-                        room: {
-                            include: {
-                                floor: {
-                                    include: { hostel: true }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        if (!student) return { status: 'NOT_REGISTERED' };
+    // Not in waitlist, check payment
+    const payment = student.payments.find(
+      (p) => p.purpose === 'ALLOTMENT_REQUEST' && p.status === 'COMPLETED',
+    );
+    if (payment) return { status: 'PAID_NOT_JOINED' };
 
-        // Check if allotted
-        if (student.allotment) {
-            return {
-                status: 'ALLOTTED',
-                allotment: student.allotment
-            };
-        }
-
-        const entry = await this.prisma.waitlistEntry.findUnique({
-            where: { studentId: student.id },
-        });
-
-        if (entry) {
-            const list = await this.getPriorityWaitlist();
-            const position = list.findIndex(e => e.studentId === student.id) + 1;
-            return { position, status: entry.status };
-        }
-
-        // Not in waitlist, check payment
-        const payment = student.payments.find((p: any) => p.purpose === 'ALLOTMENT_REQUEST' && p.status === 'COMPLETED');
-        if (payment) return { status: 'PAID_NOT_JOINED' };
-
-        return { status: 'NOT_PAID' };
-    }
+    return { status: 'NOT_PAID' };
+  }
 }

@@ -1,41 +1,49 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsInt, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsInt,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { Gender } from '@prisma/client';
 
 export class CreateRoomDto {
-    @IsString()
-    @IsNotEmpty()
-    number: string;
+  @IsString()
+  @IsNotEmpty()
+  number: string;
 
-    @IsInt()
-    capacity: number;
+  @IsInt()
+  capacity: number;
 
-    @IsArray()
-    @IsInt({ each: true })
-    yearAllowed: number[];
+  @IsArray()
+  @IsInt({ each: true })
+  yearAllowed: number[];
 }
 
 export class CreateFloorDto {
-    @IsInt()
-    number: number;
+  @IsInt()
+  number: number;
 
-    @IsEnum(Gender)
-    gender: Gender;
+  @IsEnum(Gender)
+  gender: Gender;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateRoomDto)
-    rooms: CreateRoomDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateRoomDto)
+  rooms: CreateRoomDto[];
 }
 
 export class CreateHostelDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateFloorDto)
-    @IsOptional()
-    floors?: CreateFloorDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateFloorDto)
+  @IsOptional()
+  floors?: CreateFloorDto[];
 }

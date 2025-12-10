@@ -3,27 +3,39 @@ import puppeteer from 'puppeteer';
 
 @Injectable()
 export class PdfService {
-    async generateRegistrationSlip(student: any): Promise<Buffer> {
-        try {
-            const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
-            const page = await browser.newPage();
+  async generateRegistrationSlip(student: any): Promise<Buffer> {
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
 
-            const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO');
-            const signDoc = student.documents?.find((d: any) => d.kind === 'SIGNATURE');
-            // Fix: Use absolute path if possible or assume localhost for puppeteer
-            // In a real scenario, convert image to base64 to avoid networking issues in PDF generation
-            const photoUrl = photoDoc ? `http://localhost:4000${photoDoc.fileUrl}` : null;
-            const signUrl = signDoc ? `http://localhost:4000${signDoc.fileUrl}` : null;
+      const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO');
+      const signDoc = student.documents?.find(
+        (d: any) => d.kind === 'SIGNATURE',
+      );
+      // Fix: Use absolute path if possible or assume localhost for puppeteer
+      // In a real scenario, convert image to base64 to avoid networking issues in PDF generation
+      const photoUrl = photoDoc
+        ? `http://localhost:4000${photoDoc.fileUrl}`
+        : null;
+      const signUrl = signDoc
+        ? `http://localhost:4000${signDoc.fileUrl}`
+        : null;
 
-            const hostelFeePaid = student.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED');
-            const messFeePaid = student.payments?.some((p: any) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED');
-            const isFeePaid = hostelFeePaid && messFeePaid;
-            const documentTitle = isFeePaid ? "Hostel Allotment Letter" : "Hostel Allotment Notice";
+      const hostelFeePaid = student.payments?.some(
+        (p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED',
+      );
+      const messFeePaid = student.payments?.some(
+        (p: any) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED',
+      );
+      const isFeePaid = hostelFeePaid && messFeePaid;
+      const documentTitle = isFeePaid
+        ? 'Hostel Allotment Letter'
+        : 'Hostel Allotment Notice';
 
-            const htmlContent = `
+      const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -376,27 +388,26 @@ export class PdfService {
       </html>
       `;
 
-            await page.setContent(htmlContent);
-            const pdfBuffer = await page.pdf({ format: 'A4' });
+      await page.setContent(htmlContent);
+      const pdfBuffer = await page.pdf({ format: 'A4' });
 
-            await browser.close();
-            return Buffer.from(pdfBuffer);
-
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            throw new Error('Failed to generate registration slip');
-        }
+      await browser.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new Error('Failed to generate registration slip');
     }
+  }
 
-    async generatePaymentReceipt(payment: any, student: any): Promise<Buffer> {
-        try {
-            const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
-            const page = await browser.newPage();
+  async generatePaymentReceipt(payment: any, student: any): Promise<Buffer> {
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
 
-            const htmlContent = `
+      const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -469,14 +480,14 @@ export class PdfService {
       </html>
       `;
 
-            await page.setContent(htmlContent);
-            const pdfBuffer = await page.pdf({ format: 'A4' });
+      await page.setContent(htmlContent);
+      const pdfBuffer = await page.pdf({ format: 'A4' });
 
-            await browser.close();
-            return Buffer.from(pdfBuffer);
-        } catch (error) {
-            console.error('Error generating receipt:', error);
-            throw new Error('Failed to generate payment receipt');
-        }
+      await browser.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      throw new Error('Failed to generate payment receipt');
     }
+  }
 }

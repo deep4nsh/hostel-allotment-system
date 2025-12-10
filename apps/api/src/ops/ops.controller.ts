@@ -7,7 +7,7 @@ import { Role } from '@prisma/client';
 
 @Controller('ops')
 export class OpsController {
-  constructor(private readonly opsService: OpsService) { }
+  constructor(private readonly opsService: OpsService) {}
 
   @Get('health')
   getHealth() {

@@ -4,8 +4,8 @@ import { RoomSwapController } from './room-swap.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [RoomSwapController],
-    providers: [RoomSwapService],
+  imports: [PrismaModule],
+  controllers: [RoomSwapController],
+  providers: [RoomSwapService],
 })
-export class RoomSwapModule { }
+export class RoomSwapModule {}

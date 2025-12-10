@@ -7,7 +7,7 @@ import { createWorker } from 'tesseract.js';
 
 @Injectable()
 export class DocumentsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async uploadFile(userId: string, file: Express.Multer.File, type: string) {
     const student = await this.prisma.student.findUnique({ where: { userId } });
@@ -30,21 +30,21 @@ export class DocumentsService {
         studentId: student.id,
         kind: type,
         fileUrl: fileUrl,
-      }
+      },
     });
 
     return {
       message: 'File uploaded successfully',
-      document
+      document,
     };
   }
 
   async findAllByStudent(userId: string) {
     return this.prisma.document.findMany({
       where: {
-        student: { userId }
+        student: { userId },
       },
-      orderBy: { uploadedAt: 'desc' }
+      orderBy: { uploadedAt: 'desc' },
     });
   }
 
@@ -57,32 +57,34 @@ export class DocumentsService {
     console.log(`Looking for ADMISSION_LETTER for studentId: ${student.id}`);
     const admissionDoc = await this.prisma.document.findFirst({
       where: { studentId: student.id, kind: 'ADMISSION_LETTER' },
-      orderBy: { uploadedAt: 'desc' }
+      orderBy: { uploadedAt: 'desc' },
     });
 
     if (!admissionDoc) {
       console.error(`Admission Letter not found for studentId: ${student.id}`);
       throw new Error('Admission Letter not found. Please upload it first.');
     }
-    console.log(`Found document: ${admissionDoc.id}, URL: ${admissionDoc.fileUrl}`);
+    console.log(
+      `Found document: ${admissionDoc.id}, URL: ${admissionDoc.fileUrl}`,
+    );
 
     // 2. Resolve File Path
     // fileUrl is like /uploads/filename.ext, we need absolute path
     const fileName = path.basename(admissionDoc.fileUrl);
-    let filePath = path.join(process.cwd(), 'uploads', fileName);
+    const filePath = path.join(process.cwd(), 'uploads', fileName);
 
     if (!fs.existsSync(filePath)) throw new Error('File not found on server');
 
     // 3. Perform OCR
     let text = '';
-    let tempImagePath = null;
+    const tempImagePath = null;
 
     try {
       // Check for PDF
       if (path.extname(filePath).toLowerCase() === '.pdf') {
         console.log('Processing PDF with pdf-parse...');
         const dataBuffer = fs.readFileSync(filePath);
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+
         const pdf = require('pdf-parse');
         const data = await pdf(dataBuffer);
         text = data.text;
@@ -99,8 +101,9 @@ export class DocumentsService {
       console.error('OCR Failed:', error);
       return {
         success: false,
-        message: "OCR failed to process the document. Please ensure it is clear and legible.",
-        data: null
+        message:
+          'OCR failed to process the document. Please ensure it is clear and legible.',
+        data: null,
       };
     } finally {
       // Cleanup temp file
@@ -113,8 +116,12 @@ export class DocumentsService {
     // Heuristic patterns to find data in the text
     const extracted = {
       name: text.match(/Name[:\s]+([A-Za-z\s]+)/i)?.[1]?.trim(),
-      uniqueId: text.match(/(Roll|Application|Registration)\s*No[:\s]+([A-Z0-9]+)/i)?.[2]?.trim(),
-      program: text.match(/(B\.?Tech|B\.?Sc|B\.?Des|M\.?Tech|M\.?Sc|MCA|PhD)/i)?.[0],
+      uniqueId: text
+        .match(/(Roll|Application|Registration)\s*No[:\s]+([A-Z0-9]+)/i)?.[2]
+        ?.trim(),
+      program: text.match(
+        /(B\.?Tech|B\.?Sc|B\.?Des|M\.?Tech|M\.?Sc|MCA|PhD)/i,
+      )?.[0],
       category: text.match(/(Delhi|Outside\s*Delhi)/i)?.[0],
       guardianName: text.match(/Guardian[:\s]+([A-Za-z\s]+)/i)?.[1]?.trim(),
       guardianPhone: text.match(/Phone[:\s]+(\d{10})/i)?.[1]?.trim(),
@@ -136,7 +143,8 @@ export class DocumentsService {
     // Normalize Category
     let categoryEnum = null;
     if (extracted.category) {
-      if (extracted.category.toLowerCase().includes('outside')) categoryEnum = Category.OUTSIDE_DELHI;
+      if (extracted.category.toLowerCase().includes('outside'))
+        categoryEnum = Category.OUTSIDE_DELHI;
       else categoryEnum = Category.DELHI;
     }
 
@@ -150,13 +158,13 @@ export class DocumentsService {
         category: categoryEnum || student.category,
         guardianName: student.guardianName || extracted.guardianName,
         guardianPhone: student.guardianPhone || extracted.guardianPhone,
-      }
+      },
     });
 
     return {
       success: true,
-      message: "OCR processing complete.",
-      data: { ...extracted, textSnippet: text.substring(0, 100) }
+      message: 'OCR processing complete.',
+      data: { ...extracted, textSnippet: text.substring(0, 100) },
     };
   }
 
@@ -166,7 +174,7 @@ export class DocumentsService {
 
     const document = await this.prisma.document.findFirst({
       where: { studentId: student.id, kind: type },
-      orderBy: { uploadedAt: 'desc' }
+      orderBy: { uploadedAt: 'desc' },
     });
 
     if (!document) throw new Error('Document not found');
@@ -180,7 +188,7 @@ export class DocumentsService {
 
     // Delete from database
     await this.prisma.document.delete({
-      where: { id: document.id }
+      where: { id: document.id },
     });
 
     return { message: 'Document deleted successfully' };

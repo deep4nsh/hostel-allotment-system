@@ -1,4 +1,15 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Request, Body, Param, Get, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  UseGuards,
+  Request,
+  Body,
+  Param,
+  Get,
+  Delete,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService } from './documents.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -6,14 +17,24 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('documents')
 @UseGuards(AuthGuard('jwt'))
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) { }
+  constructor(private readonly documentsService: DocumentsService) {}
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Request() req: any,
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { type: 'PHOTO' | 'SIGNATURE' | 'ADMISSION_LETTER' | 'UNDERTAKING' | 'MEDICAL_CERTIFICATE' | 'AADHAR_FRONT' | 'AADHAR_BACK' }
+    @Body()
+    body: {
+      type:
+        | 'PHOTO'
+        | 'SIGNATURE'
+        | 'ADMISSION_LETTER'
+        | 'UNDERTAKING'
+        | 'MEDICAL_CERTIFICATE'
+        | 'AADHAR_FRONT'
+        | 'AADHAR_BACK';
+    },
   ) {
     return this.documentsService.uploadFile(req.user.userId, file, body.type);
   }

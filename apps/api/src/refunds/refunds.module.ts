@@ -4,8 +4,8 @@ import { RefundsController } from './refunds.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [RefundsController],
-    providers: [RefundsService],
+  imports: [PrismaModule],
+  controllers: [RefundsController],
+  providers: [RefundsService],
 })
-export class RefundsModule { }
+export class RefundsModule {}

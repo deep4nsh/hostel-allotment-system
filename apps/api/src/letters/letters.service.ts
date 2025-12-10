@@ -4,38 +4,38 @@ import puppeteer from 'puppeteer';
 
 @Injectable()
 export class LettersService {
-    constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-    async generateAllotmentLetter(userId: string): Promise<Buffer> {
-        const student = await this.prisma.student.findUnique({
-            where: { userId },
-            include: {
-                user: true,
-                allotment: {
-                    include: {
-                        room: {
-                            include: {
-                                floor: {
-                                    include: {
-                                        hostel: true,
-                                    },
-                                },
-                            },
-                        },
-                    },
+  async generateAllotmentLetter(userId: string): Promise<Buffer> {
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      include: {
+        user: true,
+        allotment: {
+          include: {
+            room: {
+              include: {
+                floor: {
+                  include: {
+                    hostel: true,
+                  },
                 },
+              },
             },
-        });
+          },
+        },
+      },
+    });
 
-        if (!student || !student.allotment) {
-            throw new Error('Student not allotted any room');
-        }
+    if (!student || !student.allotment) {
+      throw new Error('Student not allotted any room');
+    }
 
-        const { room } = student.allotment;
-        const { floor } = room;
-        const { hostel } = floor;
+    const { room } = student.allotment;
+    const { floor } = room;
+    const { hostel } = floor;
 
-        const html = `
+    const html = `
       <html>
         <head>
           <style>
@@ -83,12 +83,12 @@ export class LettersService {
       </html>
     `;
 
-        const browser = await puppeteer.launch({ headless: true });
-        const page = await browser.newPage();
-        await page.setContent(html);
-        const pdf = await page.pdf({ format: 'A4' });
-        await browser.close();
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setContent(html);
+    const pdf = await page.pdf({ format: 'A4' });
+    await browser.close();
 
-        return Buffer.from(pdf);
-    }
+    return Buffer.from(pdf);
+  }
 }

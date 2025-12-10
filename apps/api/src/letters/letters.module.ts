@@ -4,8 +4,8 @@ import { LettersController } from './letters.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [LettersController],
-    providers: [LettersService],
+  imports: [PrismaModule],
+  controllers: [LettersController],
+  providers: [LettersService],
 })
-export class LettersModule { }
+export class LettersModule {}

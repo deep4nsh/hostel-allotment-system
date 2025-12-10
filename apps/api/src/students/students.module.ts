@@ -7,9 +7,9 @@ import { PdfService } from './pdf.service';
 import { DistanceService } from '../utils/distance.service';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [StudentsController],
-    providers: [StudentsService, PdfService, DistanceService],
-    exports: [StudentsService, PdfService],
+  imports: [PrismaModule],
+  controllers: [StudentsController],
+  providers: [StudentsService, PdfService, DistanceService],
+  exports: [StudentsService, PdfService],
 })
-export class StudentsModule { }
+export class StudentsModule {}
