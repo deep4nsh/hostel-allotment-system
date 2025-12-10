@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { User } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function AdminStudentSearchPage() {
@@ -100,43 +101,57 @@ export default function AdminStudentSearchPage() {
             </div>
 
             <div className="space-y-4">
-                {results.map((student) => (
-                    <Card key={student.id}>
-                        <CardContent className="flex justify-between items-center p-6">
-                            <div>
-                                <h3 className="font-bold text-lg">{student.name}</h3>
-                                <p className="text-sm text-slate-500">{student.uniqueId} | {student.user?.email}</p>
-                                <p className="text-sm text-slate-600 mt-1">
-                                    Year: <span className="font-medium">{student.year || '-'}</span>
-                                </p>
-                                <p className="text-sm">
-                                    {student.allotment ? (
-                                        <span className="text-green-700 font-medium">
-                                            Allocated: {student.allotment.room?.floor?.hostel?.name} - Room {student.allotment.room?.number}
-                                        </span>
-                                    ) : (
-                                        <span className="text-red-500">Not Allocated</span>
-                                    )}
-                                </p>
-                                <div className="flex gap-2 mt-2">
-                                    {student.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED') && (
-                                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                                            Hostel Paid
-                                        </span>
-                                    )}
-                                    {student.payments?.some((p: any) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED') && (
-                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                                            Mess Paid
-                                        </span>
-                                    )}
+                {results.map((student) => {
+                    const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO');
+                    const photoUrl = photoDoc ? photoDoc.fileUrl : null;
+
+                    return (
+                        <Card key={student.id}>
+                            <CardContent className="flex justify-between items-center p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-16 w-16 rounded-full overflow-hidden border bg-slate-100 flex items-center justify-center shrink-0">
+                                        {photoUrl ? (
+                                            <img src={photoUrl} alt={student.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <User className="h-8 w-8 text-slate-400" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg">{student.name}</h3>
+                                        <p className="text-sm text-slate-500">{student.uniqueId} | {student.user?.email}</p>
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            <span className="text-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                                                Year: {student.year || '-'}
+                                            </span>
+                                            {student.allotment ? (
+                                                <span className="text-green-700 font-medium text-sm bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                                                    {student.allotment.room?.floor?.hostel?.name} - {student.allotment.room?.number}
+                                                </span>
+                                            ) : (
+                                                <span className="text-red-500 text-sm bg-red-50 px-2 py-0.5 rounded border border-red-200">Not Allocated</span>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2 mt-1">
+                                            {student.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED') && (
+                                                <span className="bg-green-100 text-green-800 text-[10px] px-2 py-0.5 rounded-full font-medium uppercase">
+                                                    Hostel Fee Paid
+                                                </span>
+                                            )}
+                                            {student.payments?.some((p: any) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED') && (
+                                                <span className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-medium uppercase">
+                                                    Mess Fee Paid
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <Link href={`/admin/students/${student.userId}`}>
-                                <Button variant="outline">View Profile</Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
-                ))}
+                                <Link href={`/admin/students/${student.userId}`}>
+                                    <Button variant="outline">View Profile</Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    )
+                })}
                 {results.length === 0 && (search || selectedHostel !== 'all' || selectedYear !== 'all') && (
                     <p className="text-slate-500">No students found matching criteria.</p>
                 )}

@@ -268,6 +268,10 @@ export declare class StudentsController {
             possessionDate: Date | null;
             createdAt: Date;
         }) | null;
+        documents: {
+            kind: string;
+            fileUrl: string;
+        }[];
     } & {
         id: string;
         userId: string;

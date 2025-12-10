@@ -282,6 +282,10 @@ export declare class StudentsService {
             possessionDate: Date | null;
             createdAt: Date;
         }) | null;
+        documents: {
+            kind: string;
+            fileUrl: string;
+        }[];
     } & {
         id: string;
         userId: string;

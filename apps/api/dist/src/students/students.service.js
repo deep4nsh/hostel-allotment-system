@@ -266,6 +266,10 @@ let StudentsService = class StudentsService {
                         },
                     },
                 },
+                documents: {
+                    where: { kind: 'PHOTO' },
+                    select: { fileUrl: true, kind: true },
+                },
             },
             take: 50,
         });

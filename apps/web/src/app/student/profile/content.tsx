@@ -5,7 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProfileForm } from "@/components/student/ProfileForm"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, User } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function StudentProfileContent() {
     const [profile, setProfile] = useState<any>(null)
@@ -14,6 +22,7 @@ export default function StudentProfileContent() {
 
     const [allotment, setAllotment] = useState<any>(null)
     const [waitlist, setWaitlist] = useState<any>(null)
+    const [isPossessionDialogOpen, setIsPossessionDialogOpen] = useState(false)
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -24,15 +33,14 @@ export default function StudentProfileContent() {
             }
 
             try {
+                // Fetch Profile (includes documents via findOne)
                 const res = await fetch('/api/students/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token} ` }
                 })
                 if (res.ok) {
                     const data = await res.json()
                     setProfile(data)
-                    if (data.allotment) {
-                        setAllotment(data.allotment)
-                    }
+                    setAllotment(data.allotment)
                 } else {
                     console.error('Failed to fetch profile:', res.status, res.statusText)
                     if (res.status === 401) {
@@ -42,7 +50,7 @@ export default function StudentProfileContent() {
                 }
 
                 const wlRes = await fetch('/api/waitlist/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token} ` }
                 })
                 if (wlRes.ok) {
                     const wlData = await wlRes.json()
@@ -98,53 +106,80 @@ export default function StudentProfileContent() {
 
                             {/* Possession Logic */}
                             {allotment.isPossessed ? (
-                                <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-md text-green-800 text-sm flex items-center">
+                                <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-md text-green-800 text-sm flex items-center font-medium">
                                     <CheckCircle className="w-4 h-4 mr-2" />
                                     Possession confirmed on {new Date(allotment.possessionDate).toLocaleDateString()}
                                 </div>
                             ) : (
                                 profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED') && (
-                                    <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm space-y-3">
-                                        <h3 className="font-semibold text-gray-900">Final Acknowledgment</h3>
-                                        <div className="flex items-start space-x-2">
-                                            <input
-                                                type="checkbox"
-                                                id="possessionCheck"
-                                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                onChange={(e) => {
-                                                    const btn = document.getElementById('confirmPossessionBtn') as HTMLButtonElement;
-                                                    if (btn) btn.disabled = !e.target.checked;
-                                                }}
-                                            />
-                                            <label htmlFor="possessionCheck" className="text-sm text-gray-700">
-                                                I hereby confirm that I have possessed the hostel room allotted to me. This is the final acknowledgment that the hostel is taken.
-                                            </label>
+                                    <>
+                                        <div className="mt-6 p-4 bg-blue-50/50 rounded-lg border border-blue-100 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-1">
+                                                    <h3 className="font-semibold text-gray-900">Room Possession</h3>
+                                                    <p className="text-sm text-gray-500">Please acknowledge possession to finalize your allotment.</p>
+                                                </div>
+                                                <Button onClick={() => setIsPossessionDialogOpen(true)}>
+                                                    Acknowledge Possession
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <Button
-                                            id="confirmPossessionBtn"
-                                            disabled={true}
-                                            onClick={async () => {
-                                                try {
-                                                    const token = localStorage.getItem('token');
-                                                    const res = await fetch('/api/students/me/ack-possession', {
-                                                        method: 'POST',
-                                                        headers: { 'Authorization': `Bearer ${token}` }
-                                                    });
-                                                    if (res.ok) {
-                                                        // Refresh profile
-                                                        window.location.reload();
-                                                    } else {
-                                                        alert('Failed to acknowledge possession');
-                                                    }
-                                                } catch (e) {
-                                                    console.error(e);
-                                                }
-                                            }}
-                                            className="w-full sm:w-auto"
-                                        >
-                                            Confirm Possession
-                                        </Button>
-                                    </div>
+
+                                        <Dialog open={isPossessionDialogOpen} onOpenChange={setIsPossessionDialogOpen}>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Final Possession Acknowledgment</DialogTitle>
+                                                    <DialogDescription>
+                                                        This action confirms that you have physically taken possession of your room.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+
+                                                <div className="py-4">
+                                                    <div className="flex items-start space-x-2 bg-slate-50 p-3 rounded-md border">
+                                                        <input
+                                                            type="checkbox"
+                                                            id="possessionCheckPopup"
+                                                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                            onChange={(e) => {
+                                                                const btn = document.getElementById('confirmPossessionBtnPopup') as HTMLButtonElement;
+                                                                if (btn) btn.disabled = !e.target.checked;
+                                                            }}
+                                                        />
+                                                        <label htmlFor="possessionCheckPopup" className="text-sm text-gray-700 leading-snug">
+                                                            I hereby confirm that I have possessed the hostel room allotted to me. This is the final acknowledgment that the hostel is taken by me.
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <DialogFooter>
+                                                    <Button variant="outline" onClick={() => setIsPossessionDialogOpen(false)}>Cancel</Button>
+                                                    <Button
+                                                        id="confirmPossessionBtnPopup"
+                                                        disabled={true}
+                                                        onClick={async () => {
+                                                            try {
+                                                                const token = localStorage.getItem('token');
+                                                                const res = await fetch('/api/students/me/ack-possession', {
+                                                                    method: 'POST',
+                                                                    headers: { 'Authorization': `Bearer ${token} ` }
+                                                                });
+                                                                if (res.ok) {
+                                                                    window.location.reload();
+                                                                } else {
+                                                                    const err = await res.json();
+                                                                    alert(err.message || 'Failed to acknowledge possession');
+                                                                }
+                                                            } catch (e) {
+                                                                console.error(e);
+                                                            }
+                                                        }}
+                                                    >
+                                                        Confirm Possession
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </>
                                 )
                             )}
 

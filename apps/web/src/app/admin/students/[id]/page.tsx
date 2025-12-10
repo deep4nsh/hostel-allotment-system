@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, CheckCircle, User } from "lucide-react"
 
 export default function AdminStudentProfilePage() {
     const [student, setStudent] = useState<any>(null)
@@ -49,6 +49,9 @@ export default function AdminStudentProfilePage() {
         </div>
     )
 
+    const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO')
+    const photoUrl = photoDoc ? photoDoc.fileUrl : null
+
     return (
         <div className="p-8 space-y-6">
             <Button variant="ghost" onClick={() => router.back()} className="mb-4">
@@ -56,13 +59,34 @@ export default function AdminStudentProfilePage() {
             </Button>
 
             <div className="flex justify-between items-start">
-                <h1 className="text-3xl font-bold">{student.name}</h1>
+                <div className="flex items-center gap-4">
+                    <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center">
+                        {photoUrl ? (
+                            <img src={photoUrl} alt={student.name} className="h-full w-full object-cover" />
+                        ) : (
+                            <User className="h-10 w-10 text-slate-400" />
+                        )}
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold">{student.name}</h1>
+                        <div className="text-sm text-slate-500 mt-1">{student.uniqueId}</div>
+                    </div>
+                </div>
                 <div className="text-right">
                     <span className="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
                         {student.user?.role || 'STUDENT'}
                     </span>
                 </div>
             </div>
+
+            {student.allotment?.isPossessed && (
+                <div className="bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-md flex items-center mb-6">
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    <span className="font-medium">
+                        Possession Confirmed by Student on {new Date(student.allotment.possessionDate).toLocaleDateString()}
+                    </span>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
@@ -189,8 +213,8 @@ export default function AdminStudentProfilePage() {
                                                     <td className="p-4">₹{req.amount}</td>
                                                     <td className="p-4">
                                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${req.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                                req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                                                    req.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                            req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                                                req.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
                                                             }`}>
                                                             {req.status}
                                                         </span>
