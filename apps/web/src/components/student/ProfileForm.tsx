@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getProfile, updateProfile, requestEditAccess, calculateDistance } from "@/lib/api";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
 import { State, City, Country } from 'country-state-city';
 import {
   Dialog,
@@ -72,6 +72,7 @@ const formSchema = z.object({
 export function ProfileForm() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [isFrozen, setIsFrozen] = useState(false);
   const [editReason, setEditReason] = useState("");
@@ -437,7 +438,7 @@ export function ProfileForm() {
                       <Button
                         type="button"
                         variant="secondary"
-                        disabled={isFrozen}
+                        disabled={isFrozen || isCalculatingDistance}
                         onClick={async () => {
                           const address = {
                             addressLine1: form.getValues("addressLine1"),
@@ -450,15 +451,18 @@ export function ProfileForm() {
                             return;
                           }
                           try {
+                            setIsCalculatingDistance(true);
                             const res = await calculateDistance(address);
                             form.setValue("distance", res.distance);
                             alert(`Calculated Distance: ${res.distance} km`);
                           } catch (e) {
                             alert("Failed to calculate distance. Please try again.");
+                          } finally {
+                            setIsCalculatingDistance(false);
                           }
                         }}
                       >
-                        Calculate
+                        {isCalculatingDistance ? <Loader2 className="w-4 h-4 animate-spin" /> : "Calculate"}
                       </Button>
                     )}
                   </div>
