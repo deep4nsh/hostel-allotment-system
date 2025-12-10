@@ -2,6 +2,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DistanceService } from '../utils/distance.service';
@@ -317,6 +318,43 @@ export class StudentsService {
         },
       },
       take: 50,
+    });
+  }
+
+  async acknowledgePossession(userId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      include: {
+        allotment: true,
+        payments: true,
+      },
+    });
+
+    if (!student) throw new NotFoundException('Student not found');
+    if (!student.allotment) throw new BadRequestException('No allotment found');
+
+    if (student.allotment.isPossessed) {
+      return { message: 'Possession already acknowledged' };
+    }
+
+    const hostelFeePaid = student.payments.some(
+      (p) =>
+        p.purpose === 'HOSTEL_FEE' &&
+        (p.status === 'COMPLETED' || p.status === 'PAID' as any), // Cast for flexibility if enum differs slightly in runtime/DTO
+    );
+
+    if (!hostelFeePaid) {
+      throw new BadRequestException(
+        'Hostel fee must be paid before acknowledging possession.',
+      );
+    }
+
+    return this.prisma.allotment.update({
+      where: { id: student.allotment.id },
+      data: {
+        isPossessed: true,
+        possessionDate: new Date(),
+      },
     });
   }
 }

@@ -270,6 +270,34 @@ let StudentsService = class StudentsService {
             take: 50,
         });
     }
+    async acknowledgePossession(userId) {
+        const student = await this.prisma.student.findUnique({
+            where: { userId },
+            include: {
+                allotment: true,
+                payments: true,
+            },
+        });
+        if (!student)
+            throw new common_1.NotFoundException('Student not found');
+        if (!student.allotment)
+            throw new common_1.BadRequestException('No allotment found');
+        if (student.allotment.isPossessed) {
+            return { message: 'Possession already acknowledged' };
+        }
+        const hostelFeePaid = student.payments.some((p) => p.purpose === 'HOSTEL_FEE' &&
+            (p.status === 'COMPLETED' || p.status === 'PAID'));
+        if (!hostelFeePaid) {
+            throw new common_1.BadRequestException('Hostel fee must be paid before acknowledging possession.');
+        }
+        return this.prisma.allotment.update({
+            where: { id: student.allotment.id },
+            data: {
+                isPossessed: true,
+                possessionDate: new Date(),
+            },
+        });
+    }
 };
 exports.StudentsService = StudentsService;
 exports.StudentsService = StudentsService = __decorate([

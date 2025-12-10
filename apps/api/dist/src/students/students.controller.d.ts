@@ -155,6 +155,20 @@ export declare class StudentsController {
         updatedAt: Date;
     }[]>;
     downloadSlip(req: RequestWithUser, res: Response): Promise<void>;
+    acknowledgePossession(req: RequestWithUser): Promise<{
+        id: string;
+        studentId: string;
+        roomId: string;
+        type: string;
+        issueDate: Date;
+        validTill: Date | null;
+        letterUrl: string | null;
+        isPossessed: boolean;
+        possessionDate: Date | null;
+        createdAt: Date;
+    } | {
+        message: string;
+    }>;
     savePreferences(req: RequestWithUser, body: {
         preferences: any[];
     }): Promise<import("@prisma/client").Prisma.BatchPayload>;

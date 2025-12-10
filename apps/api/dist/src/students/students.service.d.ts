@@ -128,8 +128,8 @@ export declare class StudentsService {
     }>;
     getAllPendingEditRequests(): Promise<({
         student: {
-            name: string;
             uniqueId: string | null;
+            name: string;
             program: import("@prisma/client").$Enums.Program | null;
             year: number | null;
         };
@@ -317,4 +317,18 @@ export declare class StudentsService {
         createdAt: Date;
         updatedAt: Date;
     })[]>;
+    acknowledgePossession(userId: string): Promise<{
+        id: string;
+        studentId: string;
+        roomId: string;
+        type: string;
+        issueDate: Date;
+        validTill: Date | null;
+        letterUrl: string | null;
+        isPossessed: boolean;
+        possessionDate: Date | null;
+        createdAt: Date;
+    } | {
+        message: string;
+    }>;
 }

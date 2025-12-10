@@ -65,6 +65,9 @@ let StudentsController = class StudentsController {
             res.status(500).json({ message: 'Failed to generate registration slip' });
         }
     }
+    acknowledgePossession(req) {
+        return this.studentsService.acknowledgePossession(req.user.userId);
+    }
     savePreferences(req, body) {
         return this.studentsService.savePreferences(req.user.userId, body.preferences);
     }
@@ -152,6 +155,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], StudentsController.prototype, "downloadSlip", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Post)('me/ack-possession'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StudentsController.prototype, "acknowledgePossession", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Post)('preferences'),

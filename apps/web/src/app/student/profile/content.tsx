@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProfileForm } from "@/components/student/ProfileForm"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { CheckCircle } from "lucide-react"
 
 export default function StudentProfileContent() {
     const [profile, setProfile] = useState<any>(null)
@@ -84,9 +85,9 @@ export default function StudentProfileContent() {
                                 <div className="text-red-600 text-sm mt-1">Warning: Mess Fee is pending.</div>
                             )}
                         </CardHeader>
-                        <CardContent className="space-y-2">
+                        <CardContent className="space-y-4">
                             <p className="text-lg">You have been allotted a room.</p>
-                            <div className="grid grid-cols-2 gap-4 mt-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <span className="font-semibold">Room:</span> {allotment.room?.number}
                                 </div>
@@ -94,6 +95,58 @@ export default function StudentProfileContent() {
                                     <span className="font-semibold">Floor:</span> {allotment.room?.floor?.number}
                                 </div>
                             </div>
+
+                            {/* Possession Logic */}
+                            {allotment.isPossessed ? (
+                                <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-md text-green-800 text-sm flex items-center">
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Possession confirmed on {new Date(allotment.possessionDate).toLocaleDateString()}
+                                </div>
+                            ) : (
+                                profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED') && (
+                                    <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm space-y-3">
+                                        <h3 className="font-semibold text-gray-900">Final Acknowledgment</h3>
+                                        <div className="flex items-start space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                id="possessionCheck"
+                                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                onChange={(e) => {
+                                                    const btn = document.getElementById('confirmPossessionBtn') as HTMLButtonElement;
+                                                    if (btn) btn.disabled = !e.target.checked;
+                                                }}
+                                            />
+                                            <label htmlFor="possessionCheck" className="text-sm text-gray-700">
+                                                I hereby confirm that I have possessed the hostel room allotted to me. This is the final acknowledgment that the hostel is taken.
+                                            </label>
+                                        </div>
+                                        <Button
+                                            id="confirmPossessionBtn"
+                                            disabled={true}
+                                            onClick={async () => {
+                                                try {
+                                                    const token = localStorage.getItem('token');
+                                                    const res = await fetch('/api/students/me/ack-possession', {
+                                                        method: 'POST',
+                                                        headers: { 'Authorization': `Bearer ${token}` }
+                                                    });
+                                                    if (res.ok) {
+                                                        // Refresh profile
+                                                        window.location.reload();
+                                                    } else {
+                                                        alert('Failed to acknowledge possession');
+                                                    }
+                                                } catch (e) {
+                                                    console.error(e);
+                                                }
+                                            }}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            Confirm Possession
+                                        </Button>
+                                    </div>
+                                )
+                            )}
 
                         </CardContent>
                     </Card>

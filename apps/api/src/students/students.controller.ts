@@ -116,6 +116,12 @@ export class StudentsController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Post('me/ack-possession')
+  acknowledgePossession(@Request() req: RequestWithUser) {
+    return this.studentsService.acknowledgePossession(req.user.userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Post('preferences')
   savePreferences(
     @Request() req: RequestWithUser,
