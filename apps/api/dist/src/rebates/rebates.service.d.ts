@@ -89,6 +89,7 @@ export declare class RebatesService {
             bankAccountType: import(".prisma/client").$Enums.AccountType | null;
             bankHolderName: string | null;
             cgpa: number;
+            distance: number;
             roomTypePreference: string | null;
             floorPreference: string | null;
             isProfileFrozen: boolean;

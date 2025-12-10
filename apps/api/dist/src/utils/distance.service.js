@@ -80,7 +80,7 @@ let DistanceService = class DistanceService {
                     },
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Referer': 'https://nominatim.openstreetmap.org/'
+                        Referer: 'https://nominatim.openstreetmap.org/',
                     },
                     httpAgent: new http.Agent({ family: 6 }),
                     httpsAgent: new https.Agent({ family: 6 }),
@@ -103,7 +103,7 @@ let DistanceService = class DistanceService {
         let result = await tryGeocode(address);
         if (result)
             return result;
-        const parts = address.split(',').map(p => p.trim());
+        const parts = address.split(',').map((p) => p.trim());
         if (parts.length > 3) {
             const fallbackAddress = parts.slice(-4).join(', ');
             result = await tryGeocode(fallbackAddress);

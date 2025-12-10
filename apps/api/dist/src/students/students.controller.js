@@ -62,7 +62,6 @@ let StudentsController = class StudentsController {
             res.end(buffer);
         }
         catch (error) {
-            console.error('Error downloading slip:', error);
             res.status(500).json({ message: 'Failed to generate registration slip' });
         }
     }
@@ -83,7 +82,7 @@ let StudentsController = class StudentsController {
             search,
             hostelId,
             roomNumber,
-            year: year ? parseInt(year) : undefined
+            year: year ? parseInt(year) : undefined,
         });
     }
     async getStudentByUserId(userId) {

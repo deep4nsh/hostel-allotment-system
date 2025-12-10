@@ -1,4 +1,4 @@
-import { Gender, Category } from '@prisma/client';
+import { Gender, Category, Program } from '@prisma/client';
 export declare class UpdateStudentDto {
     uniqueId?: string;
     name?: string;
@@ -11,7 +11,7 @@ export declare class UpdateStudentDto {
     country?: string;
     gender?: Gender;
     category?: Category;
-    program?: string;
+    program?: Program;
     year?: number;
     cgpa?: number;
     distance?: number;

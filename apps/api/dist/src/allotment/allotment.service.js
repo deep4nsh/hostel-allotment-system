@@ -30,8 +30,8 @@ let AllotmentService = class AllotmentService {
                                     allotments: {
                                         where: { isPossessed: true },
                                         include: { student: true },
-                                    }
-                                }
+                                    },
+                                },
                             },
                         },
                     },
@@ -58,10 +58,14 @@ let AllotmentService = class AllotmentService {
                 return true;
             };
             const isRoomTypeAllowed = (room, student, hostelIsAC) => {
-                const level = (0, program_utils_1.getProgramGroup)(student.program) === 'POSTGRAD' ? 'MASTER' : 'BACHELOR';
+                const level = (0, program_utils_1.getProgramGroup)(student.program) === 'POSTGRAD'
+                    ? 'MASTER'
+                    : 'BACHELOR';
                 const bachelors = ['BTECH', 'BSC', 'BDES', 'IMSC'];
                 const masters = ['MTECH', 'MSC', 'MCA', 'MBA', 'MDES'];
-                const studentLevel = masters.includes(student.program) ? 'MASTER' : 'BACHELOR';
+                const studentLevel = masters.includes(student.program)
+                    ? 'MASTER'
+                    : 'BACHELOR';
                 const year = student.year || 1;
                 const capacity = room.capacity;
                 const reqType = student.roomTypePreference;
@@ -86,12 +90,14 @@ let AllotmentService = class AllotmentService {
                 }
                 return true;
             };
-            let eligibleStudents = await this.prisma.student.findMany({
+            const eligibleStudents = await this.prisma.student.findMany({
                 where: {
                     year: targetYear,
                     payments: {
                         some: {
-                            purpose: { in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'] },
+                            purpose: {
+                                in: ['REGISTRATION', 'SEAT_BOOKING', 'ALLOTMENT_REQUEST'],
+                            },
                             status: 'COMPLETED',
                         },
                     },
@@ -101,7 +107,12 @@ let AllotmentService = class AllotmentService {
                     payments: true,
                 },
             });
-            const categoryPriority = { PH: 0, NRI: 1, OUTSIDE_DELHI: 2, DELHI: 3 };
+            const categoryPriority = {
+                PH: 0,
+                NRI: 1,
+                OUTSIDE_DELHI: 2,
+                DELHI: 3,
+            };
             eligibleStudents.sort((a, b) => {
                 if (a.category === 'PH' && b.category !== 'PH')
                     return -1;
@@ -131,16 +142,16 @@ let AllotmentService = class AllotmentService {
                             return distB - distA;
                     }
                 }
-                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
             });
             const allotments = [];
             let waitlistCounter = 1;
             for (const student of eligibleStudents) {
                 const sCategory = student.category;
                 const isInternational = student.country && student.country !== 'India';
-                const effectiveCategory = (sCategory === 'NRI' || isInternational) ? 'NRI' : sCategory;
+                const effectiveCategory = sCategory === 'NRI' || isInternational ? 'NRI' : sCategory;
                 let allottedRoom = null;
-                const studentHostels = allHostels.filter(h => isHostelEligibleForYear(h.name, effectiveCategory));
+                const studentHostels = allHostels.filter((h) => isHostelEligibleForYear(h.name, effectiveCategory));
                 const prefType = student.roomTypePreference;
                 if (prefType) {
                     for (const hostel of studentHostels) {
@@ -211,9 +222,12 @@ let AllotmentService = class AllotmentService {
                     allottedRoom.allotments.push({ student });
                     allotments.push(allotment);
                     try {
-                        await this.prisma.waitlistEntry.delete({ where: { studentId: student.id } });
+                        await this.prisma.waitlistEntry.delete({
+                            where: { studentId: student.id },
+                        });
                     }
-                    catch (e) { }
+                    catch (e) {
+                    }
                 }
                 else {
                     await this.prisma.waitlistEntry.upsert({
@@ -223,7 +237,7 @@ let AllotmentService = class AllotmentService {
                             studentId: student.id,
                             position: waitlistCounter,
                             status: 'ACTIVE',
-                        }
+                        },
                     });
                     waitlistCounter++;
                 }
@@ -251,10 +265,10 @@ let AllotmentService = class AllotmentService {
             },
             include: {
                 student: {
-                    include: { user: true }
+                    include: { user: true },
                 },
                 room: {
-                    include: { floor: true }
+                    include: { floor: true },
                 },
             },
         });

@@ -24,9 +24,15 @@ let WaitlistService = class WaitlistService {
         });
         if (!student)
             throw new Error('Student not found');
-        const requiredDocs = ['ADMISSION_LETTER', 'AADHAR_FRONT', 'AADHAR_BACK', 'PHOTO', 'SIGNATURE'];
-        const uploadedDocs = student.documents.map(d => d.kind);
-        const missingDocs = requiredDocs.filter(d => !uploadedDocs.includes(d));
+        const requiredDocs = [
+            'ADMISSION_LETTER',
+            'AADHAR_FRONT',
+            'AADHAR_BACK',
+            'PHOTO',
+            'SIGNATURE',
+        ];
+        const uploadedDocs = student.documents.map((d) => d.kind);
+        const missingDocs = requiredDocs.filter((d) => !uploadedDocs.includes(d));
         if (missingDocs.length > 0) {
             throw new Error(`Missing mandatory documents: ${missingDocs.join(', ')}`);
         }
@@ -38,17 +44,20 @@ let WaitlistService = class WaitlistService {
         const payment = student.payments.find((p) => p.purpose === 'ALLOTMENT_REQUEST' && p.status === 'COMPLETED');
         if (!payment)
             throw new Error('Payment of ₹1000 not found');
-        const count = await this.prisma.waitlistEntry.count({ where: { status: 'ACTIVE' } });
+        const count = await this.prisma.waitlistEntry.count({
+            where: { status: 'ACTIVE' },
+        });
         return this.prisma.waitlistEntry.create({
             data: {
                 studentId: student.id,
                 position: count + 1,
                 status: 'ACTIVE',
+                priorityDate: payment.createdAt,
             },
         });
     }
     async getPriorityWaitlist() {
-        const entries = await this.prisma.waitlistEntry.findMany({
+        return this.prisma.waitlistEntry.findMany({
             where: { status: 'ACTIVE' },
             include: {
                 student: {
@@ -58,24 +67,19 @@ let WaitlistService = class WaitlistService {
                         uniqueId: true,
                         program: true,
                         year: true,
+                        distance: true,
                         profileMeta: true,
                         payments: {
                             where: { purpose: 'ALLOTMENT_REQUEST', status: 'COMPLETED' },
-                            select: { createdAt: true }
-                        }
-                    }
-                }
-            }
-        });
-        return entries.sort((a, b) => {
-            const distA = a.student.profileMeta?.distance || 0;
-            const distB = b.student.profileMeta?.distance || 0;
-            if (distB !== distA) {
-                return distB - distA;
-            }
-            const timeA = a.student.payments[0]?.createdAt.getTime() || 0;
-            const timeB = b.student.payments[0]?.createdAt.getTime() || 0;
-            return timeA - timeB;
+                            select: { createdAt: true },
+                        },
+                    },
+                },
+            },
+            orderBy: [
+                { student: { distance: 'desc' } },
+                { priorityDate: 'asc' },
+            ],
         });
     }
     async getWaitlistPosition(userId) {
@@ -88,20 +92,20 @@ let WaitlistService = class WaitlistService {
                         room: {
                             include: {
                                 floor: {
-                                    include: { hostel: true }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                    include: { hostel: true },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
         if (!student)
             return { status: 'NOT_REGISTERED' };
         if (student.allotment) {
             return {
                 status: 'ALLOTTED',
-                allotment: student.allotment
+                allotment: student.allotment,
             };
         }
         const entry = await this.prisma.waitlistEntry.findUnique({
@@ -109,7 +113,7 @@ let WaitlistService = class WaitlistService {
         });
         if (entry) {
             const list = await this.getPriorityWaitlist();
-            const position = list.findIndex(e => e.studentId === student.id) + 1;
+            const position = list.findIndex((e) => e.studentId === student.id) + 1;
             return { position, status: entry.status };
         }
         const payment = student.payments.find((p) => p.purpose === 'ALLOTMENT_REQUEST' && p.status === 'COMPLETED');

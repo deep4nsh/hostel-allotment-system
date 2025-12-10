@@ -1,8 +1,16 @@
 import { WaitlistService } from './waitlist.service';
+import { Role } from '@prisma/client';
+interface RequestWithUser extends Request {
+    user: {
+        userId: string;
+        email: string;
+        role: Role;
+    };
+}
 export declare class WaitlistController {
     private readonly waitlistService;
     constructor(waitlistService: WaitlistService);
-    getWaitlistPosition(req: any): Promise<{
+    getWaitlistPosition(req: RequestWithUser): Promise<{
         status: string;
         allotment?: undefined;
         position?: undefined;
@@ -20,7 +28,7 @@ export declare class WaitlistController {
                     id: string;
                     hostelId: string;
                     number: number;
-                    gender: import(".prisma/client").$Enums.Gender;
+                    gender: import("@prisma/client").$Enums.Gender;
                 };
             } & {
                 id: string;
@@ -48,11 +56,12 @@ export declare class WaitlistController {
         status: string;
         allotment?: undefined;
     }>;
-    joinWaitlist(req: any): Promise<{
+    joinWaitlist(req: RequestWithUser): Promise<{
         id: string;
         studentId: string;
         position: number;
         status: string;
+        priorityDate: Date;
         createdAt: Date;
     } | {
         message: string;
@@ -61,6 +70,7 @@ export declare class WaitlistController {
             studentId: string;
             position: number;
             status: string;
+            priorityDate: Date;
             createdAt: Date;
         };
     }>;
@@ -69,9 +79,10 @@ export declare class WaitlistController {
             id: string;
             name: string;
             uniqueId: string | null;
-            program: import(".prisma/client").$Enums.Program | null;
+            program: import("@prisma/client").$Enums.Program | null;
             year: number | null;
-            profileMeta: import(".prisma/client").Prisma.JsonValue;
+            profileMeta: import("@prisma/client").Prisma.JsonValue;
+            distance: number;
             payments: {
                 createdAt: Date;
             }[];
@@ -81,6 +92,8 @@ export declare class WaitlistController {
         studentId: string;
         position: number;
         status: string;
+        priorityDate: Date;
         createdAt: Date;
     })[]>;
 }
+export {};

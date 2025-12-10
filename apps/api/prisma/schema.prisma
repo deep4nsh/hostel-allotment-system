@@ -122,6 +122,7 @@ model Student {
 
   // CGPA & Preferences
   cgpa               Float    @default(0)
+  distance           Float    @default(0) // Optimized for sorting
   roomTypePreference String?  // SINGLE, DOUBLE, DORM
   floorPreference    String?  // GROUND, FIRST, SECOND, TOP, ANY
 
@@ -148,6 +149,10 @@ model Student {
   sentSwapInvites RoomSwapInvite[] @relation("SentSwaps")
   receivedSwapInvites RoomSwapInvite[] @relation("ReceivedSwaps")
   fines           Fine[]
+
+  @@index([distance])
+  @@index([uniqueId])
+  @@index([name])
 }
 
 
@@ -202,7 +207,11 @@ model WaitlistEntry {
   student   Student  @relation(fields: [studentId], references: [id])
   position  Int
   status    String   // ACTIVE, ALLOTTED, EXPIRED
+  priorityDate DateTime @default(now()) // For sorting (usually payment date)
   createdAt DateTime @default(now())
+
+  @@index([status, position])
+  @@index([priorityDate])
 }
 
 model Allotment {

@@ -69,7 +69,7 @@ let PaymentsService = class PaymentsService {
                     userId,
                     name: '',
                     gender: 'OTHER',
-                }
+                },
             });
         }
         let amount = 0;
@@ -87,11 +87,11 @@ let PaymentsService = class PaymentsService {
                         include: {
                             floor: {
                                 include: {
-                                    hostel: true
-                                }
-                            }
-                        }
-                    }
+                                    hostel: true,
+                                },
+                            },
+                        },
+                    },
                 },
             });
             if (!allotment)
@@ -128,21 +128,21 @@ let PaymentsService = class PaymentsService {
                         status: 'PENDING',
                         txnRef: order.id,
                         gateway: 'RAZORPAY',
-                    }
+                    },
                 });
                 if (purpose === 'FINE' && fineId) {
                     await this.prisma.fine.update({
                         where: { id: fineId },
                         data: {
-                            paymentId: payment.id
-                        }
+                            paymentId: payment.id,
+                        },
                     });
                 }
             }
             return order;
         }
         catch (error) {
-            console.error("Razorpay Order Creation Error:", error);
+            console.error('Razorpay Order Creation Error:', error);
             throw new common_1.InternalServerErrorException(`Failed to create Razorpay order: ${error.error?.description || error.message}`);
         }
     }
@@ -153,18 +153,20 @@ let PaymentsService = class PaymentsService {
             .update(body.toString())
             .digest('hex');
         if (expectedSignature === razorpaySignature) {
-            const student = await this.prisma.student.findUnique({ where: { userId } });
+            const student = await this.prisma.student.findUnique({
+                where: { userId },
+            });
             if (!student) {
                 throw new common_1.BadRequestException('Student record not found for user');
             }
             if (purpose === 'HOSTEL_FEE') {
                 await this.prisma.allotment.update({
                     where: { studentId: student.id },
-                    data: { isPossessed: true, possessionDate: new Date() }
+                    data: { isPossessed: true, possessionDate: new Date() },
                 });
             }
             const existingPayment = await this.prisma.payment.findFirst({
-                where: { txnRef: razorpayOrderId, status: 'PENDING' }
+                where: { txnRef: razorpayOrderId, status: 'PENDING' },
             });
             if (existingPayment) {
                 return this.prisma.payment.update({
@@ -172,7 +174,7 @@ let PaymentsService = class PaymentsService {
                     data: {
                         status: client_1.PaymentStatus.COMPLETED,
                         txnRef: razorpayPaymentId,
-                    }
+                    },
                 });
             }
             else {
@@ -190,7 +192,7 @@ let PaymentsService = class PaymentsService {
                     const p = existingPayment || payment;
                     await this.prisma.fine.updateMany({
                         where: { paymentId: p.id },
-                        data: { status: 'PAID' }
+                        data: { status: 'PAID' },
                     });
                 }
                 return payment;
@@ -208,13 +210,13 @@ let PaymentsService = class PaymentsService {
                     userId,
                     name: '',
                     gender: 'OTHER',
-                }
+                },
             });
         }
         if (purpose === 'HOSTEL_FEE') {
             await this.prisma.allotment.update({
                 where: { studentId: student.id },
-                data: { isPossessed: true, possessionDate: new Date() }
+                data: { isPossessed: true, possessionDate: new Date() },
             });
         }
         console.log(`Mock Verify for ${student.id} - ${purpose} - ${amount}`);
@@ -230,12 +232,12 @@ let PaymentsService = class PaymentsService {
         });
         if (purpose === 'FINE') {
             const fine = await this.prisma.fine.findFirst({
-                where: { studentId: student.id, status: 'PENDING', amount: amount }
+                where: { studentId: student.id, status: 'PENDING', amount: amount },
             });
             if (fine) {
                 await this.prisma.fine.update({
                     where: { id: fine.id },
-                    data: { status: 'PAID', paymentId: payment.id }
+                    data: { status: 'PAID', paymentId: payment.id },
                 });
             }
         }
@@ -250,15 +252,15 @@ let PaymentsService = class PaymentsService {
                     select: {
                         name: true,
                         uniqueId: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
         if (!payment) {
             throw new common_1.BadRequestException('Payment not found');
         }
         const student = await this.prisma.student.findUnique({
-            where: { id: payment.studentId }
+            where: { id: payment.studentId },
         });
         if (!student || student.userId !== userId) {
             throw new common_1.BadRequestException('Unauthorized access to payment receipt');

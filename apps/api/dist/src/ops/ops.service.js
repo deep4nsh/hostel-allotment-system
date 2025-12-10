@@ -74,28 +74,30 @@ let OpsService = class OpsService {
     async getAnalytics() {
         const totalStudents = await this.prisma.student.count();
         const allotmentsCount = await this.prisma.allotment.count();
-        const refundRequests = await this.prisma.refundRequest.count({ where: { status: 'PENDING' } });
+        const refundRequests = await this.prisma.refundRequest.count({
+            where: { status: 'PENDING' },
+        });
         const payments = await this.prisma.payment.groupBy({
             by: ['status'],
             _sum: { amount: true },
         });
-        const totalRevenue = payments.find(p => p.status === 'COMPLETED')?._sum.amount || 0;
+        const totalRevenue = payments.find((p) => p.status === 'COMPLETED')?._sum.amount || 0;
         const hostels = await this.prisma.hostel.findMany({
             include: {
                 floors: {
                     include: {
                         rooms: {
-                            select: { capacity: true, occupancy: true }
-                        }
-                    }
-                }
-            }
+                            select: { capacity: true, occupancy: true },
+                        },
+                    },
+                },
+            },
         });
-        const hostelStats = hostels.map(h => {
+        const hostelStats = hostels.map((h) => {
             let capacity = 0;
             let occupancy = 0;
-            h.floors.forEach(f => {
-                f.rooms.forEach(r => {
+            h.floors.forEach((f) => {
+                f.rooms.forEach((r) => {
                     capacity += r.capacity;
                     occupancy += r.occupancy;
                 });
@@ -104,7 +106,7 @@ let OpsService = class OpsService {
                 name: h.name,
                 capacity,
                 occupancy,
-                fillRate: capacity > 0 ? (occupancy / capacity) * 100 : 0
+                fillRate: capacity > 0 ? (occupancy / capacity) * 100 : 0,
             };
         });
         const categoryStats = await this.prisma.student.groupBy({
@@ -114,20 +116,26 @@ let OpsService = class OpsService {
         const yearStats = await this.prisma.student.groupBy({
             by: ['year'],
             _count: { id: true },
-            orderBy: { year: 'asc' }
+            orderBy: { year: 'asc' },
         });
         return {
             overview: {
                 totalStudents,
                 allotmentsCount,
                 totalRevenue,
-                pendingRefunds: refundRequests
+                pendingRefunds: refundRequests,
             },
             hostelStats,
             demographics: {
-                byCategory: categoryStats.map(c => ({ category: c.category, count: c._count.id })),
-                byYear: yearStats.map(y => ({ year: y.year || 'Unknown', count: y._count.id })),
-            }
+                byCategory: categoryStats.map((c) => ({
+                    category: c.category,
+                    count: c._count.id,
+                })),
+                byYear: yearStats.map((y) => ({
+                    year: y.year || 'Unknown',
+                    count: y._count.id,
+                })),
+            },
         };
     }
 };

@@ -20,13 +20,19 @@ let RoomSwapService = class RoomSwapService {
     async createListing(userId) {
         const student = await this.prisma.student.findUnique({
             where: { userId },
-            include: { allotment: { include: { room: { include: { floor: { include: { hostel: true } } } } } } }
+            include: {
+                allotment: {
+                    include: {
+                        room: { include: { floor: { include: { hostel: true } } } },
+                    },
+                },
+            },
         });
         if (!student || !student.allotment || !student.allotment.isPossessed) {
             throw new common_1.BadRequestException('You must have a possessed room allotment to list for swap.');
         }
         const existingListing = await this.prisma.roomSwapRequest.findUnique({
-            where: { studentId: student.id }
+            where: { studentId: student.id },
         });
         if (existingListing) {
             throw new common_1.BadRequestException('You already have an active swap listing.');
@@ -35,8 +41,8 @@ let RoomSwapService = class RoomSwapService {
             data: {
                 studentId: student.id,
                 hostelId: student.allotment.room.floor.hostel.id,
-                status: 'ACTIVE'
-            }
+                status: 'ACTIVE',
+            },
         });
     }
     async removeListing(userId) {
@@ -44,7 +50,7 @@ let RoomSwapService = class RoomSwapService {
         if (!student)
             throw new common_1.NotFoundException('Student not found');
         return this.prisma.roomSwapRequest.delete({
-            where: { studentId: student.id }
+            where: { studentId: student.id },
         });
     }
     async getMyListing(userId) {
@@ -52,13 +58,19 @@ let RoomSwapService = class RoomSwapService {
         if (!student)
             throw new common_1.NotFoundException('Student not found');
         return this.prisma.roomSwapRequest.findUnique({
-            where: { studentId: student.id }
+            where: { studentId: student.id },
         });
     }
     async getListings(userId) {
         const student = await this.prisma.student.findUnique({
             where: { userId },
-            include: { allotment: { include: { room: { include: { floor: { include: { hostel: true } } } } } } }
+            include: {
+                allotment: {
+                    include: {
+                        room: { include: { floor: { include: { hostel: true } } } },
+                    },
+                },
+            },
         });
         if (!student || !student.allotment) {
             throw new common_1.BadRequestException('No allotment found.');
@@ -68,7 +80,7 @@ let RoomSwapService = class RoomSwapService {
             where: {
                 hostelId: hostelId,
                 status: 'ACTIVE',
-                studentId: { not: student.id }
+                studentId: { not: student.id },
             },
             include: {
                 student: {
@@ -79,14 +91,14 @@ let RoomSwapService = class RoomSwapService {
                             include: {
                                 room: {
                                     include: {
-                                        floor: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                        floor: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
     }
     async sendInvite(userId, targetStudentId) {
@@ -97,10 +109,10 @@ let RoomSwapService = class RoomSwapService {
             where: {
                 OR: [
                     { senderId: sender.id, receiverId: targetStudentId },
-                    { senderId: targetStudentId, receiverId: sender.id }
+                    { senderId: targetStudentId, receiverId: sender.id },
                 ],
-                status: 'PENDING'
-            }
+                status: 'PENDING',
+            },
         });
         if (existing) {
             throw new common_1.BadRequestException('A pending invite already exists between you.');
@@ -109,8 +121,8 @@ let RoomSwapService = class RoomSwapService {
             data: {
                 senderId: sender.id,
                 receiverId: targetStudentId,
-                status: 'PENDING'
-            }
+                status: 'PENDING',
+            },
         });
     }
     async getMyInvites(userId) {
@@ -121,17 +133,25 @@ let RoomSwapService = class RoomSwapService {
             where: { senderId: student.id },
             include: {
                 receiver: {
-                    select: { name: true, uniqueId: true, allotment: { include: { room: true } } }
-                }
-            }
+                    select: {
+                        name: true,
+                        uniqueId: true,
+                        allotment: { include: { room: true } },
+                    },
+                },
+            },
         });
         const received = await this.prisma.roomSwapInvite.findMany({
             where: { receiverId: student.id },
             include: {
                 sender: {
-                    select: { name: true, uniqueId: true, allotment: { include: { room: true } } }
-                }
-            }
+                    select: {
+                        name: true,
+                        uniqueId: true,
+                        allotment: { include: { room: true } },
+                    },
+                },
+            },
         });
         return { sent, received };
     }
@@ -140,8 +160,8 @@ let RoomSwapService = class RoomSwapService {
             where: { id: inviteId },
             include: {
                 sender: { include: { allotment: true } },
-                receiver: { include: { allotment: true } }
-            }
+                receiver: { include: { allotment: true } },
+            },
         });
         if (!invite)
             throw new common_1.NotFoundException('Invite not found');
@@ -152,7 +172,7 @@ let RoomSwapService = class RoomSwapService {
         if (status === 'REJECTED') {
             return this.prisma.roomSwapInvite.update({
                 where: { id: inviteId },
-                data: { status: 'REJECTED' }
+                data: { status: 'REJECTED' },
             });
         }
         if (!invite.sender.allotment || !invite.receiver.allotment) {
@@ -165,20 +185,20 @@ let RoomSwapService = class RoomSwapService {
         return this.prisma.$transaction(async (tx) => {
             await tx.roomSwapInvite.update({
                 where: { id: inviteId },
-                data: { status: 'ACCEPTED' }
+                data: { status: 'ACCEPTED' },
             });
             await tx.allotment.update({
                 where: { id: senderAllotmentId },
-                data: { roomId: receiverRoomId }
+                data: { roomId: receiverRoomId },
             });
             await tx.allotment.update({
                 where: { id: receiverAllotmentId },
-                data: { roomId: senderRoomId }
+                data: { roomId: senderRoomId },
             });
             await tx.roomSwapRequest.deleteMany({
                 where: {
-                    studentId: { in: [invite.senderId, invite.receiverId] }
-                }
+                    studentId: { in: [invite.senderId, invite.receiverId] },
+                },
             });
             await tx.roomSwapInvite.updateMany({
                 where: {
@@ -186,11 +206,11 @@ let RoomSwapService = class RoomSwapService {
                         { senderId: invite.senderId, status: 'PENDING' },
                         { receiverId: invite.senderId, status: 'PENDING' },
                         { senderId: invite.receiverId, status: 'PENDING' },
-                        { receiverId: invite.receiverId, status: 'PENDING' }
+                        { receiverId: invite.receiverId, status: 'PENDING' },
                     ],
-                    id: { not: inviteId }
+                    id: { not: inviteId },
                 },
-                data: { status: 'REJECTED' }
+                data: { status: 'REJECTED' },
             });
             return { message: 'Swap successful' };
         });

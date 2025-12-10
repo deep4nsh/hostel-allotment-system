@@ -54,10 +54,12 @@ let RebatesService = class RebatesService {
                 student: {
                     include: {
                         allotment: {
-                            include: { room: { include: { floor: { include: { hostel: true } } } } }
-                        }
-                    }
-                }
+                            include: {
+                                room: { include: { floor: { include: { hostel: true } } } },
+                            },
+                        },
+                    },
+                },
             },
             orderBy: { createdAt: 'asc' },
         });

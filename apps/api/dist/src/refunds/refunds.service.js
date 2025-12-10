@@ -29,11 +29,13 @@ let RefundsService = class RefundsService {
     async createRequest(userId, paymentId, reason) {
         const student = await this.prisma.student.findUnique({
             where: { userId },
-            include: { allotment: true }
+            include: { allotment: true },
         });
         if (!student)
             throw new Error('Student not found');
-        const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
+        const payment = await this.prisma.payment.findUnique({
+            where: { id: paymentId },
+        });
         if (!payment || payment.studentId !== student.id)
             throw new Error('Invalid payment');
         if (payment.purpose === 'ALLOTMENT_REQUEST') {
@@ -76,12 +78,16 @@ let RefundsService = class RefundsService {
                 where: {
                     studentId: student.id,
                     purpose: 'MESS_FEE',
-                    status: 'COMPLETED'
-                }
+                    status: 'COMPLETED',
+                },
             });
             if (messPayment) {
                 const existingReq = await this.prisma.refundRequest.findFirst({
-                    where: { studentId: student.id, feeType: 'MESS_FEE', status: 'PENDING' }
+                    where: {
+                        studentId: student.id,
+                        feeType: 'MESS_FEE',
+                        status: 'PENDING',
+                    },
                 });
                 if (!existingReq) {
                     await this.prisma.refundRequest.create({
@@ -89,8 +95,8 @@ let RefundsService = class RefundsService {
                             studentId: student.id,
                             feeType: 'MESS_FEE',
                             amount: messPayment.amount,
-                            status: 'PENDING'
-                        }
+                            status: 'PENDING',
+                        },
                     });
                     console.log(`Auto-generated Mess Fee refund request for student ${student.id}`);
                 }
@@ -105,7 +111,9 @@ let RefundsService = class RefundsService {
         });
     }
     async processRefund(requestId, decision) {
-        const request = await this.prisma.refundRequest.findUnique({ where: { id: requestId } });
+        const request = await this.prisma.refundRequest.findUnique({
+            where: { id: requestId },
+        });
         if (!request)
             throw new Error('Request not found');
         if (decision === 'REJECTED') {

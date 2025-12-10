@@ -149,6 +149,7 @@ export declare class RequestsService {
             bankAccountType: import(".prisma/client").$Enums.AccountType | null;
             bankHolderName: string | null;
             cgpa: number;
+            distance: number;
             roomTypePreference: string | null;
             floorPreference: string | null;
             isProfileFrozen: boolean;
@@ -220,6 +221,7 @@ export declare class RequestsService {
             bankAccountType: import(".prisma/client").$Enums.AccountType | null;
             bankHolderName: string | null;
             cgpa: number;
+            distance: number;
             roomTypePreference: string | null;
             floorPreference: string | null;
             isProfileFrozen: boolean;

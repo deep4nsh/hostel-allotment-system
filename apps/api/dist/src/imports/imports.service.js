@@ -70,7 +70,9 @@ let ImportsService = class ImportsService {
                     results.errors.push(`Row missing Email or Name: ${JSON.stringify(row)}`);
                     continue;
                 }
-                const existingUser = await this.prisma.user.findUnique({ where: { email: Email } });
+                const existingUser = await this.prisma.user.findUnique({
+                    where: { email: Email },
+                });
                 if (existingUser) {
                     results.failed++;
                     results.errors.push(`User already exists: ${Email}`);
@@ -89,7 +91,11 @@ let ImportsService = class ImportsService {
                         userId: user.id,
                         name: Name,
                         phone: Phone ? String(Phone) : undefined,
-                        gender: Gender ? (Gender.toUpperCase() === 'M' ? 'MALE' : 'FEMALE') : 'OTHER',
+                        gender: Gender
+                            ? Gender.toUpperCase() === 'M'
+                                ? 'MALE'
+                                : 'FEMALE'
+                            : 'OTHER',
                         profileMeta: { rank: Rank },
                     },
                 });

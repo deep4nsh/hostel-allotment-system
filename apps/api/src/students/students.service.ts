@@ -28,6 +28,7 @@ export class StudentsService {
         refundRequests: true,
         fines: true,
         documents: true,
+        // Optimized: Removed deep nested includes that are not always needed for basic profile
         allotment: {
           include: {
             room: {
@@ -46,9 +47,6 @@ export class StudentsService {
 
     if (!student) {
       // Lazy creation for users who don't have a student record
-      console.log(
-        `Student record not found for user ${userId}.Creating default record.`,
-      );
 
       // Verify user exists first
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -100,7 +98,6 @@ export class StudentsService {
   }
 
   async updateProfile(userId: string, data: UpdateStudentDto) {
-    console.log('Updating profile for user:', userId);
     const student = await this.prisma.student.findUnique({ where: { userId } });
     if (!student) throw new NotFoundException('Student not found');
 
@@ -122,6 +119,8 @@ export class StudentsService {
         ...existingMeta,
         distance,
       };
+      // Also save to the optimized column
+      updateData.distance = distance;
     }
 
     const updatedStudent = await this.prisma.student.update({
@@ -162,7 +161,6 @@ export class StudentsService {
   }
 
   async requestEditAccess(userId: string, reason: string) {
-    console.log('Requesting edit access for user:', userId);
     const student = await this.prisma.student.findUnique({ where: { userId } });
     if (!student) throw new NotFoundException('Student not found');
 
@@ -254,7 +252,7 @@ export class StudentsService {
     pincode: string;
   }) {
     const fullAddress = `${addressData.addressLine1}, ${addressData.city}, ${addressData.state}, ${addressData.pincode}, India`;
-    console.log(`Calculating distance for: ${fullAddress}`);
+
 
     const coords = await this.distanceService.geocodeAddress(fullAddress);
     if (!coords) {
@@ -304,8 +302,6 @@ export class StudentsService {
       },
       include: {
         user: { select: { email: true } },
-        payments: true,
-        refundRequests: true,
         allotment: {
           include: {
             room: {

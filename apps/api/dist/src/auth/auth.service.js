@@ -76,10 +76,12 @@ let AuthService = class AuthService {
         };
     }
     async register(registerDto) {
-        if (registerDto.role === 'ADMIN' && registerDto.email !== 'admin@dtu.ac.in') {
+        if (registerDto.role === 'ADMIN' &&
+            registerDto.email !== 'admin@dtu.ac.in') {
             throw new common_1.UnauthorizedException('Invalid email for Admin role');
         }
-        if (registerDto.role === 'WARDEN' && registerDto.email !== 'warden@dtu.ac.in') {
+        if (registerDto.role === 'WARDEN' &&
+            registerDto.email !== 'warden@dtu.ac.in') {
             throw new common_1.UnauthorizedException('Invalid email for Warden role');
         }
         const existingUser = await this.usersService.findByEmail(registerDto.email);
@@ -87,11 +89,13 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException('User already exists');
         }
         try {
-            return await this.usersService.create({
+            return await this.usersService
+                .create({
                 email: registerDto.email,
                 password: registerDto.password,
                 role: registerDto.role || 'STUDENT',
-            }).then(async (user) => {
+            })
+                .then(async (user) => {
                 await this.prisma.student.create({
                     data: {
                         userId: user.id,

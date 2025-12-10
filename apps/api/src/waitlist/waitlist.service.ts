@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WaitlistService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async joinWaitlist(userId: string) {
     const student = await this.prisma.student.findUnique({
@@ -54,13 +54,15 @@ export class WaitlistService {
         studentId: student.id,
         position: count + 1,
         status: 'ACTIVE',
+        priorityDate: payment.createdAt, // Save for efficient sorting
       },
     });
   }
 
   async getPriorityWaitlist() {
     // Fetch all active waitlist entries with student details
-    const entries = await this.prisma.waitlistEntry.findMany({
+    // Optimized: Use database sorting
+    return this.prisma.waitlistEntry.findMany({
       where: { status: 'ACTIVE' },
       include: {
         student: {
@@ -70,31 +72,19 @@ export class WaitlistService {
             uniqueId: true,
             program: true,
             year: true,
-            profileMeta: true, // Contains distance
+            distance: true, // Fetch the optimized column
+            profileMeta: true,
             payments: {
               where: { purpose: 'ALLOTMENT_REQUEST', status: 'COMPLETED' },
-              select: { createdAt: true }, // Payment time for tie-breaking
+              select: { createdAt: true },
             },
           },
         },
       },
-    });
-
-    // Sort by Distance (Desc) then Payment Time (Asc)
-    return entries.sort((a, b) => {
-      const distA =
-        (a.student.profileMeta as Record<string, any>)?.distance || 0;
-      const distB =
-        (b.student.profileMeta as Record<string, any>)?.distance || 0;
-
-      if (distB !== distA) {
-        return distB - distA; // Higher distance first
-      }
-
-      // Tie-breaker: Earlier payment first
-      const timeA = a.student.payments[0]?.createdAt.getTime() || 0;
-      const timeB = b.student.payments[0]?.createdAt.getTime() || 0;
-      return timeA - timeB;
+      orderBy: [
+        { student: { distance: 'desc' } }, // Priority 1: Distance
+        { priorityDate: 'asc' },           // Priority 2: Payment Time
+      ],
     });
   }
 

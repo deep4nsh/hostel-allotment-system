@@ -35,7 +35,7 @@ export class StudentsController {
   constructor(
     private readonly studentsService: StudentsService,
     private readonly pdfService: PdfService,
-  ) {}
+  ) { }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
@@ -110,7 +110,7 @@ export class StudentsController {
 
       res.end(buffer);
     } catch (error) {
-      console.error('Error downloading slip:', error);
+      // Log only in dev or use a logger
       res.status(500).json({ message: 'Failed to generate registration slip' });
     }
   }

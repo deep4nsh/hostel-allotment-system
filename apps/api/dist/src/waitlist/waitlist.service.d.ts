@@ -7,6 +7,7 @@ export declare class WaitlistService {
         studentId: string;
         position: number;
         status: string;
+        priorityDate: Date;
         createdAt: Date;
     } | {
         message: string;
@@ -15,6 +16,7 @@ export declare class WaitlistService {
             studentId: string;
             position: number;
             status: string;
+            priorityDate: Date;
             createdAt: Date;
         };
     }>;
@@ -26,6 +28,7 @@ export declare class WaitlistService {
             program: import(".prisma/client").$Enums.Program | null;
             year: number | null;
             profileMeta: import(".prisma/client").Prisma.JsonValue;
+            distance: number;
             payments: {
                 createdAt: Date;
             }[];
@@ -35,6 +38,7 @@ export declare class WaitlistService {
         studentId: string;
         position: number;
         status: string;
+        priorityDate: Date;
         createdAt: Date;
     })[]>;
     getWaitlistPosition(userId: string): Promise<{

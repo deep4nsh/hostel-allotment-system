@@ -1,5 +1,8 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { DistanceService } from '../utils/distance.service';
+import { Prisma } from '@prisma/client';
+import { CreatePreferenceDto } from './dto/create-preference.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
 export declare class StudentsService {
     private prisma;
     private distanceService;
@@ -7,7 +10,7 @@ export declare class StudentsService {
     findOne(userId: string): Promise<{
         user: {
             email: string;
-            role: import(".prisma/client").$Enums.Role;
+            role: import("@prisma/client").$Enums.Role;
         };
     } & {
         id: string;
@@ -15,10 +18,10 @@ export declare class StudentsService {
         uniqueId: string | null;
         name: string;
         phone: string | null;
-        program: import(".prisma/client").$Enums.Program | null;
+        program: import("@prisma/client").$Enums.Program | null;
         year: number | null;
-        gender: import(".prisma/client").$Enums.Gender;
-        category: import(".prisma/client").$Enums.Category;
+        gender: import("@prisma/client").$Enums.Gender;
+        category: import("@prisma/client").$Enums.Category;
         addressLine1: string | null;
         addressLine2: string | null;
         city: string | null;
@@ -27,32 +30,33 @@ export declare class StudentsService {
         country: string | null;
         homeLat: number | null;
         homeLng: number | null;
-        profileMeta: import(".prisma/client").Prisma.JsonValue | null;
-        foodPreference: import(".prisma/client").$Enums.FoodPreference | null;
+        profileMeta: Prisma.JsonValue | null;
+        foodPreference: import("@prisma/client").$Enums.FoodPreference | null;
         guardianName: string | null;
         guardianPhone: string | null;
         guardianAddress: string | null;
         bankAccountNo: string | null;
         bankIfsc: string | null;
-        bankAccountType: import(".prisma/client").$Enums.AccountType | null;
+        bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    update(userId: string, data: any): Promise<{
+    update(userId: string, data: Prisma.StudentUpdateInput): Promise<{
         id: string;
         userId: string;
         uniqueId: string | null;
         name: string;
         phone: string | null;
-        program: import(".prisma/client").$Enums.Program | null;
+        program: import("@prisma/client").$Enums.Program | null;
         year: number | null;
-        gender: import(".prisma/client").$Enums.Gender;
-        category: import(".prisma/client").$Enums.Category;
+        gender: import("@prisma/client").$Enums.Gender;
+        category: import("@prisma/client").$Enums.Category;
         addressLine1: string | null;
         addressLine2: string | null;
         city: string | null;
@@ -61,33 +65,34 @@ export declare class StudentsService {
         country: string | null;
         homeLat: number | null;
         homeLng: number | null;
-        profileMeta: import(".prisma/client").Prisma.JsonValue | null;
-        foodPreference: import(".prisma/client").$Enums.FoodPreference | null;
+        profileMeta: Prisma.JsonValue | null;
+        foodPreference: import("@prisma/client").$Enums.FoodPreference | null;
         guardianName: string | null;
         guardianPhone: string | null;
         guardianAddress: string | null;
         bankAccountNo: string | null;
         bankIfsc: string | null;
-        bankAccountType: import(".prisma/client").$Enums.AccountType | null;
+        bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    savePreferences(userId: string, preferences: any[]): Promise<import(".prisma/client").Prisma.BatchPayload>;
-    updateProfile(userId: string, data: any): Promise<{
+    savePreferences(userId: string, preferences: CreatePreferenceDto[]): Promise<Prisma.BatchPayload>;
+    updateProfile(userId: string, data: UpdateStudentDto): Promise<{
         id: string;
         userId: string;
         uniqueId: string | null;
         name: string;
         phone: string | null;
-        program: import(".prisma/client").$Enums.Program | null;
+        program: import("@prisma/client").$Enums.Program | null;
         year: number | null;
-        gender: import(".prisma/client").$Enums.Gender;
-        category: import(".prisma/client").$Enums.Category;
+        gender: import("@prisma/client").$Enums.Gender;
+        category: import("@prisma/client").$Enums.Category;
         addressLine1: string | null;
         addressLine2: string | null;
         city: string | null;
@@ -96,16 +101,17 @@ export declare class StudentsService {
         country: string | null;
         homeLat: number | null;
         homeLng: number | null;
-        profileMeta: import(".prisma/client").Prisma.JsonValue | null;
-        foodPreference: import(".prisma/client").$Enums.FoodPreference | null;
+        profileMeta: Prisma.JsonValue | null;
+        foodPreference: import("@prisma/client").$Enums.FoodPreference | null;
         guardianName: string | null;
         guardianPhone: string | null;
         guardianAddress: string | null;
         bankAccountNo: string | null;
         bankIfsc: string | null;
-        bankAccountType: import(".prisma/client").$Enums.AccountType | null;
+        bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
@@ -116,7 +122,7 @@ export declare class StudentsService {
         id: string;
         studentId: string;
         reason: string;
-        status: import(".prisma/client").$Enums.RequestStatus;
+        status: import("@prisma/client").$Enums.RequestStatus;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -124,14 +130,14 @@ export declare class StudentsService {
         student: {
             name: string;
             uniqueId: string | null;
-            program: import(".prisma/client").$Enums.Program | null;
+            program: import("@prisma/client").$Enums.Program | null;
             year: number | null;
         };
     } & {
         id: string;
         studentId: string;
         reason: string;
-        status: import(".prisma/client").$Enums.RequestStatus;
+        status: import("@prisma/client").$Enums.RequestStatus;
         createdAt: Date;
         updatedAt: Date;
     })[]>;
@@ -141,10 +147,10 @@ export declare class StudentsService {
         uniqueId: string | null;
         name: string;
         phone: string | null;
-        program: import(".prisma/client").$Enums.Program | null;
+        program: import("@prisma/client").$Enums.Program | null;
         year: number | null;
-        gender: import(".prisma/client").$Enums.Gender;
-        category: import(".prisma/client").$Enums.Category;
+        gender: import("@prisma/client").$Enums.Gender;
+        category: import("@prisma/client").$Enums.Category;
         addressLine1: string | null;
         addressLine2: string | null;
         city: string | null;
@@ -153,16 +159,17 @@ export declare class StudentsService {
         country: string | null;
         homeLat: number | null;
         homeLng: number | null;
-        profileMeta: import(".prisma/client").Prisma.JsonValue | null;
-        foodPreference: import(".prisma/client").$Enums.FoodPreference | null;
+        profileMeta: Prisma.JsonValue | null;
+        foodPreference: import("@prisma/client").$Enums.FoodPreference | null;
         guardianName: string | null;
         guardianPhone: string | null;
         guardianAddress: string | null;
         bankAccountNo: string | null;
         bankIfsc: string | null;
-        bankAccountType: import(".prisma/client").$Enums.AccountType | null;
+        bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
@@ -173,7 +180,7 @@ export declare class StudentsService {
         id: string;
         studentId: string;
         reason: string;
-        status: import(".prisma/client").$Enums.RequestStatus;
+        status: import("@prisma/client").$Enums.RequestStatus;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -181,7 +188,7 @@ export declare class StudentsService {
         id: string;
         studentId: string;
         reason: string;
-        status: import(".prisma/client").$Enums.RequestStatus;
+        status: import("@prisma/client").$Enums.RequestStatus;
         createdAt: Date;
         updatedAt: Date;
     }[]>;
@@ -191,10 +198,10 @@ export declare class StudentsService {
         uniqueId: string | null;
         name: string;
         phone: string | null;
-        program: import(".prisma/client").$Enums.Program | null;
+        program: import("@prisma/client").$Enums.Program | null;
         year: number | null;
-        gender: import(".prisma/client").$Enums.Gender;
-        category: import(".prisma/client").$Enums.Category;
+        gender: import("@prisma/client").$Enums.Gender;
+        category: import("@prisma/client").$Enums.Category;
         addressLine1: string | null;
         addressLine2: string | null;
         city: string | null;
@@ -203,16 +210,17 @@ export declare class StudentsService {
         country: string | null;
         homeLat: number | null;
         homeLng: number | null;
-        profileMeta: import(".prisma/client").Prisma.JsonValue | null;
-        foodPreference: import(".prisma/client").$Enums.FoodPreference | null;
+        profileMeta: Prisma.JsonValue | null;
+        foodPreference: import("@prisma/client").$Enums.FoodPreference | null;
         guardianName: string | null;
         guardianPhone: string | null;
         guardianAddress: string | null;
         bankAccountNo: string | null;
         bankIfsc: string | null;
-        bankAccountType: import(".prisma/client").$Enums.AccountType | null;
+        bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
@@ -252,7 +260,7 @@ export declare class StudentsService {
                     id: string;
                     hostelId: string;
                     number: number;
-                    gender: import(".prisma/client").$Enums.Gender;
+                    gender: import("@prisma/client").$Enums.Gender;
                 };
             } & {
                 id: string;
@@ -274,34 +282,16 @@ export declare class StudentsService {
             possessionDate: Date | null;
             createdAt: Date;
         }) | null;
-        payments: {
-            id: string;
-            studentId: string;
-            purpose: import(".prisma/client").$Enums.PaymentPurpose;
-            status: import(".prisma/client").$Enums.PaymentStatus;
-            amount: number;
-            txnRef: string | null;
-            gateway: string;
-            createdAt: Date;
-        }[];
-        refundRequests: {
-            id: string;
-            studentId: string;
-            feeType: string;
-            amount: number;
-            status: string;
-            createdAt: Date;
-        }[];
     } & {
         id: string;
         userId: string;
         uniqueId: string | null;
         name: string;
         phone: string | null;
-        program: import(".prisma/client").$Enums.Program | null;
+        program: import("@prisma/client").$Enums.Program | null;
         year: number | null;
-        gender: import(".prisma/client").$Enums.Gender;
-        category: import(".prisma/client").$Enums.Category;
+        gender: import("@prisma/client").$Enums.Gender;
+        category: import("@prisma/client").$Enums.Category;
         addressLine1: string | null;
         addressLine2: string | null;
         city: string | null;
@@ -310,16 +300,17 @@ export declare class StudentsService {
         country: string | null;
         homeLat: number | null;
         homeLng: number | null;
-        profileMeta: import(".prisma/client").Prisma.JsonValue | null;
-        foodPreference: import(".prisma/client").$Enums.FoodPreference | null;
+        profileMeta: Prisma.JsonValue | null;
+        foodPreference: import("@prisma/client").$Enums.FoodPreference | null;
         guardianName: string | null;
         guardianPhone: string | null;
         guardianAddress: string | null;
         bankAccountNo: string | null;
         bankIfsc: string | null;
-        bankAccountType: import(".prisma/client").$Enums.AccountType | null;
+        bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;

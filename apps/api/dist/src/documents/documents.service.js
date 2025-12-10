@@ -71,19 +71,19 @@ let DocumentsService = class DocumentsService {
                 studentId: student.id,
                 kind: type,
                 fileUrl: fileUrl,
-            }
+            },
         });
         return {
             message: 'File uploaded successfully',
-            document
+            document,
         };
     }
     async findAllByStudent(userId) {
         return this.prisma.document.findMany({
             where: {
-                student: { userId }
+                student: { userId },
             },
-            orderBy: { uploadedAt: 'desc' }
+            orderBy: { uploadedAt: 'desc' },
         });
     }
     async processOcr(userId) {
@@ -93,7 +93,7 @@ let DocumentsService = class DocumentsService {
         console.log(`Looking for ADMISSION_LETTER for studentId: ${student.id}`);
         const admissionDoc = await this.prisma.document.findFirst({
             where: { studentId: student.id, kind: 'ADMISSION_LETTER' },
-            orderBy: { uploadedAt: 'desc' }
+            orderBy: { uploadedAt: 'desc' },
         });
         if (!admissionDoc) {
             console.error(`Admission Letter not found for studentId: ${student.id}`);
@@ -101,11 +101,11 @@ let DocumentsService = class DocumentsService {
         }
         console.log(`Found document: ${admissionDoc.id}, URL: ${admissionDoc.fileUrl}`);
         const fileName = path.basename(admissionDoc.fileUrl);
-        let filePath = path.join(process.cwd(), 'uploads', fileName);
+        const filePath = path.join(process.cwd(), 'uploads', fileName);
         if (!fs.existsSync(filePath))
             throw new Error('File not found on server');
         let text = '';
-        let tempImagePath = null;
+        const tempImagePath = null;
         try {
             if (path.extname(filePath).toLowerCase() === '.pdf') {
                 console.log('Processing PDF with pdf-parse...');
@@ -127,8 +127,8 @@ let DocumentsService = class DocumentsService {
             console.error('OCR Failed:', error);
             return {
                 success: false,
-                message: "OCR failed to process the document. Please ensure it is clear and legible.",
-                data: null
+                message: 'OCR failed to process the document. Please ensure it is clear and legible.',
+                data: null,
             };
         }
         finally {
@@ -138,7 +138,9 @@ let DocumentsService = class DocumentsService {
         }
         const extracted = {
             name: text.match(/Name[:\s]+([A-Za-z\s]+)/i)?.[1]?.trim(),
-            uniqueId: text.match(/(Roll|Application|Registration)\s*No[:\s]+([A-Z0-9]+)/i)?.[2]?.trim(),
+            uniqueId: text
+                .match(/(Roll|Application|Registration)\s*No[:\s]+([A-Z0-9]+)/i)?.[2]
+                ?.trim(),
             program: text.match(/(B\.?Tech|B\.?Sc|B\.?Des|M\.?Tech|M\.?Sc|MCA|PhD)/i)?.[0],
             category: text.match(/(Delhi|Outside\s*Delhi)/i)?.[0],
             guardianName: text.match(/Guardian[:\s]+([A-Za-z\s]+)/i)?.[1]?.trim(),
@@ -178,12 +180,12 @@ let DocumentsService = class DocumentsService {
                 category: categoryEnum || student.category,
                 guardianName: student.guardianName || extracted.guardianName,
                 guardianPhone: student.guardianPhone || extracted.guardianPhone,
-            }
+            },
         });
         return {
             success: true,
-            message: "OCR processing complete.",
-            data: { ...extracted, textSnippet: text.substring(0, 100) }
+            message: 'OCR processing complete.',
+            data: { ...extracted, textSnippet: text.substring(0, 100) },
         };
     }
     async deleteDocument(userId, type) {
@@ -192,7 +194,7 @@ let DocumentsService = class DocumentsService {
             throw new Error('Student not found');
         const document = await this.prisma.document.findFirst({
             where: { studentId: student.id, kind: type },
-            orderBy: { uploadedAt: 'desc' }
+            orderBy: { uploadedAt: 'desc' },
         });
         if (!document)
             throw new Error('Document not found');
@@ -202,7 +204,7 @@ let DocumentsService = class DocumentsService {
             fs.unlinkSync(filePath);
         }
         await this.prisma.document.delete({
-            where: { id: document.id }
+            where: { id: document.id },
         });
         return { message: 'Document deleted successfully' };
     }

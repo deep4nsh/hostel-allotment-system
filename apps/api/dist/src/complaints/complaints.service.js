@@ -26,13 +26,13 @@ let ComplaintsService = class ComplaintsService {
                         room: {
                             include: {
                                 floor: {
-                                    include: { hostel: true }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                    include: { hostel: true },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
         if (!student)
             throw new common_1.BadRequestException('Student not found');
@@ -44,31 +44,31 @@ let ComplaintsService = class ComplaintsService {
                 category: data.category,
                 description: data.description,
                 status: 'OPEN',
-            }
+            },
         });
     }
     async findAllByStudent(userId) {
         return this.prisma.maintenanceRequest.findMany({
             where: { student: { userId } },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
     async findAllForWarden(userId) {
         return this.prisma.maintenanceRequest.findMany({
             where: {
-                hostelId: { not: null }
+                hostelId: { not: null },
             },
             include: {
                 student: true,
                 hostel: true,
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
     async updateStatus(id, status) {
         return this.prisma.maintenanceRequest.update({
             where: { id },
-            data: { status }
+            data: { status },
         });
     }
 };

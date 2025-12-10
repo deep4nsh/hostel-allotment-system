@@ -25,7 +25,7 @@ let StudentsService = class StudentsService {
             where: { userId },
             include: {
                 user: {
-                    select: { email: true, role: true }
+                    select: { email: true, role: true },
                 },
                 payments: true,
                 refundRequests: true,
@@ -37,17 +37,16 @@ let StudentsService = class StudentsService {
                             include: {
                                 floor: {
                                     include: {
-                                        hostel: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                        hostel: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
         if (!student) {
-            console.log(`Student record not found for user ${userId}.Creating default record.`);
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (!user)
                 throw new common_1.NotFoundException('User not found');
@@ -59,9 +58,9 @@ let StudentsService = class StudentsService {
                 },
                 include: {
                     user: {
-                        select: { email: true, role: true }
-                    }
-                }
+                        select: { email: true, role: true },
+                    },
+                },
             });
             return newStudent;
         }
@@ -90,7 +89,6 @@ let StudentsService = class StudentsService {
         });
     }
     async updateProfile(userId, data) {
-        console.log('Updating profile for user:', userId);
         const student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student)
             throw new common_1.NotFoundException('Student not found');
@@ -105,30 +103,40 @@ let StudentsService = class StudentsService {
                 ...existingMeta,
                 distance,
             };
+            updateData.distance = distance;
         }
         const updatedStudent = await this.prisma.student.update({
             where: { userId },
             data: updateData,
         });
-        const mandatoryFields = [
-            'name', 'uniqueId', 'phone', 'gender', 'program', 'year', 'category',
-            'addressLine1', 'city', 'state', 'pincode', 'country'
+        const requiredFields = [
+            'name',
+            'uniqueId',
+            'phone',
+            'gender',
+            'program',
+            'year',
+            'category',
+            'addressLine1',
+            'city',
+            'state',
+            'pincode',
+            'country',
         ];
-        const isComplete = mandatoryFields.every(field => {
+        const isComplete = requiredFields.every((field) => {
             const value = updatedStudent[field];
             return value !== null && value !== undefined && value !== '';
         });
         if (isComplete) {
             await this.prisma.student.update({
                 where: { id: student.id },
-                data: { isProfileFrozen: true }
+                data: { isProfileFrozen: true },
             });
             updatedStudent.isProfileFrozen = true;
         }
         return updatedStudent;
     }
     async requestEditAccess(userId, reason) {
-        console.log('Requesting edit access for user:', userId);
         const student = await this.prisma.student.findUnique({ where: { userId } });
         if (!student)
             throw new common_1.NotFoundException('Student not found');
@@ -136,8 +144,8 @@ let StudentsService = class StudentsService {
             data: {
                 studentId: student.id,
                 reason,
-                status: 'PENDING'
-            }
+                status: 'PENDING',
+            },
         });
     }
     async getAllPendingEditRequests() {
@@ -149,33 +157,37 @@ let StudentsService = class StudentsService {
                         name: true,
                         uniqueId: true,
                         program: true,
-                        year: true
-                    }
-                }
+                        year: true,
+                    },
+                },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
     async approveEditRequest(requestId) {
-        const request = await this.prisma.profileEditRequest.findUnique({ where: { id: requestId } });
+        const request = await this.prisma.profileEditRequest.findUnique({
+            where: { id: requestId },
+        });
         if (!request)
             throw new common_1.NotFoundException('Request not found');
         await this.prisma.profileEditRequest.update({
             where: { id: requestId },
-            data: { status: 'APPROVED' }
+            data: { status: 'APPROVED' },
         });
         return this.prisma.student.update({
             where: { id: request.studentId },
-            data: { isProfileFrozen: false }
+            data: { isProfileFrozen: false },
         });
     }
     async rejectEditRequest(requestId) {
-        const request = await this.prisma.profileEditRequest.findUnique({ where: { id: requestId } });
+        const request = await this.prisma.profileEditRequest.findUnique({
+            where: { id: requestId },
+        });
         if (!request)
             throw new common_1.NotFoundException('Request not found');
         return this.prisma.profileEditRequest.update({
             where: { id: requestId },
-            data: { status: 'REJECTED' }
+            data: { status: 'REJECTED' },
         });
     }
     async getEditRequests(userId) {
@@ -184,7 +196,7 @@ let StudentsService = class StudentsService {
             throw new common_1.NotFoundException('Student not found');
         return this.prisma.profileEditRequest.findMany({
             where: { studentId: student.id },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
     async generateUniqueId(userId) {
@@ -203,7 +215,6 @@ let StudentsService = class StudentsService {
     }
     async calculateDistance(addressData) {
         const fullAddress = `${addressData.addressLine1}, ${addressData.city}, ${addressData.state}, ${addressData.pincode}, India`;
-        console.log(`Calculating distance for: ${fullAddress}`);
         const coords = await this.distanceService.geocodeAddress(fullAddress);
         if (!coords) {
             throw new common_1.NotFoundException('Could not geocode address');
@@ -216,43 +227,47 @@ let StudentsService = class StudentsService {
         return this.prisma.student.findMany({
             where: {
                 AND: [
-                    search ? {
-                        OR: [
-                            { name: { contains: search, mode: 'insensitive' } },
-                            { uniqueId: { contains: search, mode: 'insensitive' } },
-                            { user: { email: { contains: search, mode: 'insensitive' } } }
-                        ]
-                    } : {},
-                    year ? { year: year } : {},
-                    hostelId || roomNumber ? {
-                        allotment: {
-                            room: {
-                                ...(roomNumber ? { number: roomNumber } : {}),
-                                ...(hostelId ? { floor: { hostelId } } : {})
-                            }
+                    search
+                        ? {
+                            OR: [
+                                { name: { contains: search, mode: 'insensitive' } },
+                                { uniqueId: { contains: search, mode: 'insensitive' } },
+                                {
+                                    user: { email: { contains: search, mode: 'insensitive' } },
+                                },
+                            ],
                         }
-                    } : {}
-                ]
+                        : {},
+                    year ? { year: year } : {},
+                    hostelId || roomNumber
+                        ? {
+                            allotment: {
+                                room: {
+                                    ...(roomNumber ? { number: roomNumber } : {}),
+                                    ...(hostelId ? { floor: { hostelId } } : {}),
+                                },
+                            },
+                        }
+                        : {},
+                ],
             },
             include: {
                 user: { select: { email: true } },
-                payments: true,
-                refundRequests: true,
                 allotment: {
                     include: {
                         room: {
                             include: {
                                 floor: {
                                     include: {
-                                        hostel: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                                        hostel: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
             },
-            take: 50
+            take: 50,
         });
     }
 };

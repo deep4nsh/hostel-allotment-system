@@ -18,13 +18,17 @@ let RequestsService = class RequestsService {
         this.prisma = prisma;
     }
     async createChangeRequest(studentId, data) {
-        const student = await this.prisma.student.findUnique({ where: { id: studentId } });
+        const student = await this.prisma.student.findUnique({
+            where: { id: studentId },
+        });
         if (!student)
             throw new Error('Student not found');
         if (student.year === 1) {
             throw new Error('First year students are not allowed to request hostel changes.');
         }
-        const allotment = await this.prisma.allotment.findUnique({ where: { studentId } });
+        const allotment = await this.prisma.allotment.findUnique({
+            where: { studentId },
+        });
         if (!allotment)
             throw new Error('No active allotment found');
         return this.prisma.roomChangeRequest.create({
@@ -37,7 +41,9 @@ let RequestsService = class RequestsService {
         });
     }
     async createSurrenderRequest(studentId, data) {
-        const allotment = await this.prisma.allotment.findUnique({ where: { studentId } });
+        const allotment = await this.prisma.allotment.findUnique({
+            where: { studentId },
+        });
         if (!allotment)
             throw new Error('No active allotment found');
         return this.prisma.roomSurrenderRequest.create({
@@ -50,7 +56,9 @@ let RequestsService = class RequestsService {
         });
     }
     async confirmPossession(studentId) {
-        const allotment = await this.prisma.allotment.findUnique({ where: { studentId } });
+        const allotment = await this.prisma.allotment.findUnique({
+            where: { studentId },
+        });
         if (!allotment)
             throw new Error('No active allotment found');
         return this.prisma.allotment.update({
@@ -62,16 +70,31 @@ let RequestsService = class RequestsService {
         });
     }
     async getMyRequests(studentId) {
-        const changeRequests = await this.prisma.roomChangeRequest.findMany({ where: { studentId } });
-        const surrenderRequests = await this.prisma.roomSurrenderRequest.findMany({ where: { studentId } });
-        const swapRequests = await this.prisma.hostelSwapRequest.findMany({ where: { studentId } });
+        const changeRequests = await this.prisma.roomChangeRequest.findMany({
+            where: { studentId },
+        });
+        const surrenderRequests = await this.prisma.roomSurrenderRequest.findMany({
+            where: { studentId },
+        });
+        const swapRequests = await this.prisma.hostelSwapRequest.findMany({
+            where: { studentId },
+        });
         return { changeRequests, surrenderRequests, swapRequests };
     }
     async getAllChangeRequests() {
         return this.prisma.roomChangeRequest.findMany({
             include: {
-                student: { include: { user: true, allotment: { include: { room: { include: { floor: { include: { hostel: true } } } } } } } },
-                preferredHostel: true
+                student: {
+                    include: {
+                        user: true,
+                        allotment: {
+                            include: {
+                                room: { include: { floor: { include: { hostel: true } } } },
+                            },
+                        },
+                    },
+                },
+                preferredHostel: true,
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -94,12 +117,16 @@ let RequestsService = class RequestsService {
             data: { status, adminComment: comment },
         });
         if (status === 'APPROVED') {
-            const allotment = await this.prisma.allotment.findUnique({ where: { id: request.allotmentId } });
+            const allotment = await this.prisma.allotment.findUnique({
+                where: { id: request.allotmentId },
+            });
             if (allotment) {
-                await this.prisma.allotment.delete({ where: { id: request.allotmentId } });
+                await this.prisma.allotment.delete({
+                    where: { id: request.allotmentId },
+                });
                 await this.prisma.room.update({
                     where: { id: allotment.roomId },
-                    data: { occupancy: { decrement: 1 } }
+                    data: { occupancy: { decrement: 1 } },
                 });
             }
         }

@@ -18,7 +18,9 @@ let FinesService = class FinesService {
         this.prisma = prisma;
     }
     async imposeFine(wardenId, data) {
-        const student = await this.prisma.student.findUnique({ where: { id: data.studentId } });
+        const student = await this.prisma.student.findUnique({
+            where: { id: data.studentId },
+        });
         if (!student)
             throw new Error('Student not found');
         return this.prisma.fine.create({
@@ -28,20 +30,20 @@ let FinesService = class FinesService {
                 reason: data.reason,
                 category: data.category,
                 issuedBy: wardenId,
-                status: 'PENDING'
-            }
+                status: 'PENDING',
+            },
         });
     }
     async getFinesByStudent(studentId) {
         return this.prisma.fine.findMany({
             where: { studentId },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
     async getAllFines() {
         return this.prisma.fine.findMany({
             include: { student: { include: { user: true } } },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
 };

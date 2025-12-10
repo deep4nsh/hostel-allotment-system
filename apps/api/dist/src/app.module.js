@@ -58,10 +58,12 @@ exports.AppModule = AppModule = __decorate([
             requests_module_1.RequestsModule,
             room_swap_module_1.RoomSwapModule,
             fines_module_1.FinesModule,
-            throttler_1.ThrottlerModule.forRoot([{
+            throttler_1.ThrottlerModule.forRoot([
+                {
                     ttl: 60000,
                     limit: 100,
-                }]),
+                },
+            ]),
             serve_static_1.ServeStaticModule.forRoot({
                 rootPath: (0, path_1.join)(process.cwd(), 'uploads'),
                 serveRoot: '/uploads',

@@ -69,13 +69,13 @@ let HostelsService = class HostelsService {
                                         student: {
                                             include: {
                                                 user: {
-                                                    select: { email: true }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                                                    select: { email: true },
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
                         },
                     },
                 },

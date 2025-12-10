@@ -17,17 +17,23 @@ let PdfService = class PdfService {
         try {
             const browser = await puppeteer_1.default.launch({
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
             });
             const page = await browser.newPage();
             const photoDoc = student.documents?.find((d) => d.kind === 'PHOTO');
             const signDoc = student.documents?.find((d) => d.kind === 'SIGNATURE');
-            const photoUrl = photoDoc ? `http://localhost:4000${photoDoc.fileUrl}` : null;
-            const signUrl = signDoc ? `http://localhost:4000${signDoc.fileUrl}` : null;
+            const photoUrl = photoDoc
+                ? `http://localhost:4000${photoDoc.fileUrl}`
+                : null;
+            const signUrl = signDoc
+                ? `http://localhost:4000${signDoc.fileUrl}`
+                : null;
             const hostelFeePaid = student.payments?.some((p) => p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED');
             const messFeePaid = student.payments?.some((p) => p.purpose === 'MESS_FEE' && p.status === 'COMPLETED');
             const isFeePaid = hostelFeePaid && messFeePaid;
-            const documentTitle = isFeePaid ? "Hostel Allotment Letter" : "Hostel Allotment Notice";
+            const documentTitle = isFeePaid
+                ? 'Hostel Allotment Letter'
+                : 'Hostel Allotment Notice';
             const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -394,7 +400,7 @@ let PdfService = class PdfService {
         try {
             const browser = await puppeteer_1.default.launch({
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
             });
             const page = await browser.newPage();
             const htmlContent = `

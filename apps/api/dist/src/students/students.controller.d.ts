@@ -1,12 +1,20 @@
 import { StudentsService } from './students.service';
 import { PdfService } from './pdf.service';
+import { Role } from '@prisma/client';
 import type { Response } from 'express';
 import { UpdateStudentDto } from './dto/update-student.dto';
+interface RequestWithUser extends Request {
+    user: {
+        userId: string;
+        email: string;
+        role: Role;
+    };
+}
 export declare class StudentsController {
     private readonly studentsService;
     private readonly pdfService;
     constructor(studentsService: StudentsService, pdfService: PdfService);
-    getProfile(req: any): Promise<{
+    getProfile(req: RequestWithUser): Promise<{
         user: {
             email: string;
             role: import("@prisma/client").$Enums.Role;
@@ -39,13 +47,14 @@ export declare class StudentsController {
         bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    updateProfile(req: any, updateStudentDto: UpdateStudentDto): Promise<{
+    updateProfile(req: RequestWithUser, updateStudentDto: UpdateStudentDto): Promise<{
         id: string;
         userId: string;
         uniqueId: string | null;
@@ -73,13 +82,14 @@ export declare class StudentsController {
         bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    generateId(req: any): Promise<{
+    generateId(req: RequestWithUser): Promise<{
         id: string;
         userId: string;
         uniqueId: string | null;
@@ -107,6 +117,7 @@ export declare class StudentsController {
         bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
@@ -125,7 +136,7 @@ export declare class StudentsController {
             lng: number;
         };
     }>;
-    requestEditAccess(req: any, body: {
+    requestEditAccess(req: RequestWithUser, body: {
         reason: string;
     }): Promise<{
         id: string;
@@ -135,7 +146,7 @@ export declare class StudentsController {
         createdAt: Date;
         updatedAt: Date;
     }>;
-    getEditRequests(req: any): Promise<{
+    getEditRequests(req: RequestWithUser): Promise<{
         id: string;
         studentId: string;
         reason: string;
@@ -143,8 +154,8 @@ export declare class StudentsController {
         createdAt: Date;
         updatedAt: Date;
     }[]>;
-    downloadSlip(req: any, res: Response): Promise<void>;
-    savePreferences(req: any, body: {
+    downloadSlip(req: RequestWithUser, res: Response): Promise<void>;
+    savePreferences(req: RequestWithUser, body: {
         preferences: any[];
     }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     getAllPendingEditRequests(): Promise<({
@@ -190,6 +201,7 @@ export declare class StudentsController {
         bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
@@ -242,24 +254,6 @@ export declare class StudentsController {
             possessionDate: Date | null;
             createdAt: Date;
         }) | null;
-        payments: {
-            id: string;
-            studentId: string;
-            purpose: import("@prisma/client").$Enums.PaymentPurpose;
-            status: import("@prisma/client").$Enums.PaymentStatus;
-            amount: number;
-            txnRef: string | null;
-            gateway: string;
-            createdAt: Date;
-        }[];
-        refundRequests: {
-            id: string;
-            studentId: string;
-            feeType: string;
-            amount: number;
-            status: string;
-            createdAt: Date;
-        }[];
     } & {
         id: string;
         userId: string;
@@ -288,6 +282,7 @@ export declare class StudentsController {
         bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
@@ -327,6 +322,7 @@ export declare class StudentsController {
         bankAccountType: import("@prisma/client").$Enums.AccountType | null;
         bankHolderName: string | null;
         cgpa: number;
+        distance: number;
         roomTypePreference: string | null;
         floorPreference: string | null;
         isProfileFrozen: boolean;
@@ -334,3 +330,4 @@ export declare class StudentsController {
         updatedAt: Date;
     }>;
 }
+export {};
