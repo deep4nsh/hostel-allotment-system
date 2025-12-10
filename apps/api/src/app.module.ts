@@ -26,8 +26,13 @@ import { RequestsModule } from './requests/requests.module';
 import { RoomSwapModule } from './room-swap/room-swap.module';
 import { FinesModule } from './fines/fines.module';
 
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     PrismaModule,
     UsersModule,
     AuthModule,
@@ -67,4 +72,4 @@ import { FinesModule } from './fines/fines.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

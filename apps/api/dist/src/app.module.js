@@ -33,12 +33,16 @@ const complaints_module_1 = require("./complaints/complaints.module");
 const requests_module_1 = require("./requests/requests.module");
 const room_swap_module_1 = require("./room-swap/room-swap.module");
 const fines_module_1 = require("./fines/fines.module");
+const config_1 = require("@nestjs/config");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+            }),
             prisma_module_1.PrismaModule,
             users_module_1.UsersModule,
             auth_module_1.AuthModule,

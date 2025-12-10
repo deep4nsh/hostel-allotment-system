@@ -14,6 +14,7 @@ export default function PreferencesPageContent() {
     const router = useRouter()
 
     const [studentYear, setStudentYear] = useState<number | null>(null)
+    const [isProfileFrozen, setIsProfileFrozen] = useState<boolean>(false)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -24,13 +25,14 @@ export default function PreferencesPageContent() {
             }
 
             try {
-                // Fetch Profile to check Year
+                // Fetch Profile to check Year and Status
                 const profileRes = await fetch('/api/students/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 if (profileRes.ok) {
                     const profile = await profileRes.json()
                     setStudentYear(profile.year)
+                    setIsProfileFrozen(profile.isProfileFrozen)
                 }
 
                 // Fetch Hostels
@@ -83,6 +85,16 @@ export default function PreferencesPageContent() {
 
 
     if (isLoading) return <div className="p-8">Loading...</div>
+
+    if (!isProfileFrozen) {
+        return (
+            <div className="p-8 text-center space-y-4">
+                <h1 className="text-2xl font-bold text-amber-600">Profile Not Submitted</h1>
+                <p className="text-lg">Please complete and submit your profile to access preferences.</p>
+                <Button onClick={() => router.push('/student/profile')}>Go to Profile</Button>
+            </div>
+        )
+    }
 
     if (studentYear === 1) {
         return (
