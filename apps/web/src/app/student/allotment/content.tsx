@@ -14,6 +14,8 @@ export default function AllotmentPageContent() {
     const [documents, setDocuments] = useState<any[]>([])
     const [missingDocs, setMissingDocs] = useState<string[]>([])
 
+    const [isTerminated, setIsTerminated] = useState(false)
+
     useEffect(() => {
         checkStatus()
         checkDocuments()
@@ -34,6 +36,22 @@ export default function AllotmentPageContent() {
 
     const checkStatus = async () => {
         try {
+            // 1. Check Refund/Termination Status via Profile
+            const profile = await import("@/lib/api").then(m => m.getProfile())
+            const hasRefundedHostelFee = profile.payments?.some((p: any) =>
+                p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED'
+            )
+            const hasApprovedRefundRequest = profile.refundRequests?.some((r: any) =>
+                r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED'
+            )
+
+            if (hasRefundedHostelFee || hasApprovedRefundRequest) {
+                setIsTerminated(true)
+                setStatus('NOT_PAID') // Default state effectively, but UI will be blocked by isTerminated
+                return
+            }
+
+            // 2. Check Waitlist/Allotment Status
             const res = await getWaitlistPosition()
             if (res.status === 'ALLOTTED') {
                 setStatus('ALLOTTED')
@@ -214,7 +232,17 @@ export default function AllotmentPageContent() {
                 <p className="text-slate-500">Request a hostel seat by paying the token fee and joining the priority waitlist.</p>
             </div>
 
-            {missingDocs.length > 0 && status !== 'WAITLISTED' && (
+            {isTerminated && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-8 rounded-lg text-center space-y-2">
+                    <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-2" />
+                    <h2 className="text-2xl font-bold">Allotment Terminated</h2>
+                    <p className="text-lg">
+                        Apply for allotment next year. This year's allotment is terminated by you.
+                    </p>
+                </div>
+            )}
+
+            {!isTerminated && missingDocs.length > 0 && status !== 'WAITLISTED' && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
                     <strong className="font-bold">Missing Documents! </strong>
                     <span className="block sm:inline">You must upload the following documents before applying: {missingDocs.join(', ')}</span>
@@ -226,69 +254,71 @@ export default function AllotmentPageContent() {
                 </div>
             )}
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Request Status</CardTitle>
-                    <CardDescription>Current status of your allotment request</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {status === 'WAITLISTED' ? (
-                        <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
-                            <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                                <CheckCircle2 className="h-8 w-8" />
-                            </div>
-                            <div className="space-y-1">
-                                <h3 className="text-2xl font-bold">Request Submitted</h3>
-                                <p className="text-slate-500">You are currently in the waitlist.</p>
-                            </div>
-                            <div className="bg-slate-100 px-6 py-3 rounded-lg">
-                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Current Position</p>
-                                <p className="text-4xl font-bold text-blue-600">#{position}</p>
-                            </div>
-                            <p className="text-sm text-slate-400 max-w-md">
-                                Priority is determined by your distance from DTU. Students living further away get higher priority.
-                            </p>
-                        </div>
-                    ) : status === 'PAID_NOT_JOINED' ? (
-                        <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
-                            <div className="h-16 w-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center">
-                                <AlertCircle className="h-8 w-8" />
-                            </div>
-                            <div className="space-y-1">
-                                <h3 className="text-2xl font-bold">Payment Complete</h3>
-                                <p className="text-slate-500">You have paid the fee but haven't joined the waitlist yet.</p>
-                            </div>
-                            <Button size="lg" onClick={handleJoinOnly} disabled={loading || missingDocs.length > 0}>
-                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Join Waitlist Now
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                                <h4 className="font-semibold text-blue-900 mb-2">Process</h4>
-                                <ol className="list-decimal list-inside space-y-1 text-blue-800 text-sm">
-                                    <li>Pay a refundable token fee of ₹1,000.</li>
-                                    <li>Your request will be added to the priority waitlist.</li>
-                                    <li>Waitlist is sorted based on distance from DTU (Highest distance = Top priority).</li>
-                                    <li>Once allotted, you will be notified to pay the hostel fee.</li>
-                                </ol>
-                            </div>
-
-                            <div className="flex flex-col items-center space-y-4 pt-4">
-                                <div className="text-center">
-                                    <p className="text-sm text-slate-500 mb-1">Token Fee Amount</p>
-                                    <p className="text-3xl font-bold">₹1,000</p>
+            {!isTerminated && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Request Status</CardTitle>
+                        <CardDescription>Current status of your allotment request</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {status === 'WAITLISTED' ? (
+                            <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
+                                <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                                    <CheckCircle2 className="h-8 w-8" />
                                 </div>
-                                <Button size="lg" className="w-full max-w-sm" onClick={handlePaymentAndJoin} disabled={loading || missingDocs.length > 0}>
+                                <div className="space-y-1">
+                                    <h3 className="text-2xl font-bold">Request Submitted</h3>
+                                    <p className="text-slate-500">You are currently in the waitlist.</p>
+                                </div>
+                                <div className="bg-slate-100 px-6 py-3 rounded-lg">
+                                    <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Current Position</p>
+                                    <p className="text-4xl font-bold text-blue-600">#{position}</p>
+                                </div>
+                                <p className="text-sm text-slate-400 max-w-md">
+                                    Priority is determined by your distance from DTU. Students living further away get higher priority.
+                                </p>
+                            </div>
+                        ) : status === 'PAID_NOT_JOINED' ? (
+                            <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
+                                <div className="h-16 w-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center">
+                                    <AlertCircle className="h-8 w-8" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-2xl font-bold">Payment Complete</h3>
+                                    <p className="text-slate-500">You have paid the fee but haven't joined the waitlist yet.</p>
+                                </div>
+                                <Button size="lg" onClick={handleJoinOnly} disabled={loading || missingDocs.length > 0}>
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Pay & Request Allotment
+                                    Join Waitlist Now
                                 </Button>
                             </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                        ) : (
+                            <div className="space-y-6">
+                                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                                    <h4 className="font-semibold text-blue-900 mb-2">Process</h4>
+                                    <ol className="list-decimal list-inside space-y-1 text-blue-800 text-sm">
+                                        <li>Pay a refundable token fee of ₹1,000.</li>
+                                        <li>Your request will be added to the priority waitlist.</li>
+                                        <li>Waitlist is sorted based on distance from DTU (Highest distance = Top priority).</li>
+                                        <li>Once allotted, you will be notified to pay the hostel fee.</li>
+                                    </ol>
+                                </div>
+
+                                <div className="flex flex-col items-center space-y-4 pt-4">
+                                    <div className="text-center">
+                                        <p className="text-sm text-slate-500 mb-1">Token Fee Amount</p>
+                                        <p className="text-3xl font-bold">₹1,000</p>
+                                    </div>
+                                    <Button size="lg" className="w-full max-w-sm" onClick={handlePaymentAndJoin} disabled={loading || missingDocs.length > 0}>
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Pay & Request Allotment
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
         </div>
     )
 }
