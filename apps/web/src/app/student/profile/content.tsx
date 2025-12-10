@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProfileForm } from "@/components/student/ProfileForm"
+import { AllotmentJourney } from "@/components/student/AllotmentJourney"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle, User } from "lucide-react"
@@ -81,6 +82,8 @@ export default function StudentProfileContent() {
                         router.push('/login')
                     }}>Logout</Button>
                 </div>
+
+                <AllotmentJourney profile={profile} waitlist={waitlist} />
 
                 {allotment ? (
                     <Card className="bg-green-50 border-green-200">

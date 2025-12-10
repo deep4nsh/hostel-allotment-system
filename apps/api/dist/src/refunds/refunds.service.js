@@ -113,9 +113,13 @@ let RefundsService = class RefundsService {
     async processRefund(requestId, decision) {
         const request = await this.prisma.refundRequest.findUnique({
             where: { id: requestId },
+            include: { student: { include: { allotment: true } } },
         });
         if (!request)
             throw new Error('Request not found');
+        if (request.status !== 'PENDING') {
+            throw new Error('Request already processed');
+        }
         if (decision === 'REJECTED') {
             return this.prisma.refundRequest.update({
                 where: { id: requestId },
@@ -124,6 +128,32 @@ let RefundsService = class RefundsService {
         }
         try {
             console.log(`[MOCK] Processing refund for ${request.amount} via Razorpay`);
+            const payment = await this.prisma.payment.findFirst({
+                where: {
+                    studentId: request.studentId,
+                    purpose: request.feeType,
+                    status: 'COMPLETED',
+                },
+            });
+            if (payment) {
+                await this.prisma.payment.update({
+                    where: { id: payment.id },
+                    data: { status: 'REFUNDED' },
+                });
+            }
+            if (request.feeType === 'HOSTEL_FEE') {
+                const allotment = request.student.allotment;
+                if (allotment) {
+                    await this.prisma.room.update({
+                        where: { id: allotment.roomId },
+                        data: { occupancy: { decrement: 1 } }
+                    });
+                    await this.prisma.allotment.delete({
+                        where: { id: allotment.id }
+                    });
+                    console.log(`Cancelled allotment for student ${request.studentId}`);
+                }
+            }
             return this.prisma.refundRequest.update({
                 where: { id: requestId },
                 data: { status: 'APPROVED' },
@@ -131,7 +161,7 @@ let RefundsService = class RefundsService {
         }
         catch (error) {
             console.error('Refund failed', error);
-            throw new Error('Refund processing failed');
+            throw new Error('Refund processing failed: ' + error.message);
         }
     }
 };

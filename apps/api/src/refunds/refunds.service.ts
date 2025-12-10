@@ -122,8 +122,13 @@ export class RefundsService {
   async processRefund(requestId: string, decision: 'APPROVED' | 'REJECTED') {
     const request = await this.prisma.refundRequest.findUnique({
       where: { id: requestId },
+      include: { student: { include: { allotment: true } } },
     });
     if (!request) throw new Error('Request not found');
+
+    if (request.status !== 'PENDING') {
+      throw new Error('Request already processed');
+    }
 
     if (decision === 'REJECTED') {
       return this.prisma.refundRequest.update({
@@ -132,13 +137,47 @@ export class RefundsService {
       });
     }
 
-    // If APPROVED, trigger Razorpay Refund
+    // If APPROVED, trigger Razorpay Refund and Side Effects
     try {
-      // In a real scenario, we would need the Razorpay Payment ID (pay_xxx) stored in the Payment record
-      // For now, we mock the success
       console.log(
         `[MOCK] Processing refund for ${request.amount} via Razorpay`,
       );
+
+      // 1. Update Payment Status to REFUNDED
+      // Find the payment associated with this feeType for this student
+      // Ideally we should have linked paymentId in RefundRequest, but we can find it by type/student
+      const payment = await this.prisma.payment.findFirst({
+        where: {
+          studentId: request.studentId,
+          purpose: request.feeType as any,
+          status: 'COMPLETED',
+        },
+      });
+
+      if (payment) {
+        await this.prisma.payment.update({
+          where: { id: payment.id },
+          data: { status: 'REFUNDED' },
+        });
+      }
+
+      // 2. Cancellation Side Effects (Hostel Fee only)
+      if (request.feeType === 'HOSTEL_FEE') {
+        const allotment = request.student.allotment;
+        if (allotment) {
+          // Free the room
+          await this.prisma.room.update({
+            where: { id: allotment.roomId },
+            data: { occupancy: { decrement: 1 } }
+          });
+
+          // Delete Allotment
+          await this.prisma.allotment.delete({
+            where: { id: allotment.id }
+          });
+          console.log(`Cancelled allotment for student ${request.studentId}`);
+        }
+      }
 
       return this.prisma.refundRequest.update({
         where: { id: requestId },
@@ -146,7 +185,7 @@ export class RefundsService {
       });
     } catch (error) {
       console.error('Refund failed', error);
-      throw new Error('Refund processing failed');
+      throw new Error('Refund processing failed: ' + error.message);
     }
   }
 }
