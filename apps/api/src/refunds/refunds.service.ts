@@ -34,12 +34,13 @@ export class RefundsService {
     if (payment.purpose === 'HOSTEL_FEE') {
       const now = new Date();
       const currentYear = now.getFullYear();
-      const deadline = new Date(`${currentYear}-08-14`); // August 14th
+      const deadline = new Date(`${currentYear}-12-31`); // Extended to Dec 31st for testing/late cycle
+      // const deadline = new Date(`${currentYear}-08-14`); // Original: August 14th
 
-      // If strictly after Aug 14, reject
+      // If strictly after Dec 31, reject
       if (now > deadline) {
         throw new Error(
-          'Refund applications for Hostel Fees are closed for this session (Deadline: 14th August).',
+          'Refund applications for Hostel Fees are closed for this session (Deadline: 31st December).',
         );
       }
     }

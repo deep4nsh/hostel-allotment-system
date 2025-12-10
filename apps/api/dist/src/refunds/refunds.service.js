@@ -44,9 +44,9 @@ let RefundsService = class RefundsService {
         if (payment.purpose === 'HOSTEL_FEE') {
             const now = new Date();
             const currentYear = now.getFullYear();
-            const deadline = new Date(`${currentYear}-08-14`);
+            const deadline = new Date(`${currentYear}-12-31`);
             if (now > deadline) {
-                throw new Error('Refund applications for Hostel Fees are closed for this session (Deadline: 14th August).');
+                throw new Error('Refund applications for Hostel Fees are closed for this session (Deadline: 31st December).');
             }
         }
         let refundAmount = payment.amount;
