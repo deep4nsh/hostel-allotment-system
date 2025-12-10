@@ -174,8 +174,8 @@ export declare class StudentsController {
     }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     getAllPendingEditRequests(): Promise<({
         student: {
-            name: string;
             uniqueId: string | null;
+            name: string;
             program: import("@prisma/client").$Enums.Program | null;
             year: number | null;
         };
@@ -268,6 +268,24 @@ export declare class StudentsController {
             possessionDate: Date | null;
             createdAt: Date;
         }) | null;
+        payments: {
+            id: string;
+            studentId: string;
+            purpose: import("@prisma/client").$Enums.PaymentPurpose;
+            status: import("@prisma/client").$Enums.PaymentStatus;
+            amount: number;
+            txnRef: string | null;
+            gateway: string;
+            createdAt: Date;
+        }[];
+        refundRequests: {
+            id: string;
+            studentId: string;
+            feeType: string;
+            amount: number;
+            status: string;
+            createdAt: Date;
+        }[];
         documents: {
             kind: string;
             fileUrl: string;

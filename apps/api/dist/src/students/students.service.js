@@ -270,6 +270,8 @@ let StudentsService = class StudentsService {
                     where: { kind: 'PHOTO' },
                     select: { fileUrl: true, kind: true },
                 },
+                payments: true,
+                refundRequests: true,
             },
             take: 50,
         });
