@@ -85,145 +85,148 @@ export default function StudentProfileContent() {
 
                 <AllotmentJourney profile={profile} waitlist={waitlist} />
 
-                {allotment ? (
-                    <Card className="bg-green-50 border-green-200">
-                        <CardHeader>
-                            <CardTitle className="text-green-700">🎉 Hostel Allotted!</CardTitle>
-                            {!profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
-                                <div className="text-red-600 text-sm mt-1">Warning: Hostel Fee is pending.</div>
-                            )}
-                            {!profile?.payments?.some((p: any) => p.purpose === 'MESS_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
-                                <div className="text-red-600 text-sm mt-1">Warning: Mess Fee is pending.</div>
-                            )}
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <p className="text-lg">You have been allotted a room.</p>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <span className="font-semibold">Room:</span> {allotment.room?.number}
-                                </div>
-                                <div>
-                                    <span className="font-semibold">Floor:</span> {allotment.room?.floor?.number}
-                                </div>
-                            </div>
+                {(() => {
+                    const isTerminated = profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED') ||
+                        profile?.refundRequests?.some((r: any) => r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED')
 
-                            {/* Possession Logic */}
-                            {allotment.isPossessed ? (
-                                <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-md text-green-800 text-sm flex items-center font-medium">
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Possession confirmed on {new Date(allotment.possessionDate).toLocaleDateString()}
-                                </div>
-                            ) : (
-                                profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
-                                    <>
-                                        <div className="mt-6 p-4 bg-blue-50/50 rounded-lg border border-blue-100 space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="space-y-1">
-                                                    <h3 className="font-semibold text-gray-900">Room Possession</h3>
-                                                    <p className="text-sm text-gray-500">Please acknowledge possession to finalize your allotment.</p>
-                                                </div>
-                                                <Button onClick={() => setIsPossessionDialogOpen(true)}>
-                                                    Acknowledge Possession
-                                                </Button>
-                                            </div>
+                    if (isTerminated) {
+                        return (
+                            <Card className="bg-red-50 border-red-200">
+                                <CardHeader>
+                                    <CardTitle className="text-red-700">Allotment Terminated</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-lg text-red-800">Your allotment process has been terminated due to Fee Refund.</p>
+                                    <p className="text-sm text-red-600 mt-2">You cannot re-apply for a hostel seat this year.</p>
+                                </CardContent>
+                            </Card>
+                        )
+                    }
+
+                    if (allotment) {
+                        return (
+                            <Card className="bg-green-50 border-green-200">
+                                <CardHeader>
+                                    <CardTitle className="text-green-700">🎉 Hostel Allotted!</CardTitle>
+                                    {!profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
+                                        <div className="text-red-600 text-sm mt-1">Warning: Hostel Fee is pending.</div>
+                                    )}
+                                    {!profile?.payments?.some((p: any) => p.purpose === 'MESS_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
+                                        <div className="text-red-600 text-sm mt-1">Warning: Mess Fee is pending.</div>
+                                    )}
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <p className="text-lg">You have been allotted a room.</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="font-semibold">Room:</span> {allotment.room?.number}
                                         </div>
+                                        <div>
+                                            <span className="font-semibold">Floor:</span> {allotment.room?.floor?.number}
+                                        </div>
+                                    </div>
 
-                                        <Dialog open={isPossessionDialogOpen} onOpenChange={setIsPossessionDialogOpen}>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Final Possession Acknowledgment</DialogTitle>
-                                                    <DialogDescription>
-                                                        This action confirms that you have physically taken possession of your room.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-
-                                                <div className="py-4">
-                                                    <div className="flex items-start space-x-2 bg-slate-50 p-3 rounded-md border">
-                                                        <input
-                                                            type="checkbox"
-                                                            id="possessionCheckPopup"
-                                                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                            checked={isAcknowledged}
-                                                            onChange={(e) => setIsAcknowledged(e.target.checked)}
-                                                        />
-                                                        <label htmlFor="possessionCheckPopup" className="text-sm text-gray-700 leading-snug">
-                                                            I hereby confirm that I have possessed the hostel room allotted to me. This is the final acknowledgment that the hostel is taken by me.
-                                                        </label>
+                                    {/* Possession Logic */}
+                                    {allotment.isPossessed ? (
+                                        <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-md text-green-800 text-sm flex items-center font-medium">
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Possession confirmed on {new Date(allotment.possessionDate).toLocaleDateString()}
+                                        </div>
+                                    ) : (
+                                        profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')) && (
+                                            <>
+                                                <div className="mt-6 p-4 bg-blue-50/50 rounded-lg border border-blue-100 space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-1">
+                                                            <h3 className="font-semibold text-gray-900">Room Possession</h3>
+                                                            <p className="text-sm text-gray-500">Please acknowledge possession to finalize your allotment.</p>
+                                                        </div>
+                                                        <Button onClick={() => setIsPossessionDialogOpen(true)}>
+                                                            Acknowledge Possession
+                                                        </Button>
                                                     </div>
                                                 </div>
 
-                                                <DialogFooter>
-                                                    <Button variant="outline" onClick={() => setIsPossessionDialogOpen(false)}>Cancel</Button>
-                                                    <Button
-                                                        disabled={!isAcknowledged || isSubmitting}
-                                                        onClick={async () => {
-                                                            setIsSubmitting(true)
-                                                            try {
-                                                                const token = localStorage.getItem('token');
-                                                                const res = await fetch('/api/students/me/ack-possession', {
-                                                                    method: 'POST',
-                                                                    headers: { 'Authorization': `Bearer ${token}` }
-                                                                });
-                                                                if (res.ok) {
-                                                                    window.location.reload();
-                                                                } else {
-                                                                    const err = await res.json();
-                                                                    alert(err.message || 'Failed to acknowledge possession');
-                                                                }
-                                                            } catch (e) {
-                                                                console.error(e);
-                                                                alert('An error occurred. Please try again.');
-                                                            } finally {
-                                                                setIsSubmitting(false)
-                                                            }
-                                                        }}
-                                                    >
-                                                        {isSubmitting ? 'Confirming...' : 'Confirm Possession'}
-                                                    </Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </>
-                                )
-                            )}
+                                                <Dialog open={isPossessionDialogOpen} onOpenChange={setIsPossessionDialogOpen}>
+                                                    <DialogContent>
+                                                        <DialogHeader>
+                                                            <DialogTitle>Final Possession Acknowledgment</DialogTitle>
+                                                            <DialogDescription>
+                                                                This action confirms that you have physically taken possession of your room.
+                                                            </DialogDescription>
+                                                        </DialogHeader>
 
-                        </CardContent>
-                    </Card>
-                ) : (
-                    (() => {
-                        const isTerminated = profile?.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED') ||
-                            profile?.refundRequests?.some((r: any) => r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED')
+                                                        <div className="py-4">
+                                                            <div className="flex items-start space-x-2 bg-slate-50 p-3 rounded-md border">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id="possessionCheckPopup"
+                                                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                                    checked={isAcknowledged}
+                                                                    onChange={(e) => setIsAcknowledged(e.target.checked)}
+                                                                />
+                                                                <label htmlFor="possessionCheckPopup" className="text-sm text-gray-700 leading-snug">
+                                                                    I hereby confirm that I have possessed the hostel room allotted to me. This is the final acknowledgment that the hostel is taken by me.
+                                                                </label>
+                                                            </div>
+                                                        </div>
 
-                        if (isTerminated) {
-                            return (
-                                <Card className="bg-red-50 border-red-200">
-                                    <CardHeader>
-                                        <CardTitle className="text-red-700">Allotment Terminated</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-lg text-red-800">Your allotment process has been terminated due to Fee Refund.</p>
-                                        <p className="text-sm text-red-600 mt-2">You cannot re-apply for a hostel seat this year.</p>
-                                    </CardContent>
-                                </Card>
-                            )
-                        }
+                                                        <DialogFooter>
+                                                            <Button variant="outline" onClick={() => setIsPossessionDialogOpen(false)}>Cancel</Button>
+                                                            <Button
+                                                                disabled={!isAcknowledged || isSubmitting}
+                                                                onClick={async () => {
+                                                                    setIsSubmitting(true)
+                                                                    try {
+                                                                        const token = localStorage.getItem('token');
+                                                                        const res = await fetch('/api/students/me/ack-possession', {
+                                                                            method: 'POST',
+                                                                            headers: { 'Authorization': `Bearer ${token}` }
+                                                                        });
+                                                                        if (res.ok) {
+                                                                            window.location.reload();
+                                                                        } else {
+                                                                            const err = await res.json();
+                                                                            alert(err.message || 'Failed to acknowledge possession');
+                                                                        }
+                                                                    } catch (e) {
+                                                                        console.error(e);
+                                                                        alert('An error occurred. Please try again.');
+                                                                    } finally {
+                                                                        setIsSubmitting(false)
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {isSubmitting ? 'Confirming...' : 'Confirm Possession'}
+                                                            </Button>
+                                                        </DialogFooter>
+                                                    </DialogContent>
+                                                </Dialog>
+                                            </>
+                                        )
+                                    )}
 
-                        if (waitlist && waitlist.position) {
-                            return (
-                                <Card className="bg-blue-50 border-blue-200">
-                                    <CardHeader>
-                                        <CardTitle className="text-blue-700">Waitlist Status</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-lg">Your current waitlist position: <span className="font-bold text-2xl">{waitlist.position}</span></p>
-                                        <p className="text-sm text-blue-600">Status: {waitlist.status}</p>
-                                    </CardContent>
-                                </Card>
-                            )
-                        }
-                        return null
-                    })()
-                )}
+                                </CardContent>
+                            </Card>
+                        )
+                    }
+
+                    if (waitlist && waitlist.position) {
+                        return (
+                            <Card className="bg-blue-50 border-blue-200">
+                                <CardHeader>
+                                    <CardTitle className="text-blue-700">Waitlist Status</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-lg">Your current waitlist position: <span className="font-bold text-2xl">{waitlist.position}</span></p>
+                                    <p className="text-sm text-blue-600">Status: {waitlist.status}</p>
+                                </CardContent>
+                            </Card>
+                        )
+                    }
+
+                    return null
+                })()}
 
                 <Card>
                     <CardHeader>

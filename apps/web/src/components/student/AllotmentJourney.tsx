@@ -124,7 +124,14 @@ export function AllotmentJourney({ profile, waitlist }: AllotmentJourneyProps) {
                             else if (step.isCurrent) state = 'current'
 
                             // If terminated, override current state visual
-                            const isStepTerminated = isTerminated && state === 'current'
+                            // Also override "Completed" state for Fees and Possession (ids 5, 6) or Allotment (id 4)
+                            // to show they are effectively voided/terminated
+                            let isStepTerminated = isTerminated && state === 'current'
+
+                            if (isTerminated && state === 'completed' && (step.id === 4 || step.id === 5 || step.id === 6)) {
+                                state = 'terminated_completed' // Special internal state
+                                isStepTerminated = true
+                            }
 
                             return (
                                 <div key={step.id} className="relative flex gap-4">
