@@ -52,6 +52,10 @@ export default function AdminStudentProfilePage() {
     const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO')
     const photoUrl = photoDoc ? photoDoc.fileUrl : null
 
+    // Check termination status
+    const isTerminated = student.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED') ||
+        student.refundRequests?.some((r: any) => r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED');
+
     return (
         <div className="p-8 space-y-6">
             <Button variant="ghost" onClick={() => router.back()} className="mb-4">
@@ -60,16 +64,22 @@ export default function AdminStudentProfilePage() {
 
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
-                    <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center">
+                    <div className={`h-20 w-20 rounded-full overflow-hidden border-2 flex items-center justify-center ${isTerminated ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-100'
+                        }`}>
                         {photoUrl ? (
                             <img src={photoUrl} alt={student.name} className="h-full w-full object-cover" />
                         ) : (
-                            <User className="h-10 w-10 text-slate-400" />
+                            <User className={`h-10 w-10 ${isTerminated ? 'text-red-400' : 'text-slate-400'}`} />
                         )}
                     </div>
                     <div>
                         <h1 className="text-3xl font-bold">{student.name}</h1>
                         <div className="text-sm text-slate-500 mt-1">{student.uniqueId}</div>
+                        {isTerminated && (
+                            <span className="inline-block bg-red-100 text-red-800 text-xs font-bold px-2 py-0.5 rounded mt-2">
+                                TERMINATED
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className="text-right">
@@ -119,12 +129,21 @@ export default function AdminStudentProfilePage() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className={isTerminated ? "border-red-200 bg-red-50" : ""}>
                     <CardHeader>
-                        <CardTitle>Allotment Status</CardTitle>
+                        <CardTitle className={isTerminated ? "text-red-700" : ""}>
+                            {isTerminated ? "Termination Status" : "Allotment Status"}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {student.allotment ? (
+                        {isTerminated ? (
+                            <div className="p-4 bg-white border border-red-200 rounded-md text-red-700">
+                                <h4 className="font-bold text-lg mb-1">Allotment Terminated</h4>
+                                <p className="text-sm">
+                                    Student has been refunded the Hostel Fee. Allotment is permanently cancelled.
+                                </p>
+                            </div>
+                        ) : student.allotment ? (
                             <div className="grid grid-cols-2 gap-4">
                                 {renderField("Hostel", student.allotment.room?.floor?.hostel?.name)}
                                 {renderField("Room", student.allotment.room?.number)}

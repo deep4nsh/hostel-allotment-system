@@ -105,15 +105,19 @@ export default function AdminStudentSearchPage() {
                     const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO');
                     const photoUrl = photoDoc ? photoDoc.fileUrl : null;
 
+                    const isTerminated = student.payments?.some((p: any) => p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED') ||
+                        student.refundRequests?.some((r: any) => r.feeType === 'HOSTEL_FEE' && r.status === 'APPROVED');
+
                     return (
                         <Card key={student.id}>
                             <CardContent className="flex justify-between items-center p-6">
                                 <div className="flex items-center gap-4">
-                                    <div className="h-16 w-16 rounded-full overflow-hidden border bg-slate-100 flex items-center justify-center shrink-0">
+                                    <div className={`h-16 w-16 rounded-full overflow-hidden border flex items-center justify-center shrink-0 ${isTerminated ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-100'
+                                        }`}>
                                         {photoUrl ? (
                                             <img src={photoUrl} alt={student.name} className="h-full w-full object-cover" />
                                         ) : (
-                                            <User className="h-8 w-8 text-slate-400" />
+                                            <User className={`h-8 w-8 ${isTerminated ? 'text-red-400' : 'text-slate-400'}`} />
                                         )}
                                     </div>
                                     <div>
@@ -123,7 +127,11 @@ export default function AdminStudentSearchPage() {
                                             <span className="text-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
                                                 Year: {student.year || '-'}
                                             </span>
-                                            {student.allotment ? (
+                                            {isTerminated ? (
+                                                <span className="text-red-700 font-bold text-sm bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                                                    TERMINATED
+                                                </span>
+                                            ) : student.allotment ? (
                                                 <span className="text-green-700 font-medium text-sm bg-green-50 px-2 py-0.5 rounded border border-green-200">
                                                     {student.allotment.room?.floor?.hostel?.name} - {student.allotment.room?.number}
                                                 </span>
