@@ -415,3 +415,18 @@ export async function mockVerifyPayment(purpose: string, amount: number) {
   if (!response.ok) throw new Error('Mock payment failed');
   return response.json();
 }
+
+export async function acknowledgePossession() {
+  const response = await fetch(`${API_URL}/students/me/ack-possession`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to acknowledge possession');
+  }
+  return response.json();
+}

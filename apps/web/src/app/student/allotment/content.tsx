@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { createPaymentOrder, mockVerifyPayment, joinWaitlist, getWaitlistPosition } from "@/lib/api"
+import { createPaymentOrder, mockVerifyPayment, joinWaitlist, getWaitlistPosition, getProfile, getMyDocuments, acknowledgePossession } from "@/lib/api"
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 
 export default function AllotmentPageContent() {
@@ -15,6 +15,7 @@ export default function AllotmentPageContent() {
     const [missingDocs, setMissingDocs] = useState<string[]>([])
 
     const [isTerminated, setIsTerminated] = useState(false)
+    const [isHostelFeePaid, setIsHostelFeePaid] = useState(false) // State moved here
 
     useEffect(() => {
         checkStatus()
@@ -23,7 +24,7 @@ export default function AllotmentPageContent() {
 
     const checkDocuments = async () => {
         try {
-            const docs = await import("@/lib/api").then(m => m.getMyDocuments())
+            const docs = await getMyDocuments()
             setDocuments(docs)
             const required = ['ADMISSION_LETTER', 'AADHAR_FRONT', 'AADHAR_BACK', 'PHOTO', 'SIGNATURE']
             const uploaded = docs.map((d: any) => d.kind)
@@ -37,7 +38,14 @@ export default function AllotmentPageContent() {
     const checkStatus = async () => {
         try {
             // 1. Check Refund/Termination Status via Profile
-            const profile = await import("@/lib/api").then(m => m.getProfile())
+            const profile = await getProfile()
+
+            // Check Payment Status
+            const paid = profile.payments?.some((p: any) =>
+                p.purpose === 'HOSTEL_FEE' && p.status === 'COMPLETED'
+            )
+            setIsHostelFeePaid(!!paid)
+
             const hasRefundedHostelFee = profile.payments?.some((p: any) =>
                 p.purpose === 'HOSTEL_FEE' && p.status === 'REFUNDED'
             )
@@ -47,7 +55,7 @@ export default function AllotmentPageContent() {
 
             if (hasRefundedHostelFee || hasApprovedRefundRequest) {
                 setIsTerminated(true)
-                setStatus('NOT_PAID') // Default state effectively, but UI will be blocked by isTerminated
+                setStatus('NOT_PAID')
                 return
             }
 
@@ -75,11 +83,34 @@ export default function AllotmentPageContent() {
         try {
             // Mock Hostel Fee Payment (e.g. 50k)
             await mockVerifyPayment('HOSTEL_FEE', 50000)
+
+            // Auto-confirm possession if payment succeeds
+            try {
+                await acknowledgePossession()
+                alert('Hostel Fee Paid & Possession Confirmed!')
+            } catch (ackError) {
+                console.error("Auto-possession failed", ackError)
+                alert('Payment Successful! Please click "Confirm Possession" to finalize.')
+            }
+
             await checkStatus() // Reload to see confirmed status
-            alert('Hostel Fee Paid Successfully! Allotment Confirmed.')
         } catch (e: any) {
             console.error(e)
             alert(e.message || 'Payment failed')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleConfirmPossession = async () => {
+        setLoading(true)
+        try {
+            await acknowledgePossession()
+            await checkStatus()
+            alert('Possession Confirmed!')
+        } catch (e: any) {
+            console.error(e)
+            alert(e.message || 'Confirmation failed')
         } finally {
             setLoading(false)
         }
@@ -186,7 +217,7 @@ export default function AllotmentPageContent() {
                             </div>
                         </div>
 
-                        {!isPossessed && !isExpired && (
+                        {!isPossessed && !isExpired && !isHostelFeePaid && (
                             <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg flex items-start space-x-3">
                                 <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
                                 <div>
@@ -201,10 +232,17 @@ export default function AllotmentPageContent() {
 
                         {!isPossessed && !isExpired && (
                             <div className="pt-4">
-                                <Button size="lg" className="w-full" onClick={handleHostelFeePayment} disabled={loading}>
-                                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Pay Hostel Fee & Confirm
-                                </Button>
+                                {isHostelFeePaid ? (
+                                    <Button size="lg" className="w-full bg-green-600 hover:bg-green-700" onClick={handleConfirmPossession} disabled={loading}>
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                                        Confirm Possession
+                                    </Button>
+                                ) : (
+                                    <Button size="lg" className="w-full" onClick={handleHostelFeePayment} disabled={loading}>
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Pay Hostel Fee & Confirm
+                                    </Button>
+                                )}
                             </div>
                         )}
 
