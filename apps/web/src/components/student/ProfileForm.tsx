@@ -113,6 +113,13 @@ export function ProfileForm() {
   const selectedState = form.watch("state");
   const currentCategory = form.watch("category");
 
+  // Watch address fields for calculation button
+  const addressLine1 = form.watch("addressLine1");
+  const city = form.watch("city");
+  const pincode = form.watch("pincode");
+
+  const isAddressComplete = addressLine1 && city && selectedState && pincode;
+
   // Fetch states based on countryCode
   const states = State.getStatesOfCountry(countryCode);
 
@@ -438,7 +445,7 @@ export function ProfileForm() {
                       <Button
                         type="button"
                         variant="secondary"
-                        disabled={isFrozen || isCalculatingDistance}
+                        disabled={isFrozen || isCalculatingDistance || !isAddressComplete}
                         onClick={async () => {
                           const address = {
                             addressLine1: form.getValues("addressLine1"),
@@ -446,8 +453,8 @@ export function ProfileForm() {
                             state: form.getValues("state"),
                             pincode: form.getValues("pincode"),
                           };
+                          // Double check, though button should be disabled
                           if (!address.addressLine1 || !address.city || !address.state || !address.pincode) {
-                            alert("Please fill in all address fields first.");
                             return;
                           }
                           try {
@@ -462,7 +469,7 @@ export function ProfileForm() {
                           }
                         }}
                       >
-                        {isCalculatingDistance ? <Loader2 className="w-4 h-4 animate-spin" /> : "Calculate"}
+                        {isCalculatingDistance ? <Loader2 className="w-4 h-4 animate-spin" /> : (!isAddressComplete ? "Enter Address" : "Calculate")}
                       </Button>
                     )}
                   </div>
