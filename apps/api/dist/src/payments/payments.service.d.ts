@@ -27,8 +27,8 @@ export declare class PaymentsService {
     }>;
     getPaymentForReceipt(paymentId: string, userId: string): Promise<{
         student: {
-            uniqueId: string | null;
             name: string;
+            uniqueId: string | null;
         };
     } & {
         id: string;
