@@ -8,7 +8,7 @@ import { getProgramGroup } from '../utils/program.utils';
 
 @Injectable()
 export class AllotmentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async runAllotment(targetYear: number) {
     try {
