@@ -13,6 +13,7 @@ export default function DocumentsPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [isFeePaid, setIsFeePaid] = useState(false);
+  const [hasAllotment, setHasAllotment] = useState(false);
   const router = useRouter();
 
   // State for file inputs
@@ -28,15 +29,45 @@ export default function DocumentsPageContent() {
   async function checkFeeStatus() {
     try {
       const profile = await getProfile();
-      if (profile && profile.payments) {
-        // Check for HOSTEL_FEE with status COMPLETED
-        const paid = profile.payments.some((p: any) =>
-          p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')
-        );
-        setIsFeePaid(paid);
+      if (profile) {
+        if (profile.payments) {
+          // Check for HOSTEL_FEE with status COMPLETED
+          const paid = profile.payments.some((p: any) =>
+            p.purpose === 'HOSTEL_FEE' && (p.status === 'COMPLETED' || p.status === 'PAID')
+          );
+          setIsFeePaid(paid);
+        }
+        if (profile.allotment && profile.allotment.isPossessed) {
+          setHasAllotment(true);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch profile for fee status", error);
+    }
+  }
+
+  async function handleDownloadIDCard() {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('/api/students/me/id-card', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `hostel-id-card.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        const err = await res.json();
+        alert(`Failed to download ID Card: ${err.message}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error downloading ID Card');
     }
   }
 
@@ -136,7 +167,15 @@ export default function DocumentsPageContent() {
             <h1 className="text-3xl font-bold text-gray-900">My Documents</h1>
             <p className="text-gray-500 mt-1">Upload and manage your required documents for hostel allotment.</p>
           </div>
-          <Button variant="outline" onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+          <div className="flex gap-2">
+            {hasAllotment && (
+              <Button onClick={handleDownloadIDCard}>
+                <FileText className="w-4 h-4 mr-2" />
+                Download ID Card
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

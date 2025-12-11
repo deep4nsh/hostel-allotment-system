@@ -174,8 +174,8 @@ export declare class StudentsController {
     }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     getAllPendingEditRequests(): Promise<({
         student: {
-            uniqueId: string | null;
             name: string;
+            uniqueId: string | null;
             program: import("@prisma/client").$Enums.Program | null;
             year: number | null;
         };
@@ -365,5 +365,7 @@ export declare class StudentsController {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    downloadIdCard(req: RequestWithUser, res: Response): Promise<void>;
+    downloadBatchIdCards(hostelId: string, res: Response): Promise<void>;
 }
 export {};

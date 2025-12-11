@@ -304,6 +304,43 @@ let StudentsService = class StudentsService {
             },
         });
     }
+    async getBatchStudentsForIdCard(hostelId) {
+        return this.prisma.student.findMany({
+            where: {
+                allotment: {
+                    isPossessed: true,
+                    room: {
+                        floor: {
+                            hostelId: hostelId
+                        }
+                    },
+                }
+            },
+            include: {
+                user: { select: { email: true } },
+                allotment: {
+                    include: {
+                        room: {
+                            include: {
+                                floor: {
+                                    include: {
+                                        hostel: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                documents: {
+                    where: { kind: { in: ['PHOTO', 'SIGNATURE'] } },
+                    select: { fileUrl: true, kind: true },
+                },
+            },
+            orderBy: {
+                uniqueId: 'asc'
+            }
+        });
+    }
 };
 exports.StudentsService = StudentsService;
 exports.StudentsService = StudentsService = __decorate([

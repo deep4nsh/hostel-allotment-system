@@ -490,4 +490,288 @@ export class PdfService {
       throw new Error('Failed to generate payment receipt');
     }
   }
+  async generateIdCard(student: any): Promise<Buffer> {
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
+
+      const photoDoc = student.documents?.find((d: any) => d.kind === 'PHOTO');
+      const signDoc = student.documents?.find((d: any) => d.kind === 'SIGNATURE');
+
+      const photoUrl = photoDoc ? `http://localhost:4000${photoDoc.fileUrl}` : null;
+      const signUrl = signDoc ? `http://localhost:4000${signDoc.fileUrl}` : null;
+
+      const cardData = {
+        session: '2025-26',
+        name: student.name,
+        roll: student.uniqueId,
+        room: student.allotment?.room ? `${student.allotment.room.number} (${student.allotment.room.floor?.hostel?.name})` : 'N/A',
+        validity: 'July 2026',
+        phone: student.phone,
+        email: student.user?.email,
+        yoa: student.startYear || '2025',
+        photoUrl: photoUrl || '',
+        signatureUrl: signUrl || ''
+      };
+
+      const htmlContent = `
+        <!doctype html>
+        <html>
+        <head>
+        <meta charset="utf-8" />
+        <style>
+          @page { size: 85.6mm 54mm; margin: 0; }
+          body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; padding: 0; }
+          
+          /* Card Container - simplified for single card PDF */
+          .card-container { width: 85.6mm; height: 54mm; page-break-after: always; position: relative; box-sizing: border-box; }
+          .face { position: relative; width: 100%; height: 100%; padding: 3mm 4mm; box-sizing: border-box; border: 0.2mm solid #ccc; }
+          
+          .title { font-weight: 700; font-size: 11pt; text-align: center; color: #900; line-height: 1.1; margin-bottom: 2px; }
+          .subtitle { font-size: 7pt; text-align: center; color: #333; margin-bottom: 4px; }
+          
+          .ribbon { background:#8c1048; color:#fff; padding: 2px 8px; font-weight: bold; border-radius: 2px; display:inline-block; margin: 1mm 0 2mm; font-size: 10pt; }
+
+          .row { display:flex; gap:8px; align-items:flex-start; margin-top: 2px; }
+          .photo { width: 20mm; height: 24mm; object-fit: cover; border: 0.5mm solid #8c1048; border-radius: 2px; }
+          .fields { font-size: 9pt; line-height: 1.3; flex: 1; }
+
+          .sig { height: 8mm; margin-top: 1mm; margin-left: 10px; max-width: 30mm; object-fit: contain; }
+          .label { font-weight: 700; color: #444; }
+          .muted { font-size: 7pt; color: #666; margin-top: 2px; }
+          .issuing { text-align: center; font-size: 7pt; color: #900; font-weight: bold; margin-top: 1px; }
+
+          /* Back */
+          .box { background:#fffbe7; padding: 2mm 3mm; border: 0.3mm solid #e1d39a; margin: 2mm 0; border-radius: 4px; }
+          .instructions { font-size: 7pt; margin-top: 2mm; }
+          .instructions ol { padding-left: 12px; margin: 2px 0; }
+          .instructions li { margin-bottom: 1px; }
+          .qr { position:absolute; right:3mm; bottom:3mm; width:12mm; height:12mm; opacity: 0.8; }
+        </style>
+        </head>
+        <body>
+          <!-- FRONT -->
+          <div class="card-container">
+            <div class="face">
+              <div class="title">DELHI TECHNOLOGICAL UNIVERSITY</div>
+              <div class="subtitle">Shahbad Daulatpur, Main Bawana Road, Delhi-110042</div>
+              <div style="text-align:center"><span class="ribbon">Hostel ID Card (${cardData.session})</span></div>
+              <div class="row">
+                <img class="photo" src="${cardData.photoUrl}" alt="Photo" onerror="this.style.display='none'"/>
+                <div class="fields">
+                  <div><span class="label">Name:</span> <strong>${cardData.name}</strong></div>
+                  <div><span class="label">Roll No:</span> ${cardData.roll}</div>
+                  <div><span class="label">Room:</span> ${cardData.room}</div>
+                  <div style="text-align: right; margin-top: 2px;">
+                     <img class="sig" src="${cardData.signatureUrl}" alt="Sign" onerror="this.style.display='none'"/>
+                     <div class="issuing">Issuing Authority</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BACK -->
+          <div class="card-container">
+            <div class="face">
+              <div class="box">
+                <div style="display:flex; justify-content:space-between;">
+                    <div><span class="label">Validity:</span> ${cardData.validity}</div>
+                    <div><span class="label">YOA:</span> ${cardData.yoa}</div>
+                </div>
+                <div style="margin-top:2px"><span class="label">Mob:</span> ${cardData.phone}</div>
+                <div style="margin-top:2px"><span class="label">Email:</span> ${cardData.email}</div>
+              </div>
+              <div class="instructions">
+                <div style="background:#8c1048; color:white; padding:1px 4px; font-weight:bold; display:inline-block; font-size: 7pt;">INSTRUCTIONS</div>
+                <ol>
+                  <li>The ID card must be displayed upon entering hostel premises.</li>
+                  <li>For loss, duplicate card issued on payment of Rs. 200/-.</li>
+                  <li>Keep it safe and report loss immediately.</li>
+                  <li>This card is property of DTU Hostels.</li>
+                </ol>
+              </div>
+              <!-- QR placeholder -->
+              <div class="qr" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:6px;">QR</div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await page.setContent(htmlContent);
+      // Generate PDF with card dimensions
+      const pdfBuffer = await page.pdf({
+        width: '85.6mm',
+        height: '54mm',
+        printBackground: true,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 }
+      });
+
+      await browser.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating ID Card:', error);
+      throw new Error('Failed to generate ID card');
+    }
+  }
+
+  async generateBatchIdCards(students: any[]): Promise<Buffer> {
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
+
+      // Map students to data needed for HTML
+      const cardsData = students.map(s => {
+        const photoDoc = s.documents?.find((d: any) => d.kind === 'PHOTO');
+        const signDoc = s.documents?.find((d: any) => d.kind === 'SIGNATURE');
+        return {
+          session: '2025-26',
+          name: s.name,
+          roll: s.uniqueId,
+          room: s.allotment?.room ? `${s.allotment.room.number} (${s.allotment.room.floor?.hostel?.name})` : 'N/A',
+          validity: 'July 2026',
+          phone: s.phone,
+          email: s.user?.email,
+          yoa: s.startYear || '2025',
+          photoUrl: photoDoc ? `http://localhost:4000${photoDoc.fileUrl}` : '',
+          signatureUrl: signDoc ? `http://localhost:4000${signDoc.fileUrl}` : ''
+        };
+      });
+
+      const styles = `
+          @page { size: A4; margin: 10mm; }
+          body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
+          .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10mm; row-gap: 10mm; page-break-inside: auto; }
+          
+          /* Using a wrapper to keep front and back together might be tricky across pages if using grid. 
+             Instead, we can render pairs sequentially or in a specific layout.
+             User requested "both back and front pages". 
+             Let's do: Front | Back side-by-side for each student? 
+             Or Fronts on one page, backs on next?
+             The prompt says "admin can download multiple id cards in single pdf with both back and front pages... with a pair of both and back together".
+             Let's put Front and Back side-by-side for each student.
+             A4 width is 210mm. Card width 85.6mm. 2 cards = ~171mm + gap. 
+             So we can fit 2 columns: Front | Back.
+             Rows per page: A4 height 297mm. Card height 54mm. 5 rows = 270mm.
+             So 5 students per page (Front+Back).
+          */
+          
+          .student-row { display: flex; gap: 5mm; margin-bottom: 5mm; break-inside: avoid; page-break-inside: avoid; }
+          
+          .card { width: 85.6mm; height: 54mm; border: 0.2mm solid #999; border-radius: 3mm; overflow: hidden; position: relative; background: white; }
+          .face { position: relative; width: 100%; height: 100%; padding: 4mm 5mm; box-sizing: border-box; }
+          
+          .title { font-weight: 700; font-size: 10pt; text-align: center; color: #900; line-height: 1.1; }
+          .subtitle { font-size: 6.5pt; text-align: center; color: #333; margin-bottom: 2px; }
+          
+          .ribbon { background:#8c1048; color:#fff; padding: 2px 6px; display:inline-block; margin: 1mm 0; font-size: 9pt; border-radius: 2px; }
+
+          .row-content { display:flex; gap:6px; align-items:flex-start; margin-top: 2px; }
+          .photo { width: 18mm; height: 22mm; object-fit: cover; border: 0.3mm solid #8c1048; border-radius: 2px; }
+          .fields { font-size: 8pt; line-height: 1.3; flex: 1; }
+
+          .sig { height: 8mm; margin-top: 2mm; object-fit: contain; max-width: 30mm; }
+          .label { font-weight: 700; color: #444; }
+          .muted { font-size: 7.5pt; color: #555; }
+          .issuing { text-align: right; font-size: 6pt; color: #900; font-weight: bold; margin-top: 1px; margin-right: 5px; }
+
+          /* Back elements */
+          .box { background:#fffbe7; padding: 2mm 3mm; border: 0.3mm solid #e1d39a; margin: 2mm 0; border-radius: 4px; }
+          .instructions { font-size: 6.5pt; margin-top: 2mm; }
+           .instructions ol { padding-left: 14px; margin: 2px 0; }
+          .qr { position:absolute; right:3mm; bottom:3mm; width:12mm; height:12mm; opacity:0.6; border:1px solid #eee; }
+      `;
+
+      // Helper to generate Front HTML
+      const getFront = (s: any) => `
+        <div class="card">
+          <div class="face">
+            <div class="title">DELHI TECHNOLOGICAL UNIVERSITY</div>
+            <div class="subtitle">Shahbad Daulatpur, Bawana Road, Delhi-42</div>
+            <div style="text-align:center"><span class="ribbon">Hostel ID Card (${s.session})</span></div>
+            <div class="row-content">
+              <img class="photo" src="${s.photoUrl || ''}" onerror="this.style.visibility='hidden'" />
+              <div class="fields">
+                <div><span class="label">Name:</span> <strong>${s.name}</strong></div>
+                <div><span class="label">Roll:</span> ${s.roll}</div>
+                <div><span class="label">Room:</span> ${s.room}</div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; align-items:center; flex-direction:column; margin-top:-5px;">
+               <img class="sig" src="${s.signatureUrl || ''}" onerror="this.style.visibility='hidden'" />
+               <div class="issuing">Issuing Authority</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Helper to generate Back HTML
+      const getBack = (s: any) => `
+        <div class="card">
+          <div class="face">
+            <div class="box">
+              <div style="display:flex; justify-content:space-between">
+                  <div><span class="label">Validity:</span> ${s.validity}</div>
+                  <div><span class="label">YOA:</span> ${s.yoa}</div>
+              </div>
+              <div><span class="label">Mob:</span> ${s.phone}</div>
+              <div><span class="label">Email:</span> ${s.email}</div>
+            </div>
+            <div class="instructions">
+              <div style="font-weight:bold; background:#8c1048; color:white; padding:1px 4px; display:inline-block; font-size:6pt;">INSTRUCTIONS</div>
+              <ol>
+                <li>Display upon entering hostel.</li>
+                <li>Duplicate card fee: Rs. 200/-.</li>
+                <li>Report loss immediately.</li>
+              </ol>
+            </div>
+            <div class="qr"></div>
+          </div>
+        </div>
+      `;
+
+      let htmlBody = '';
+      cardsData.forEach(s => {
+        htmlBody += `
+            <div class="student-row">
+                ${getFront(s)}
+                ${getBack(s)}
+            </div>
+          `;
+      });
+
+      const htmlContent = `
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>${styles}</style>
+        </head>
+        <body>
+          ${htmlBody}
+        </body>
+        </html>
+      `;
+
+      await page.setContent(htmlContent);
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+      });
+
+      await browser.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating Batch ID Cards:', error);
+      throw new Error('Failed to generate batch ID cards');
+    }
+  }
 }

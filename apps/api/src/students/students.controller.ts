@@ -10,6 +10,7 @@ import {
   NotFoundException,
   Param,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { PdfService } from './pdf.service';
@@ -177,5 +178,55 @@ export class StudentsController {
     const student = await this.studentsService.findOne(userId);
     if (!student) throw new NotFoundException('Student not found');
     return student;
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/id-card')
+  async downloadIdCard(@Request() req: RequestWithUser, @Res() res: Response) {
+    const student = await this.studentsService.findOne(req.user.userId);
+
+    // Check if eligible (e.g., has allotment and possession acknowledged)
+    const allotment = (student as any)?.allotment;
+    if (!allotment) {
+      throw new NotFoundException('No confirmed allotment found for ID Card');
+    }
+
+    if (!allotment.isPossessed) {
+      throw new BadRequestException('You must acknowledge possession before downloading ID Card');
+    }
+
+    const pdfBuffer = await this.pdfService.generateIdCard(student);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename=hostel-id-card.pdf',
+      'Content-Length': pdfBuffer.length,
+    });
+    res.end(pdfBuffer);
+  }
+
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get('admin/id-cards/bulk')
+  async downloadBatchIdCards(
+    @Query('hostelId') hostelId: string,
+    @Res() res: Response
+  ) {
+    if (!hostelId) throw new BadRequestException('Hostel ID is required');
+
+    const students = await this.studentsService.getBatchStudentsForIdCard(hostelId);
+
+    if (!students || students.length === 0) {
+      throw new NotFoundException('No students found for this hostel');
+    }
+
+    const pdfBuffer = await this.pdfService.generateBatchIdCards(students);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=hostel-id-cards-${hostelId}.pdf`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.end(pdfBuffer);
   }
 }

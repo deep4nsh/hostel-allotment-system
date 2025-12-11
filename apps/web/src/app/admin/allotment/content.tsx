@@ -55,6 +55,32 @@ export default function AdminAllotmentContent() {
         }
     }
 
+    const handleDownloadBatchIdCards = async () => {
+        if (!selectedHostel) return;
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`/api/students/admin/id-cards/bulk?hostelId=${selectedHostel}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `hostel-id-cards-${selectedHostel}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                const err = await res.json();
+                alert(`Failed to download: ${err.message}`);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error downloading ID cards');
+        }
+    }
+
     const handleTriggerAllotment = async () => {
         const token = localStorage.getItem('token')
         try {
@@ -116,7 +142,14 @@ export default function AdminAllotmentContent() {
             </div>
 
             <div className="pt-8">
-                <h2 className="text-xl font-semibold mb-4">View Allotments by Hostel</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold">View Allotments by Hostel</h2>
+                    {selectedHostel && (
+                        <Button variant="outline" onClick={handleDownloadBatchIdCards}>
+                            Download Batch ID Cards
+                        </Button>
+                    )}
+                </div>
                 <div className="flex items-center gap-4">
                     <Select onValueChange={setSelectedHostel} value={selectedHostel}>
                         <SelectTrigger className="w-[200px]">

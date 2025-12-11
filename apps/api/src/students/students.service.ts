@@ -363,4 +363,43 @@ export class StudentsService {
       },
     });
   }
+
+  async getBatchStudentsForIdCard(hostelId: string) {
+    return this.prisma.student.findMany({
+      where: {
+        allotment: {
+          isPossessed: true,
+          room: {
+            floor: {
+              hostelId: hostelId
+            }
+          },
+          // status: 'ALLOTTED', // Optionally filter by status if needed
+        }
+      },
+      include: {
+        user: { select: { email: true } },
+        allotment: {
+          include: {
+            room: {
+              include: {
+                floor: {
+                  include: {
+                    hostel: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        documents: {
+          where: { kind: { in: ['PHOTO', 'SIGNATURE'] } },
+          select: { fileUrl: true, kind: true },
+        },
+      },
+      orderBy: {
+        uniqueId: 'asc' // Sort by Roll No
+      }
+    });
+  }
 }

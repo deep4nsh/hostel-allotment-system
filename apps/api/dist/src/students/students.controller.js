@@ -94,6 +94,38 @@ let StudentsController = class StudentsController {
             throw new common_1.NotFoundException('Student not found');
         return student;
     }
+    async downloadIdCard(req, res) {
+        const student = await this.studentsService.findOne(req.user.userId);
+        const allotment = student?.allotment;
+        if (!allotment) {
+            throw new common_1.NotFoundException('No confirmed allotment found for ID Card');
+        }
+        if (!allotment.isPossessed) {
+            throw new common_1.BadRequestException('You must acknowledge possession before downloading ID Card');
+        }
+        const pdfBuffer = await this.pdfService.generateIdCard(student);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': 'attachment; filename=hostel-id-card.pdf',
+            'Content-Length': pdfBuffer.length,
+        });
+        res.end(pdfBuffer);
+    }
+    async downloadBatchIdCards(hostelId, res) {
+        if (!hostelId)
+            throw new common_1.BadRequestException('Hostel ID is required');
+        const students = await this.studentsService.getBatchStudentsForIdCard(hostelId);
+        if (!students || students.length === 0) {
+            throw new common_1.NotFoundException('No students found for this hostel');
+        }
+        const pdfBuffer = await this.pdfService.generateBatchIdCards(students);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename=hostel-id-cards-${hostelId}.pdf`,
+            'Content-Length': pdfBuffer.length,
+        });
+        res.end(pdfBuffer);
+    }
 };
 exports.StudentsController = StudentsController;
 __decorate([
@@ -219,6 +251,25 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], StudentsController.prototype, "getStudentByUserId", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)('me/id-card'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], StudentsController.prototype, "downloadIdCard", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, common_1.Get)('admin/id-cards/bulk'),
+    __param(0, (0, common_1.Query)('hostelId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], StudentsController.prototype, "downloadBatchIdCards", null);
 exports.StudentsController = StudentsController = __decorate([
     (0, common_1.Controller)('students'),
     __metadata("design:paramtypes", [students_service_1.StudentsService,
