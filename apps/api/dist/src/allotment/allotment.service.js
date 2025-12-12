@@ -18,9 +18,9 @@ let AllotmentService = class AllotmentService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async runAllotment(targetYear) {
+    async runAllotment(targetYear, maxAllotments) {
         try {
-            console.log(`Running Year-wise Allotment for Year ${targetYear}`);
+            console.log(`Running Year-wise Allotment for Year ${targetYear}, Limit: ${maxAllotments ?? 'Unlimited'}`);
             const allHostels = await this.prisma.hostel.findMany({
                 include: {
                     floors: {
@@ -146,59 +146,68 @@ let AllotmentService = class AllotmentService {
             });
             const allotments = [];
             let waitlistCounter = 1;
+            let allottedIndianCount = 0;
             for (const student of eligibleStudents) {
                 const sCategory = student.category;
                 const isInternational = student.country && student.country !== 'India';
                 const effectiveCategory = sCategory === 'NRI' || isInternational ? 'NRI' : sCategory;
                 let allottedRoom = null;
-                const studentHostels = allHostels.filter((h) => isHostelEligibleForYear(h.name, effectiveCategory));
-                const prefType = student.roomTypePreference;
-                if (prefType) {
-                    for (const hostel of studentHostels) {
-                        for (const floor of hostel.floors) {
-                            if (floor.gender !== student.gender)
-                                continue;
-                            const availableRoom = floor.rooms.find((r) => {
-                                if (r.occupancy >= r.capacity)
-                                    return false;
-                                if (r.occupancy > 0) {
-                                    const occupants = r.allotments.map((a) => a.student);
-                                    if (occupants.some((o) => o.year !== targetYear))
-                                        return false;
-                                }
-                                return isRoomTypeAllowed(r, student, hostel.isAC);
-                            });
-                            if (availableRoom) {
-                                allottedRoom = availableRoom;
-                                break;
-                            }
-                        }
-                        if (allottedRoom)
-                            break;
+                let limitReached = false;
+                if (maxAllotments !== undefined && effectiveCategory !== 'NRI') {
+                    if (allottedIndianCount >= maxAllotments) {
+                        limitReached = true;
                     }
                 }
-                if (!allottedRoom) {
-                    for (const hostel of studentHostels) {
-                        for (const floor of hostel.floors) {
-                            if (floor.gender !== student.gender)
-                                continue;
-                            const availableRoom = floor.rooms.find((r) => {
-                                if (r.occupancy >= r.capacity)
-                                    return false;
-                                if (r.occupancy > 0) {
-                                    const occupants = r.allotments.map((a) => a.student);
-                                    if (occupants.some((o) => o.year !== targetYear))
+                if (!limitReached) {
+                    const studentHostels = allHostels.filter((h) => isHostelEligibleForYear(h.name, effectiveCategory));
+                    const prefType = student.roomTypePreference;
+                    if (prefType) {
+                        for (const hostel of studentHostels) {
+                            for (const floor of hostel.floors) {
+                                if (floor.gender !== student.gender)
+                                    continue;
+                                const availableRoom = floor.rooms.find((r) => {
+                                    if (r.occupancy >= r.capacity)
                                         return false;
+                                    if (r.occupancy > 0) {
+                                        const occupants = r.allotments.map((a) => a.student);
+                                        if (occupants.some((o) => o.year !== targetYear))
+                                            return false;
+                                    }
+                                    return isRoomTypeAllowed(r, student, hostel.isAC);
+                                });
+                                if (availableRoom) {
+                                    allottedRoom = availableRoom;
+                                    break;
                                 }
-                                return isRoomTypeAllowed(r, student, hostel.isAC);
-                            });
-                            if (availableRoom) {
-                                allottedRoom = availableRoom;
-                                break;
                             }
+                            if (allottedRoom)
+                                break;
                         }
-                        if (allottedRoom)
-                            break;
+                    }
+                    if (!allottedRoom) {
+                        for (const hostel of studentHostels) {
+                            for (const floor of hostel.floors) {
+                                if (floor.gender !== student.gender)
+                                    continue;
+                                const availableRoom = floor.rooms.find((r) => {
+                                    if (r.occupancy >= r.capacity)
+                                        return false;
+                                    if (r.occupancy > 0) {
+                                        const occupants = r.allotments.map((a) => a.student);
+                                        if (occupants.some((o) => o.year !== targetYear))
+                                            return false;
+                                    }
+                                    return isRoomTypeAllowed(r, student, hostel.isAC);
+                                });
+                                if (availableRoom) {
+                                    allottedRoom = availableRoom;
+                                    break;
+                                }
+                            }
+                            if (allottedRoom)
+                                break;
+                        }
                     }
                 }
                 if (allottedRoom) {
@@ -221,6 +230,9 @@ let AllotmentService = class AllotmentService {
                         allottedRoom.allotments = [];
                     allottedRoom.allotments.push({ student });
                     allotments.push(allotment);
+                    if (effectiveCategory !== 'NRI') {
+                        allottedIndianCount++;
+                    }
                     try {
                         await this.prisma.waitlistEntry.delete({
                             where: { studentId: student.id },

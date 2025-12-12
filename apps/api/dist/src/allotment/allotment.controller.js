@@ -25,7 +25,7 @@ let AllotmentController = class AllotmentController {
         this.allotmentService = allotmentService;
     }
     triggerAllotment(body) {
-        return this.allotmentService.runAllotment(body.year);
+        return this.allotmentService.runAllotment(body.year, body.maxAllotments);
     }
     getAllotments(hostelId) {
         return this.allotmentService.getAllotments(hostelId);

@@ -4,6 +4,7 @@ export declare class AllotmentController {
     constructor(allotmentService: AllotmentService);
     triggerAllotment(body: {
         year: number;
+        maxAllotments?: number;
     }): Promise<{
         totalEligible: number;
         allotted: number;

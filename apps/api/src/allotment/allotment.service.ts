@@ -10,9 +10,11 @@ import { getProgramGroup } from '../utils/program.utils';
 export class AllotmentService {
   constructor(private prisma: PrismaService) { }
 
-  async runAllotment(targetYear: number) {
+  async runAllotment(targetYear: number, maxAllotments?: number) {
     try {
-      console.log(`Running Year-wise Allotment for Year ${targetYear}`);
+      console.log(
+        `Running Year-wise Allotment for Year ${targetYear}, Limit: ${maxAllotments ?? 'Unlimited'}`,
+      );
 
       // 1. Fetch ALL Hostels with Rooms AND current occupants
       const allHostels = await this.prisma.hostel.findMany({
@@ -184,6 +186,7 @@ export class AllotmentService {
 
       const allotments = [];
       let waitlistCounter = 1;
+      let allottedIndianCount = 0;
 
       // 5. Iterate and Assign
       for (const student of eligibleStudents) {
@@ -195,79 +198,89 @@ export class AllotmentService {
 
         let allottedRoom = null;
 
-        // Filter Hostels for this Student
-        const studentHostels = allHostels.filter((h) =>
-          isHostelEligibleForYear(h.name, effectiveCategory),
-        );
-
-        // Find Room based on Preference (roomTypePreference)
-        // "TRIPLE_AC" -> Capacity 3 + Hostel.isAC = true
-        // "TRIPLE" -> Capacity 3 + Hostel.isAC = false
-        // "DOUBLE" -> Capacity 2
-        // "SINGLE" -> Capacity 1
-
-        const prefType = student.roomTypePreference;
-
-        // Attempt 1: Exact Match in Eligible Hostels
-        if (prefType) {
-          for (const hostel of studentHostels) {
-            for (const floor of hostel.floors) {
-              if (floor.gender !== student.gender) continue; // Gender Check
-
-              const availableRoom = floor.rooms.find((r: any) => {
-                if (r.occupancy >= r.capacity) return false;
-                // Compatibility check (e.g. don't mix Year 1 with Year 4 in same room)
-                // We can rely on 'isRoomTypeAllowed' implicitly covering year logic for the ROOM TYPE,
-                // but for sharing, we rely on empty or matching.
-                // Since we iterate year-wise, freshers naturally group together.
-                // For seniors, we might mix years (2,3,4) if allowed.
-                // Let's keep it simple: If room not empty, check occupants.
-                if (r.occupancy > 0) {
-                  // Check if existing occupants are compatible (Same Year mainly)
-                  // Local check using 'r.allotments'
-                  const occupants = r.allotments.map((a: any) => a.student);
-                  if (occupants.some((o: any) => o.year !== targetYear))
-                    return false;
-                }
-
-                // Type Check
-                return isRoomTypeAllowed(r, student, hostel.isAC);
-              });
-
-              if (availableRoom) {
-                allottedRoom = availableRoom;
-                break;
-              }
-            }
-            if (allottedRoom) break;
+        // CHECK QUANTITY LIMIT (Indian Only)
+        let limitReached = false;
+        if (maxAllotments !== undefined && effectiveCategory !== 'NRI') {
+          if (allottedIndianCount >= maxAllotments) {
+            limitReached = true;
           }
         }
 
-        // Attempt 2: Fallback to ANY valid room in Eligible Hostels
-        if (!allottedRoom) {
-          for (const hostel of studentHostels) {
-            for (const floor of hostel.floors) {
-              if (floor.gender !== student.gender) continue;
+        if (!limitReached) {
+          // Filter Hostels for this Student
+          const studentHostels = allHostels.filter((h) =>
+            isHostelEligibleForYear(h.name, effectiveCategory),
+          );
 
-              const availableRoom = floor.rooms.find((r: any) => {
-                if (r.occupancy >= r.capacity) return false;
-                if (r.occupancy > 0) {
-                  const occupants = r.allotments.map((a: any) => a.student);
-                  if (occupants.some((o: any) => o.year !== targetYear))
-                    return false;
+          // Find Room based on Preference (roomTypePreference)
+          // "TRIPLE_AC" -> Capacity 3 + Hostel.isAC = true
+          // "TRIPLE" -> Capacity 3 + Hostel.isAC = false
+          // "DOUBLE" -> Capacity 2
+          // "SINGLE" -> Capacity 1
+
+          const prefType = student.roomTypePreference;
+
+          // Attempt 1: Exact Match in Eligible Hostels
+          if (prefType) {
+            for (const hostel of studentHostels) {
+              for (const floor of hostel.floors) {
+                if (floor.gender !== student.gender) continue; // Gender Check
+
+                const availableRoom = floor.rooms.find((r: any) => {
+                  if (r.occupancy >= r.capacity) return false;
+                  // Compatibility check (e.g. don't mix Year 1 with Year 4 in same room)
+                  // We can rely on 'isRoomTypeAllowed' implicitly covering year logic for the ROOM TYPE,
+                  // but for sharing, we rely on empty or matching.
+                  // Since we iterate year-wise, freshers naturally group together.
+                  // For seniors, we might mix years (2,3,4) if allowed.
+                  // Let's keep it simple: If room not empty, check occupants.
+                  if (r.occupancy > 0) {
+                    // Check if existing occupants are compatible (Same Year mainly)
+                    // Local check using 'r.allotments'
+                    const occupants = r.allotments.map((a: any) => a.student);
+                    if (occupants.some((o: any) => o.year !== targetYear))
+                      return false;
+                  }
+
+                  // Type Check
+                  return isRoomTypeAllowed(r, student, hostel.isAC);
+                });
+
+                if (availableRoom) {
+                  allottedRoom = availableRoom;
+                  break;
                 }
-                // Basic Type Check (e.g. no Masters in Triples if banned)
-                return isRoomTypeAllowed(r, student, hostel.isAC);
-              });
-
-              if (availableRoom) {
-                allottedRoom = availableRoom;
-                break;
               }
+              if (allottedRoom) break;
             }
-            if (allottedRoom) break;
           }
-        }
+
+          // Attempt 2: Fallback to ANY valid room in Eligible Hostels
+          if (!allottedRoom) {
+            for (const hostel of studentHostels) {
+              for (const floor of hostel.floors) {
+                if (floor.gender !== student.gender) continue;
+
+                const availableRoom = floor.rooms.find((r: any) => {
+                  if (r.occupancy >= r.capacity) return false;
+                  if (r.occupancy > 0) {
+                    const occupants = r.allotments.map((a: any) => a.student);
+                    if (occupants.some((o: any) => o.year !== targetYear))
+                      return false;
+                  }
+                  // Basic Type Check (e.g. no Masters in Triples if banned)
+                  return isRoomTypeAllowed(r, student, hostel.isAC);
+                });
+
+                if (availableRoom) {
+                  allottedRoom = availableRoom;
+                  break;
+                }
+              }
+              if (allottedRoom) break;
+            }
+          }
+        } // End of if (!limitReachedForIndian)
 
         if (allottedRoom) {
           const validTill = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -291,6 +304,11 @@ export class AllotmentService {
           allottedRoom.allotments.push({ student } as any);
 
           allotments.push(allotment);
+
+          if (effectiveCategory !== 'NRI') {
+            allottedIndianCount++;
+          }
+
           try {
             await this.prisma.waitlistEntry.delete({
               where: { studentId: student.id },

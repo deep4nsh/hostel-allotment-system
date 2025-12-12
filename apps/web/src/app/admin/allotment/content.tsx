@@ -10,6 +10,7 @@ export default function AdminAllotmentContent() {
     const [hostels, setHostels] = useState<any[]>([])
     const [selectedYear, setSelectedYear] = useState<string>('1')
     const [selectedHostel, setSelectedHostel] = useState<string>('')
+    const [maxAllotments, setMaxAllotments] = useState<string>('')
     const [allotments, setAllotments] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const router = useRouter()
@@ -83,6 +84,11 @@ export default function AdminAllotmentContent() {
 
     const handleTriggerAllotment = async () => {
         const token = localStorage.getItem('token')
+        const payload: any = { year: parseInt(selectedYear) }
+        if (maxAllotments) {
+            payload.maxAllotments = parseInt(maxAllotments)
+        }
+
         try {
             const res = await fetch(`/api/allotment/trigger`, {
                 method: 'POST',
@@ -90,7 +96,7 @@ export default function AdminAllotmentContent() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ year: parseInt(selectedYear) })
+                body: JSON.stringify(payload)
             })
             if (res.ok) {
                 const result = await res.json()
@@ -134,6 +140,18 @@ export default function AdminAllotmentContent() {
                             <SelectItem value="5">5th Year</SelectItem>
                         </SelectContent>
                     </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">Max Allotments (Indian):</span>
+                    <input
+                        type="number"
+                        min="1"
+                        placeholder="Unlimited"
+                        value={maxAllotments}
+                        onChange={(e) => setMaxAllotments(e.target.value)}
+                        className="px-3 py-2 border rounded-md w-[150px] text-sm"
+                    />
                 </div>
 
                 <Button onClick={handleTriggerAllotment}>

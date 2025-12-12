@@ -2,7 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class AllotmentService {
     private prisma;
     constructor(prisma: PrismaService);
-    runAllotment(targetYear: number): Promise<{
+    runAllotment(targetYear: number, maxAllotments?: number): Promise<{
         totalEligible: number;
         allotted: number;
         waitlisted: number;

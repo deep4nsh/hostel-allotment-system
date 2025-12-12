@@ -7,13 +7,13 @@ import { Role } from '@prisma/client';
 
 @Controller('allotment')
 export class AllotmentController {
-  constructor(private readonly allotmentService: AllotmentService) {}
+  constructor(private readonly allotmentService: AllotmentService) { }
 
   @Post('trigger')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.ADMIN)
-  triggerAllotment(@Body() body: { year: number }) {
-    return this.allotmentService.runAllotment(body.year);
+  triggerAllotment(@Body() body: { year: number; maxAllotments?: number }) {
+    return this.allotmentService.runAllotment(body.year, body.maxAllotments);
   }
 
   @Get('list/:hostelId')
