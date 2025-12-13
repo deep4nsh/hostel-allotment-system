@@ -107,7 +107,7 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="user@dtu.ac.in" {...field} />
+                <Input placeholder="Enter Your email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

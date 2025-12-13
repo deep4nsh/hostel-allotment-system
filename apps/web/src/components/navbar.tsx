@@ -113,9 +113,9 @@ export function Navbar() {
                 {role === "STUDENT" && (
                   <>
                     <NavLink href="/student/profile" active={isActive("/student/profile")}>Profile</NavLink>
-                    <NavLink href="/student/allotment" active={isActive("/student/allotment")}>Allotment</NavLink>
                     <NavLink href="/student/documents" active={isActive("/student/documents")}>Documents</NavLink>
                     <NavLink href="/student/preferences" active={isActive("/student/preferences")}>Preferences</NavLink>
+                    <NavLink href="/student/allotment" active={isActive("/student/allotment")}>Allotment</NavLink>
                     <NavLink href="/student/payments" active={isActive("/student/payments")}>Payments</NavLink>
                     <NavLink href="/student/complaints" active={isActive("/student/complaints")}>Complaints</NavLink>
                     <NavLink href="/student/rebate" active={isActive("/student/rebate")}>Mess Rebate</NavLink>
